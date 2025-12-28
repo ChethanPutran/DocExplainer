@@ -1,6 +1,6 @@
 # 📘 Project: Doc Explainer - A Context-Aware, Knowledge-Adaptive Document Tutor Using Large Language Models
 
-## 🔥 Core Idea (Reframed Precisely)
+## 🔥 Core Idea
 
 An **AI-augmented document viewer** that:
 
@@ -12,51 +12,8 @@ An **AI-augmented document viewer** that:
 6. Recommends **prerequisites or deeper material**
 
 
----
 
-## 1️⃣ System Architecture (High-Level)
-
-```
-Frontend (Web / Desktop)
-│
-├── Document Viewer (PDF / Markdown / HTML)
-│     ├── Text Selection Listener
-│     ├── Section + Position Tracking
-│
-├── Sidebar AI Tutor
-│     ├── Explanation Panel
-│     ├── Voice Output (TTS)
-│     ├── Voice Input (ASR)
-│     ├── Doubt / Question Interface
-│
-Backend
-│
-├── Document Understanding Engine
-│     ├── Hierarchical Chunking
-│     ├── Section Graph
-│     ├── Embedding Store (Doc Memory)
-│
-├── User Knowledge Model
-│     ├── Concept Graph
-│     ├── Mastery Estimation
-│     ├── Interaction History
-│
-├── Context-Aware Reasoning Engine
-│     ├── Selected Text Context
-│     ├── Global Doc Context
-│     ├── User Knowledge Context
-│
-├── Recommendation Engine
-│     ├── Prerequisite Detector
-│     ├── Depth Estimator
-│     ├── External Material Retriever
-│
-└── LLM Orchestration Layer
-```
-
----
-
-## 2️⃣ Key Functionalities (With ML Framing)
+## Key Functionalities (With ML Framing)
 
 ### 🔹 1. Selected Text Explanation (Core Feature)
 
@@ -193,7 +150,7 @@ Detected gap:
 
 ---
 
-## 3️⃣ Algorithms & Models You Can Highlight
+## Algorithms & Models 
 
 ### Core ML Components
 
@@ -213,7 +170,7 @@ Detected gap:
 
 ---
 
-## 4️⃣ MVP → Advanced Roadmap
+## MVP → Advanced Roadmap
 
 ### ✅ Phase 1 (4–6 weeks) – MVP
 
@@ -1666,6 +1623,49 @@ The selected technology stack supports modular development of an adaptive, docum
 └───────────────────────────────────────────────────────────┘
 ```
 
+---
+
+## System Architecture (High-Level)
+
+```
+Frontend (Web / Desktop)
+│
+├── Document Viewer (PDF / Markdown / HTML)
+│     ├── Text Selection Listener
+│     ├── Section + Position Tracking
+│
+├── Sidebar AI Tutor
+│     ├── Explanation Panel
+│     ├── Voice Output (TTS)
+│     ├── Voice Input (ASR)
+│     ├── Doubt / Question Interface
+│
+Backend
+│
+├── Document Understanding Engine
+│     ├── Hierarchical Chunking
+│     ├── Section Graph
+│     ├── Embedding Store (Doc Memory)
+│
+├── User Knowledge Model
+│     ├── Concept Graph
+│     ├── Mastery Estimation
+│     ├── Interaction History
+│
+├── Context-Aware Reasoning Engine
+│     ├── Selected Text Context
+│     ├── Global Doc Context
+│     ├── User Knowledge Context
+│
+├── Recommendation Engine
+│     ├── Prerequisite Detector
+│     ├── Depth Estimator
+│     ├── External Material Retriever
+│
+└── LLM Orchestration Layer
+```
+
+---
 
 # Related Work
 
