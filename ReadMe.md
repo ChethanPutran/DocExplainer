@@ -647,82 +647,6 @@ k_{u,j}^{(t)} \leftarrow k_{u,j}^{(t)} + \gamma \cdot k_{u,i}^{(t)}
 
 This allows **knowledge transfer** across related concepts.
 
----
-
-
-
-# Related Work
-
-## Document-Centric Question Answering and Explanation Systems
-
-Early work on document understanding and question answering focused on extracting answers from local textual contexts, often treating documents as flat sequences of text. Reading comprehension benchmarks such as SQuAD (Rajpurkar et al., 2016) and Natural Questions (Kwiatkowski et al., 2019) formalized span-based question answering but did not address explanation generation or user adaptation.
-
-Retrieval-Augmented Generation (RAG) models (Lewis et al., 2020) extended this paradigm by incorporating external document retrieval to ground large language models, improving factual consistency. Subsequent systems applied RAG-style approaches to PDF-based question answering and document chat interfaces; however, these systems primarily generate static responses and do not account for the user’s evolving knowledge or pedagogical appropriateness of explanations.
-
-Recent work on long-context document understanding (Beltagy et al., 2020; Tay et al., 2022) has improved global document representation, but these models still lack mechanisms for adaptive explanation or learner modeling, which are central to effective educational use.
-
----
-
-## Intelligent Tutoring Systems and Adaptive Learning
-
-Intelligent Tutoring Systems (ITS) have a long history of modeling student knowledge to personalize instruction (Anderson et al., 1995; Koedinger et al., 1997). Classical ITS frameworks rely on explicit problem-solving tasks and domain-specific rules, limiting scalability to open-ended documents.
-
-Bayesian Knowledge Tracing (Corbett & Anderson, 1994) and its extensions model student mastery as a latent variable inferred from observed performance. More recent approaches, such as Deep Knowledge Tracing (Piech et al., 2015), use recurrent neural networks to capture temporal learning dynamics. While effective in structured educational settings, these models assume discrete exercises and correctness labels, which are absent in free-form document interaction scenarios.
-
-Our work differs by inferring user knowledge **implicitly** from natural interactions—text selection, explanation requests, and conversational queries—without requiring explicit quizzes or labeled outcomes.
-
----
-
-## User Modeling and Knowledge State Estimation
-
-User modeling has been extensively studied in recommender systems and adaptive interfaces (Brusilovsky & Millán, 2007). In educational contexts, learner models often rely on concept-level mastery representations, updated through observed behavior. Item Response Theory (IRT) (Baker & Kim, 2004) provides a principled statistical framework for estimating ability, but typically requires controlled assessment items.
-
-Recent LLM-based educational agents attempt to personalize responses using conversation history or heuristics, but lack explicit, interpretable knowledge representations. In contrast, our approach maintains a **continuous, concept-level knowledge state**, enabling explicit detection of knowledge gaps and mastery progression within document-centric learning.
-
----
-
-## Explanation Generation and Pedagogical Adaptation
-
-Explainable AI research has emphasized transparency and justification of model predictions (Doshi-Velez & Kim, 2017), but explanation *for learning* requires additional pedagogical considerations. Prior work in educational explanation generation highlights the importance of adapting explanations to learner expertise (Chi et al., 1994; McNamara et al., 2004).
-
-Recent LLM-based explanation systems can generate fluent and detailed explanations on demand, but typically adopt a one-size-fits-all approach. Studies have shown that mismatched explanation depth can hinder learning due to cognitive overload or redundancy. Our work explicitly models explanation depth as a function of estimated user knowledge and document complexity.
-
----
-
-## Multimodal Educational Interfaces
-
-Multimodal interaction, particularly voice-based tutoring, has been explored in conversational agents and educational dialogue systems (Litman & Forbes-Riley, 2004; Raux et al., 2005). Advances in speech recognition and text-to-speech systems have enabled natural voice-based interaction with AI tutors. However, most existing systems operate independently of document structure and lack persistent user knowledge modeling.
-
-By integrating voice interaction directly into a document-centric explanation system, our work supports natural, continuous learning while preserving document context and pedagogical continuity.
-
----
-
-## Positioning of This Work
-
-In contrast to prior approaches, this work unifies:
-
-* **Global document understanding**
-* **Implicit user knowledge modeling**
-* **Adaptive explanation generation**
-* **Prerequisite and depth-aware recommendation**
-
-within a single framework for interactive document learning. This positions the system at the intersection of document intelligence, intelligent tutoring systems, and large language model–based educational agents, addressing limitations in each individual line of work.
-
----
-
-## Key References (for your bibliography)
-
-* Anderson, J. R., Corbett, A. T., Koedinger, K. R., & Pelletier, R. (1995). *Cognitive tutors: Lessons learned*.
-* Baker, F. B., & Kim, S.-H. (2004). *Item Response Theory*.
-* Beltagy, I., Peters, M., & Cohan, A. (2020). **Longformer**.
-* Brusilovsky, P., & Millán, E. (2007). User models for adaptive hypermedia.
-* Corbett, A. T., & Anderson, J. R. (1994). Knowledge tracing.
-* Doshi-Velez, F., & Kim, B. (2017). Towards a rigorous science of interpretability.
-* Lewis, P. et al. (2020). Retrieval-Augmented Generation.
-* Piech, C. et al. (2015). Deep Knowledge Tracing.
-* Rajpurkar, P. et al. (2016). SQuAD.
-* Tay, Y. et al. (2022). Efficient transformers survey.
-
 
 ---
 
@@ -1742,13 +1666,78 @@ The selected technology stack supports modular development of an adaptive, docum
 └───────────────────────────────────────────────────────────┘
 ```
 
+
+# Related Work
+
+## Document-Centric Question Answering and Explanation Systems
+
+Early work on document understanding and question answering focused on extracting answers from local textual contexts, often treating documents as flat sequences of text. Reading comprehension benchmarks such as SQuAD (Rajpurkar et al., 2016) and Natural Questions (Kwiatkowski et al., 2019) formalized span-based question answering but did not address explanation generation or user adaptation.
+
+Retrieval-Augmented Generation (RAG) models (Lewis et al., 2020) extended this paradigm by incorporating external document retrieval to ground large language models, improving factual consistency. Subsequent systems applied RAG-style approaches to PDF-based question answering and document chat interfaces; however, these systems primarily generate static responses and do not account for the user’s evolving knowledge or pedagogical appropriateness of explanations.
+
+Recent work on long-context document understanding (Beltagy et al., 2020; Tay et al., 2022) has improved global document representation, but these models still lack mechanisms for adaptive explanation or learner modeling, which are central to effective educational use.
+
 ---
 
-## 3️⃣ How to Describe This in a Paper (1–2 lines)
+## Intelligent Tutoring Systems and Adaptive Learning
 
-> *Figure X illustrates the system architecture of the proposed document-centric intelligent tutoring system. The architecture integrates document understanding, online user knowledge modeling, adaptive explanation generation, and multimodal interaction within a modular, service-oriented framework.*
+Intelligent Tutoring Systems (ITS) have a long history of modeling student knowledge to personalize instruction (Anderson et al., 1995; Koedinger et al., 1997). Classical ITS frameworks rely on explicit problem-solving tasks and domain-specific rules, limiting scalability to open-ended documents.
 
+Bayesian Knowledge Tracing (Corbett & Anderson, 1994) and its extensions model student mastery as a latent variable inferred from observed performance. More recent approaches, such as Deep Knowledge Tracing (Piech et al., 2015), use recurrent neural networks to capture temporal learning dynamics. While effective in structured educational settings, these models assume discrete exercises and correctness labels, which are absent in free-form document interaction scenarios.
 
+Our work differs by inferring user knowledge **implicitly** from natural interactions—text selection, explanation requests, and conversational queries—without requiring explicit quizzes or labeled outcomes.
+
+---
+
+## User Modeling and Knowledge State Estimation
+
+User modeling has been extensively studied in recommender systems and adaptive interfaces (Brusilovsky & Millán, 2007). In educational contexts, learner models often rely on concept-level mastery representations, updated through observed behavior. Item Response Theory (IRT) (Baker & Kim, 2004) provides a principled statistical framework for estimating ability, but typically requires controlled assessment items.
+
+Recent LLM-based educational agents attempt to personalize responses using conversation history or heuristics, but lack explicit, interpretable knowledge representations. In contrast, our approach maintains a **continuous, concept-level knowledge state**, enabling explicit detection of knowledge gaps and mastery progression within document-centric learning.
+
+---
+
+## Explanation Generation and Pedagogical Adaptation
+
+Explainable AI research has emphasized transparency and justification of model predictions (Doshi-Velez & Kim, 2017), but explanation *for learning* requires additional pedagogical considerations. Prior work in educational explanation generation highlights the importance of adapting explanations to learner expertise (Chi et al., 1994; McNamara et al., 2004).
+
+Recent LLM-based explanation systems can generate fluent and detailed explanations on demand, but typically adopt a one-size-fits-all approach. Studies have shown that mismatched explanation depth can hinder learning due to cognitive overload or redundancy. Our work explicitly models explanation depth as a function of estimated user knowledge and document complexity.
+
+---
+
+## Multimodal Educational Interfaces
+
+Multimodal interaction, particularly voice-based tutoring, has been explored in conversational agents and educational dialogue systems (Litman & Forbes-Riley, 2004; Raux et al., 2005). Advances in speech recognition and text-to-speech systems have enabled natural voice-based interaction with AI tutors. However, most existing systems operate independently of document structure and lack persistent user knowledge modeling.
+
+By integrating voice interaction directly into a document-centric explanation system, our work supports natural, continuous learning while preserving document context and pedagogical continuity.
+
+---
+
+## Positioning of This Work
+
+In contrast to prior approaches, this work unifies:
+
+* **Global document understanding**
+* **Implicit user knowledge modeling**
+* **Adaptive explanation generation**
+* **Prerequisite and depth-aware recommendation**
+
+within a single framework for interactive document learning. This positions the system at the intersection of document intelligence, intelligent tutoring systems, and large language model–based educational agents, addressing limitations in each individual line of work.
+
+---
+
+## Key References (for your bibliography)
+
+* Anderson, J. R., Corbett, A. T., Koedinger, K. R., & Pelletier, R. (1995). *Cognitive tutors: Lessons learned*.
+* Baker, F. B., & Kim, S.-H. (2004). *Item Response Theory*.
+* Beltagy, I., Peters, M., & Cohan, A. (2020). **Longformer**.
+* Brusilovsky, P., & Millán, E. (2007). User models for adaptive hypermedia.
+* Corbett, A. T., & Anderson, J. R. (1994). Knowledge tracing.
+* Doshi-Velez, F., & Kim, B. (2017). Towards a rigorous science of interpretability.
+* Lewis, P. et al. (2020). Retrieval-Augmented Generation.
+* Piech, C. et al. (2015). Deep Knowledge Tracing.
+* Rajpurkar, P. et al. (2016). SQuAD.
+* Tay, Y. et al. (2022). Efficient transformers survey.
 
 
 # Failure Modes and Safeguards
@@ -2100,22 +2089,6 @@ a_t \sim \pi_\theta(\cdot \mid s_t)
 ]
 
 This unifies **knowledge modeling + explanation + recommendation** under a single learned tutoring policy.
-
----
-
-## 9. Why This RL Formulation Is Strong
-
-✔ Formal MDP definition
-✔ Reward tied to **learning**, not fluency
-✔ Compatible with offline data
-✔ Safe exploration
-✔ Extensible to multi-user learning
-
----
-
-## 10. One-line paper summary
-
-> *We model adaptive tutoring as a reinforcement learning problem, where the agent selects explanation and intervention strategies to maximize long-term user learning under uncertainty.*
 
 ---
 
