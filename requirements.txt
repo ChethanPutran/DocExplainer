@@ -1,0 +1,23 @@
+# GUI
+PySide6==6.10.1
+
+# PDF/Text processing
+PyMuPDF==1.26.7
+# pdfplumber==0.11.5
+
+# LLM and embeddings
+# transformers==4.35.0
+# sentence-transformers==2.2.2
+# torch==2.2.0
+# faiss-cpu==1.7.4.post2   # Use faiss-gpu if you have GPU
+
+# ASR / TTS
+PyAudio-0.2.14 
+SpeechRecognition-3.14.4
+pyttsx3-2.99
+# openai-whisper==20231223
+# sounddevice==0.4.9  # For microphone input
+
+# Utilities
+# numpy==1.26.5
+# pandas==2.1.1
