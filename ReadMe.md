@@ -1,4 +1,4 @@
-# 📘 Project: ** Doc Explainer - A Context-Aware, Knowledge-Adaptive Document Tutor Using Large Language Models **
+# 📘 Project: Doc Explainer - A Context-Aware, Knowledge-Adaptive Document Tutor Using Large Language Models
 
 ## 🔥 Core Idea (Reframed Precisely)
 
