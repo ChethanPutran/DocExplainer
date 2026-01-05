@@ -1,0 +1,6 @@
+class APIActions:
+    SUMMARIZE = "SUMMARIZE"
+    EXPLAIN = "EXPLAIN"
+    ASK = "ASK"
+    RELEASE = "RELEASE"
+    FEEDBACK = "FEEDBACK"
