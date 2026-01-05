@@ -145,13 +145,46 @@ This system is:
 
 ---
 
-PART 1: DOCUMENT PROCESSOR 
-PART 2: HIERARCHICAL MEMORY (INCLUDING CACHE)
-PART 3: CONCEPT EXTRACTION & KNOWLEDGE GRAPH
-PART 4: BAYESIAN KNOWLEDGE TRACING & USER MODELING
-PART 5: ADAPTIVE EXPLAINER & CONTEXT-AWARE GENERATION
-PART 6: VOICE INTERFACE & ASR/TTS
-PART 7: MAIN APPLICATION & INTEGRATION
+
+---
+
+
+
+### Tasks to be completed
+
+
+* Concept graph extraction
+* Knowledge mastery estimation
+* Simple user profile (known / unknown)
+* Adaptive explanation depth
+* Context-aware RAG
+* Prerequisite suggestion (recomendation)
+* Personalized curriculum generation
+* Quiz-based feedback loop
+* Reinforcement learning for tutoring policy
+* Multi-doc knowledge transfer
+* Manual concept graph
+* Paragraph → concept tagging
+* Rule-based explanation prompt
+* LLM-based explanation
+* Automatic concept extraction
+* Embedding-based concept linking
+* Persistent user knowledge store
+* Explanation quality feedback loop
+* RL-based explanation depth tuning
+* Multimodal (equations + diagrams)
+
+---
+## PART 1: DOCUMENT PROCESSOR 
+* PDF viewer
+* Text selection → sidebar explanation
+## PART 2: HIERARCHICAL MEMORY (INCLUDING CACHE)
+## PART 3: CONCEPT EXTRACTION & KNOWLEDGE GRAPH
+## PART 4: BAYESIAN KNOWLEDGE TRACING & USER MODELING
+## PART 5: ADAPTIVE EXPLAINER & CONTEXT-AWARE GENERATION
+## PART 6: VOICE INTERFACE & ASR/TTS
+* Basic voice input/output
+## PART 7: MAIN APPLICATION & INTEGRATION
 
 
 COMPONENTS TO IMPLEMENT:
@@ -177,36 +210,5 @@ COMPONENTS TO IMPLEMENT:
         - web app
 
 
-
----
-
-
-
-### Tasks to be completed
-* PDF viewer (React / Electron)
-* Basic voice input/output
-* Text selection → sidebar explanation
-* Concept graph extraction
-* Knowledge mastery estimation
-* Simple user profile (known / unknown)
-* Adaptive explanation depth
-* Context-aware RAG
-* Prerequisite suggestion (recomendation)
-* Personalized curriculum generation
-* Quiz-based feedback loop
-* Reinforcement learning for tutoring policy
-* Multi-doc knowledge transfer
-* Manual concept graph
-* Paragraph → concept tagging
-* Rule-based explanation prompt
-* LLM-based explanation
-* Automatic concept extraction
-* Embedding-based concept linking
-* Persistent user knowledge store
-* Explanation quality feedback loop
-* RL-based explanation depth tuning
-* Multimodal (equations + diagrams)
-
----
 
 
