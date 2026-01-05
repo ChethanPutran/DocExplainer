@@ -6,19 +6,31 @@ PyMuPDF==1.26.7
 # pdfplumber==0.11.5
 
 # LLM and embeddings
-# transformers==4.35.0
-# en-core-web-sm-3.8.0
+en-core-web-sm-3.8.0
+spacy==3.8.7
+langchain==0.3.26
+transformers==4.57.3
+torch==2.7.1
 sentence-transformers==5.2.0
-# torch==2.2.0
 # faiss-cpu==1.7.4.post2   # Use faiss-gpu if you have GPU
 
 # ASR / TTS
-PyAudio-0.2.14 
-SpeechRecognition-3.14.4
-pyttsx3-2.99
+PyAudio==0.2.14
+SpeechRecognition==3.14.4
+sounddevice==0.5.3
+whisper==1.1.10
+pyttsx3== 2.99
+speech_recognition==3.14.4
 # openai-whisper==20231223
-# sounddevice==0.4.9  # For microphone input
 
 # Utilities
-# numpy==1.26.5
-# pandas==2.1.1
+networkx==3.5
+matplotlib==3.10.3
+plotly== 6.5.0
+numpy==2.1.3
+pandas==2.3.1
+
+# Web 
+fastapi==0.127.1
+uvicorn==0.35.0
+xgboost==3.1.2
