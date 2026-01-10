@@ -1,111 +1,54 @@
 import networkx as nx
-import matplotlib.pyplot as plt
-from typing import List, Dict, Tuple
-import torch
+from typing import Dict, List, Tuple
+# import torch
 import re
-from transformers import AutoTokenizer, AutoModelForTokenClassification
-from collections import defaultdict
 import plotly.graph_objects as go
-from src.core.document.document_processing import DocumentTree
+from src.core.knowlege_modelling.user_model import UserState
+from src.core.knowlege_modelling.base import Concept, ConceptRelationship, ConceptNode, ConceptNodeRelationship, ConceptGraph, GraphDelta
+from src.core.document.document_processing import DocumentChunk, DocumentNode, DocumentTree
 from src.core.document.document_cacher import DocumentCacher
+from src.models.text import TextModels
 
 
-class ConceptTree:
-    def __init__(self):
-        self.graph = nx.DiGraph()
-        self.concept_embeddings = {}
 
-    def add_concept(self, concept: str, embedding: torch.Tensor):
-        self.graph.add_node(concept)
-        self.concept_embeddings[concept] = embedding
+class GraphUpdater:
+    def __init__(self, base_graph: ConceptGraph, user_state: UserState):
+        self.graph = base_graph
+        self.user = user_state
 
-    def add_relationship(self, concept1: str, concept2: str, weight: float):
-        self.graph.add_edge(concept1, concept2, weight=weight)
+    def apply_delta(self, delta: GraphDelta):
+        # Add new concepts
+        for concept in delta.new_concepts.values():
+            self.graph.add_concept(concept)
 
-    def visualize(self):
-        pos = nx.spring_layout(self.graph)
-        plt.figure(figsize=(12, 12))
-        nx.draw(self.graph, pos, with_labels=True, node_size=2000, node_color="lightblue", font_size=10)
-        plt.show()
+        # Add new edges
+        for edge in delta.new_edges:
+            w = self.compute_weight(edge)
+            self.graph.add_relationship(edge.concept1, edge.concept2, w)
 
-class Concept:
-    def __init__(self, 
-                 name: str,
-                 description: str = "", score: float = 0.0,
-                 frequency: int = 0,
-                 first_pos: int = -1,
-                 attributes: Dict | None = None
-                    ):
-        self.name = name
-        self.score = score
-        self.frequency = frequency
-        self.first_position = first_pos
+        # Update existing edges
+        for (u, v), dw in delta.edge_updates.items():
+            self.graph.update_relationship(u, v, dw)
 
-        self.description = description
-        self.attributes = attributes if attributes is not None else {}
+    def compute_weight(self, edge: ConceptNodeRelationship):
+        cu = self.user.confidence.get(edge.concept1.primary_concept.name, 0.5)
+        cv = self.user.confidence.get(edge.concept2.primary_concept.name, 0.5)
+        return edge.relationship.strength * min(cu, cv)
 
-class ConceptRelationship:
-    def __init__(self, 
-                 concept1: Concept,
-                 concept2: Concept,
-                 description: str = "",
-                 attributes: Dict | None = None
-                 ):
-        self.concept1 = concept1
-        self.concept2 = concept2
-        self.description = description
-        self.attributes = attributes if attributes is not None else {}
 
-class ConceptNode:
-    def __init__(self, primary_concept: Concept,
-                  embedding: torch.Tensor | None = None
-                  ):
-        self.primary_concept = primary_concept
-        self.embedding = embedding # For future use GNN
-
-class ConceptGraph:
-    def __init__(self):
-        self.graph = nx.DiGraph()
-        self.concept_embeddings = {}
-
-    def add_concept(self, concept: ConceptNode):
-        self.graph.add_node(concept)
-
-    def add_relationship(self, concept1: ConceptNode, concept2: ConceptNode, relationship: ConceptRelationship):
-        self.graph.add_edge(concept1, concept2, relationship=relationship)
-
-    def get_concept(self, concept_name: str) -> ConceptNode | None:
-        for concept in self.graph.nodes:
-            if concept.primary_concept.name == concept_name:
-                return concept
-        return None
-    
-    def visualize(self):
-        pos = nx.spring_layout(self.graph)
-        plt.figure(figsize=(12, 12))
-        nx.draw(self.graph, pos, with_labels=True, node_size=2000, node_color = "lightblue", font_size=10)
-        plt.show()
-
-class ConceptGraphBuilder:
+class ConceptBuilder:
     """
     Builds knowledge graph from document concepts
     """
-    def __init__(self, llm_client=None):
-        self.llm = llm_client
+    GRAPH = "concept_graph"
+    def __init__(self, text_model : TextModels) -> None:
+        self.ner_model = text_model.get_ner_model()
+        self.ner_regex = text_model.get_ner_regex()
+        self.ner_llm = text_model.get_ner_llm()
         self.document_cacher = DocumentCacher()
         self.concept_embeddings = {}
-        
-        # Load NER model for concept extraction
-        # self.tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
-        # self.ner_model = AutoModelForTokenClassification.from_pretrained("dslim/bert-base-NER")
 
-        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-cased")
-        self.model = AutoModelForTokenClassification.from_pretrained(
-            "elastic/distilbert-base-cased-finetuned-conll03-english"
-        )
-
-
-    def build_concept_graph(self, concepts: List[Tuple[Concept, List[Tuple[Concept,ConceptRelationship]]]], doc_sub_tree: DocumentTree) -> ConceptGraph:
+    def _build_concept_graph(self, concepts: List[Tuple[Concept, List[Tuple[Concept,ConceptRelationship]]]], doc_sub_tree: DocumentTree) -> ConceptGraph:
         """
         Build concept graph from list of concepts
         """
@@ -123,12 +66,16 @@ class ConceptGraphBuilder:
                 if sec_concept_node is None:
                     sec_concept_node = ConceptNode(primary_concept=sec_concept)
                     graph.add_concept(sec_concept_node)
-                graph.add_relationship(concept_node, sec_concept_node, relationship=rel)
+                edge = ConceptNodeRelationship(
+                    concept1=concept_node,
+                    concept2=sec_concept_node,
+                    relationship=rel)
+                graph.add_relationship(concept_node, sec_concept_node, relationship=edge)
     
         return graph
     
     
-    def extract_concepts_from_document(self, document_tree: DocumentTree, section = "*", paragraph = "*", context = "*") -> ConceptGraph:
+    def extract_concepts_from_document(self, document_tree: DocumentTree, section:int = 0, paragraph = 0, context = 0) -> List[Tuple[Concept, List[Tuple[Concept, ConceptRelationship]]]]:
         """
         Extract the concepts from the document in  the selected section and paragraph and build knowledge graph
 
@@ -142,14 +89,14 @@ class ConceptGraphBuilder:
         print("Extracting concepts from document...")
 
         cur_section = document_tree.get_section(section)
-        previous_sections = document_tree.get_previous_sections(section)
+        # previous_sections = document_tree.get_previous_sections(section)
 
+        # Check for cached concepts
         cached_knowledge = self.document_cacher.retrieve_document(section)
-        cached_concepts = None
+        
+        # Add logioc for some context from previous sections/paragraphs if needed
         if cached_knowledge:
-            if 'graph' in cached_knowledge:
-                return cached_knowledge['graph']
-            cached_concepts = cached_knowledge['concepts']
+            return cached_knowledge
 
         texts = []
         for paragraph_node in cur_section:
@@ -158,100 +105,37 @@ class ConceptGraphBuilder:
                 texts.append(text)
         all_concepts = []
 
-        # Use cached concepts if available
-        if cached_concepts:
-            all_concepts.extend(cached_concepts)
-        else:
-            # Method 1: NER for named entities
-            ner_concepts = self._extract_with_ner(texts)
+  
+        # Method 1: NER for named entities
+        ner_concepts = self.ner_model.extract_concepts(texts)
 
-            # Method 2: Pattern-based extraction
-            pattern_concepts = self._extract_with_patterns(texts)
+        # Method 2: Pattern-based extraction
+        pattern_concepts = self.ner_regex.extract_concepts(texts)
 
-            # Method 3: LLM-based extraction (if available)
-            llm_concepts = []
-            if self.llm:
-                llm_concepts = self._extract_with_llm(texts)
+        # Method 3: LLM-based extraction (if available)
+        llm_concepts = []
 
-            # Combine and deduplicate concepts
-            all_concepts = list(set(ner_concepts + pattern_concepts + llm_concepts))
+        if self.ner_llm:
+            llm_concepts = self.ner_llm.extract_concepts(texts)
+        
+        # Combine and deduplicate concepts
+        all_concepts_t = list(set(ner_concepts + pattern_concepts + llm_concepts))
+        all_concepts = self._build_concepts(all_concepts_t)
 
         # Filter and rank concepts
         filtered_concepts = self._filter_concepts(all_concepts)
 
         concept_relationships = self._extract_relationships(filtered_concepts, text=" ".join(texts))
 
-        return self.build_concept_graph(concept_relationships, document_tree)
+        return concept_relationships
 
-    def _extract_with_ner(self, text:  List[str]) -> List[Concept]:
-        """Extract concepts using Named Entity Recognition"""
-        inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
-        with torch.no_grad():
-            outputs = self.ner_model(**inputs)
-        
-        predictions = torch.argmax(outputs.logits, dim=2)
-        tokens = self.tokenizer.convert_ids_to_tokens(inputs["input_ids"][0])
-        
+    def _build_concepts(self, text_concepts: List[str]) -> List[Concept]:
         concepts = []
-        current_entity = []
-        current_label = None
-        
-        for token, prediction in zip(tokens, predictions[0]):
-            label = self.ner_model.config.id2label[prediction.item()]
-            
-            if label.startswith("B-"):
-                if current_entity:
-                    concepts.append(" ".join(current_entity))
-                current_entity = [token.replace("##", "")]
-                current_label = label[2:]
-            elif label.startswith("I-") and current_label == label[2:]:
-                current_entity.append(token.replace("##", ""))
-            else:
-                if current_entity:
-                    concepts.append(" ".join(current_entity))
-                current_entity = []
-                current_label = None
-        
-        if current_entity:
-            concepts.append(" ".join(current_entity))
-        
-        return list(set([c for c in concepts if len(c) > 2]))
-    
-    def _extract_with_patterns(self, text:  List[str]) -> List[Concept]:
-        """Extract concepts using linguistic patterns"""
-        patterns = [
-            r'(?:[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',  # Capitalized phrases
-            r'(?:"([^"]+)"\s+(?:is|are|means|refers to))',  # Quoted definitions
-            r'(?:\b(?:the|a|an)\s+([A-Za-z-]+\s+(?:of|in|for)\s+[A-Za-z-]+))',  # Noun phrases
-        ]
-        
-        concepts = []
-        for pattern in patterns:
-            matches = re.finditer(pattern, text)
-            for match in matches:
-                concept = match.group(1) if match.groups() else match.group(0)
-                if concept and len(concept.split()) <= 5:  # Limit to 5 words
-                    concepts.append(concept.strip())
-        
-        return list(set(concepts))
-    
-    def _extract_with_llm(self, text:  List[str]) -> List[Concept]:
-        """Extract concepts using LLM"""
-        prompt = f"""
-        Extract the key concepts from the following text. 
-        Return only the concepts as a comma-separated list.
-        
-        Text: {text[:2000]}
-        
-        Concepts:
-        """
-        
-        try:
-            response = self.llm.generate(prompt)
-            concepts = [c.strip() for c in response.split(',')]
-            return concepts
-        except:
-            return []
+        for t_concept in text_concepts:
+            concept = Concept(name=t_concept, description=t_concept)
+            concepts.append(concept)
+        return concepts
+
 
     def _filter_concepts(self, concepts: List[Concept]) -> List[Concept]:
         """Filter and rank concepts by importance"""
@@ -293,7 +177,7 @@ class ConceptGraphBuilder:
         # Return top 50 concepts
         return scored_concepts[:50]
 
-   
+    
     def _extract_relationships(self, concepts: List[Concept], text: str)-> List[Tuple[Concept, List[Tuple[Concept, ConceptRelationship]]]]:
         """Extract relationships between concepts"""
         concepts_with_relationships = []
@@ -447,3 +331,116 @@ class ConceptGraphBuilder:
         prerequisites.sort(key=lambda x: (-x['importance'], x['depth']))
         
         return prerequisites[:10]  # Return top 10
+    
+
+class DocumentChain:
+    """
+    Represents a chain of document sections or paragraphs.
+    """
+    def __init__(self):
+        self.sections = None
+        self.chain: List[GraphDelta] = []
+        self.init_graph = ConceptGraph()
+       
+
+    def _append(self, delta):
+        self.chain.append(delta)
+    
+    def get_concept_graph_upto(self, idx: int):
+        return self.chain[:idx + 1]
+
+    def get_document_context(self, check_point) -> Dict:
+        context = {
+            "text": "",
+            "embeddings": []
+        }
+        text = ""
+        for delta in self.chain[:check_point]:
+            text += delta.data.text + "\n"
+        context["text"] = text
+        return context
+
+
+class GraphStateManager:
+    def __init__(self, text_models: TextModels):
+        self.document_chain = DocumentChain()
+        self.concept_builder = ConceptBuilder(text_models)
+        self.graph = ConceptGraph()
+        self.graph_updater = GraphUpdater(self.graph, UserState())
+
+    def get_concept_graph_upto(self, idx: int):
+        for delta in self.document_chain.get_concept_graph_upto(idx):
+            self.graph_updater.apply_delta(delta)
+        return self.graph
+    
+    def build_chain(self, document: DocumentTree):
+        self.document = document
+        self.sections = document.get_sections()
+
+        # Chain building logic (temporal chain of sections)
+        for section_id, section in enumerate(self.sections):
+            # Extract concepts for the section
+            concepts = self.concept_builder.extract_concepts_from_document(document, section=section_id)
+
+            # Create delta
+            delta = GraphDelta(section_id=section_id, data=section)
+            delta.create(self.graph, concepts)
+            
+            # Append to document chain
+            self.document_chain._append(delta)
+    
+    def get_document_context(self, check_point) -> Dict:
+        return self.document_chain.get_document_context(check_point)
+    
+    
+if __name__ == "__main__":
+    document_text = """
+    Intelligent Systems for Autonomous Decision Making
+1. Introduction
+
+Autonomous systems are increasingly deployed in real-world environments where they must perceive, reason, and act under uncertainty. These systems rely on a combination of sensing, learning, and control mechanisms to operate safely and efficiently. Recent advances in machine learning have enabled autonomous agents to handle complex scenarios that were previously considered intractable.
+
+The core challenge in autonomous decision making lies in integrating heterogeneous information sources. Sensor data such as images, lidar measurements, and inertial signals must be processed jointly to produce a coherent understanding of the environment. This understanding is then used to generate actions that satisfy safety, efficiency, and robustness constraints.
+
+2. System Architecture
+
+A typical autonomous system consists of three primary modules: perception, decision making, and control. The perception module transforms raw sensor inputs into structured representations such as object lists, maps, or latent features. These representations provide the foundation for downstream reasoning.
+
+The decision-making module operates on the perceived state of the environment. It may use rule-based logic, optimization techniques, or learned policies to determine appropriate actions. Reinforcement learning has emerged as a powerful framework for learning decision policies directly from interaction data.
+
+3. Learning and Adaptation
+
+Machine learning enables autonomous systems to adapt to new environments and changing conditions. Supervised learning is often used for perception tasks, while reinforcement learning is commonly applied to sequential decision problems. Unsupervised methods can assist in representation learning and anomaly detection.
+
+Adaptation remains challenging due to limited data availability and safety constraints. Online learning techniques must balance exploration and exploitation while avoiding catastrophic failures. Incorporating prior knowledge and human feedback can significantly improve learning efficiency and system reliability.
+
+4. Evaluation and Challenges
+
+Evaluating autonomous systems requires carefully designed metrics that capture both performance and safety. Simulation environments are frequently used to test algorithms under controlled conditions before real-world deployment. However, simulation-to-reality gaps can limit the effectiveness of this approach.
+
+Key challenges include robustness to distribution shifts, interpretability of learned models, and scalability to complex environments. Addressing these challenges is critical for the widespread adoption of autonomous technologies in safety-critical domains.
+
+5. Conclusion
+
+Autonomous decision-making systems combine perception, learning, and control to operate in uncertain environments. Advances in machine learning have significantly expanded their capabilities, but important challenges remain. Continued research in adaptive learning, robust evaluation, and human-in-the-loop systems is essential for building trustworthy autonomous agents.
+    """
+    sections = re.split(r'(?=^##\s+\d+\.\s+.+$)', document_text, flags=re.MULTILINE)
+
+    chunk = DocumentChunk(text=document_text)
+    root = DocumentNode(chunk)
+    doc = DocumentTree("Root", root)
+    doc.hierarchy = {
+            'document': chunk,
+            'sections': [DocumentChunk(text=s) for s in sections],
+            'paragraphs': [
+                DocumentChunk(text=p) for s in sections for p in re.split(r'\n\s*\n', s) if p.strip()
+            ],
+            'sentences': [
+                DocumentChunk(text=sent) for s in sections for p in re.split(r'\n\s*\n', s) if p.strip() for sent in re.split(r'(?<=[.!?]) +', p) if sent.strip()       
+            ]
+        }
+    
+    manager = GraphStateManager(TextModels())
+    manager.build_chain(doc)
+    G = manager.get_concept_graph_upto(0)
+    G.visualize()

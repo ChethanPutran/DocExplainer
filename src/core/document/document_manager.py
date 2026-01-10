@@ -10,7 +10,7 @@ class DocumentManager:
     def get_document(self, doc_id: str) -> Document:
         return self.cache.get(doc_id)
     
-    def load_document(self, path: str) -> str:
+    def load_document(self, path: str) -> int:
         text, sections = parse_document(path)
 
         doc = Document(
@@ -21,5 +21,5 @@ class DocumentManager:
             embeddings={}
         )
 
-        self.cache.store(doc)
+        # self.cache.store(doc)
         return doc.doc_id

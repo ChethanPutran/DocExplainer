@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple
+from core.memory.session import Context
 from src.core.knowlege_modelling.knowledge_tracing import ConceptGraph
 from src.core.knowlege_modelling.user_model import KnowledgeState, UserKnowledgeState
 # import openai
@@ -164,6 +165,43 @@ class AdaptiveExplainer:
             depth_preference='adaptive'
         )
         return explanation_obj
+    
+    def summarize(self, text: str, context: Context) -> Explanation:
+        # # Generate summary explanation
+        # explanation_obj = self.generate_explanation(
+        #     selected_text=text,
+        #     context=context,
+        #     concept_graph=None,
+        #     user_knowledge={},
+        #     depth_preference='concise'
+        # )
+        # return explanation_obj
+        return "Summary explanation placeholder"
+    
+    def explain(self, text: str, context: Context) -> Explanation:
+        # # Generate summary explanation
+        # explanation_obj = self.generate_explanation(
+        #     selected_text=text,
+        #     context=context,
+        #     concept_graph=None,
+        #     user_knowledge={},
+        #     depth_preference='concise'
+        # )
+        # return explanation_obj
+        return "Summary explanation placeholder"
+    
+    
+    def ask(self, text: str, context: Context) -> Explanation:
+        # # Generate summary explanation
+        # explanation_obj = self.generate_explanation(
+        #     selected_text=text,
+        #     context=context,
+        #     concept_graph=None,
+        #     user_knowledge={},
+        #     depth_preference='concise'
+        # )
+        # return explanation_obj
+        return "Summary explanation placeholder"
     
     def generate_explanation(self, 
                            selected_text: str,

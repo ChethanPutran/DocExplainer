@@ -94,8 +94,14 @@ class PDFViewer(QWidget, BaseViewer):
         main_layout = QVBoxLayout(self)
         main_layout.addWidget(self.scroll_)
         self.setLayout(main_layout)
-
+        self.doc_id = None
         self.doc : fitz.Document | None = None
+    
+    def get_document(self) -> fitz.Document | None:
+        return super().get_document()
+    
+    def set_doc_id(self, doc_id: str):
+        return super().set_doc_id(doc_id)
 
     def load(self, path):
         """Load PDF and create page widgets"""

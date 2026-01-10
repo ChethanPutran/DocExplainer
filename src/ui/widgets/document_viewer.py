@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QTextBrowser, QMenu
 from PySide6.QtGui import QAction
 from PySide6.QtCore import Signal
+from pymupdf import Document
 
 from ..utils.utils import load_document
 from .base_viewer import BaseViewer, ActionType
@@ -14,6 +15,12 @@ class DocumentViewer(QTextBrowser, BaseViewer):
         super().__init__(parent)
         self.setReadOnly(True)
 
+    def set_doc_id(self, doc_id: str):
+        return super().set_doc_id(doc_id)
+    
+    def get_document(self) -> Document | None:
+        return super().get_document()
+    
     def load(self, path):
         content = load_document(path)
         self.setHtml(content)

@@ -1,1 +1,1 @@
-python -m src.ui.gui.main_window
+python -m src.ui.gui.window_manager

@@ -1,4 +1,3 @@
-# core/document_processor.py
 from enum import Enum
 import re
 import numpy as np
@@ -6,7 +5,7 @@ from typing import List, Dict, Tuple
 from dataclasses import dataclass
 import spacy
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from src.models.embedding_model import EmbeddingModel
+from src.models.text import EmbeddingModel
 from src.core.document.document import Document
 
 def parse_document(path: str) -> Tuple[str, List[Dict]]:
@@ -40,6 +39,7 @@ def parse_document(path: str) -> Tuple[str, List[Dict]]:
         })
     
     return text, sections
+
 @dataclass
 class MetaData:
     """Hierarchical document chunk"""
@@ -191,7 +191,8 @@ class HierarchicalDocumentProcessor:
     """
     Creates hierarchical document representation with embeddings
     """
-    def __init__(self, embedding_model=EmbeddingModel.DEFAULT_MODEL_NAME):
+    def __init__(self,doc_manager, embedding_model=EmbeddingModel.DEFAULT_MODEL_NAME):
+        self.doc_manager = doc_manager
         self.embedding_model = EmbeddingModel(embedding_model)
         self.nlp = spacy.load('en_core_web_sm')
         self.text_splitter = RecursiveCharacterTextSplitter(
@@ -199,18 +200,42 @@ class HierarchicalDocumentProcessor:
             chunk_overlap=50,
             separators=["\n\n", "\n", ". ", " ", ""]
         )
-        self.document_tree: DocumentTree = None
-        self.document : Document = None
-        self.document_processed = False
+        self.document_trees: List[DocumentTree] = []
+        self.documents : List[Document] = []
+        self.document_processed: List[bool] = []
     
-    def set_document(self, document: Document):
+    def get_document_tree(self, doc_id: int) -> DocumentTree:
+        """Get the hierarchical document tree"""
+        # Return existing tree if already processed
+        if len(self.document_trees) >= doc_id:
+            return self.document_trees[doc_id]
+        
+        # Process and return the document tree
+        if not self.is_document_set(doc_id):
+            raise ValueError("No document set in processor. Please provide a document.")
+        
+        if self.is_document_processed():
+            return self.document_tree
+        
+        document = self.doc_manager.get_document(doc_id)
+        document_text = document.get_text()
+        doc_title = document.get_title()
+        
+        document_tree = self.process_document(document_text, doc_title)
+        self.document_trees.append(document_tree)
+        return document_tree
+    
+    def set_document(self, doc_id: int):
         """Set the current document"""
-        self.document = document
+        document = self.doc_manager.get_document(doc_id)
+        self.documents.append(document)
         self.document_processed = False
     
-    def is_document_set(self) -> bool:
+    def is_document_set(self,doc_id) -> bool:
         """Check if document is set"""
-        return self.document is not None
+        if self.document and self.document.doc_id == doc_id:
+            return True
+        return False
 
     def is_document_processed(self) -> bool:
         """Check if document has been processed"""
@@ -424,4 +449,17 @@ class HierarchicalDocumentProcessor:
         sentence_lower = sentence.lower()
         return any(indicator in sentence_lower for indicator in concept_indicators)
    
+
+if __name__ == "__main__":
+    # Example usage
+    from src.core.document.document_processing import 
+    doc_manager = DocumentManager()
+    processor = HierarchicalDocumentProcessor(doc_manager)
     
+    # Assume document with ID 1 exists
+    doc_id = 1
+    processor.set_document(doc_id)
+    document_tree = processor.get_document_tree(doc_id)
+    
+    print(f"Document Title: {document_tree.get_title()}")
+    print(f"Total Chunks: {document_tree.get_total_chunks()}")

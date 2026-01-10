@@ -1,5 +1,5 @@
 from enum import Enum
-
+from abc import ABC, abstractmethod
 import fitz
 
 class ActionType(Enum):
@@ -12,15 +12,20 @@ class ActionType(Enum):
 
 class BaseViewer:
     """
-    Interface-like base class (NO ABC, NO QObject)
+    Interface-like base class for document viewers.
     """
     doc : fitz.Document 
+    doc_id : str | None
 
+    @abstractmethod
     def load(self, path: str):
-        raise NotImplementedError
-
+        pass
+    @abstractmethod
     def clear(self):
-        raise NotImplementedError
-
+        pass
+    
     def get_document(self) -> fitz.Document | None:
         return self.doc
+   
+    def set_doc_id(self, doc_id: str):
+        self.doc_id = doc_id

@@ -2,7 +2,7 @@ from typing import Dict, List
 from dataclasses import dataclass
 import pickle
 from datetime import datetime
-from  src.core.knowlege_modelling.knowledge_tracing import Concept
+from  src.core.knowlege_modelling.base import Concept
 
 @dataclass
 class KnowledgeState:
@@ -23,6 +23,36 @@ class UserKnowledgeState:
         self.knowledge_states: Dict[Concept, KnowledgeState] = {}
         self.interaction_history: List[UserInteraction] = []
     
+    def to_dict(self) -> Dict:
+        """Convert to dictionary for serialization"""
+        return {
+            'knowledge_states': {
+                concept.name: {
+                    'p_knowledge': state.p_knowledge,
+                    'p_learn': state.p_learn,
+                    'p_guess': state.p_guess,
+                    'p_slip': state.p_slip,
+                    'n_attempts': state.n_attempts,
+                    'n_correct': state.n_correct,
+                    'last_interaction': state.last_interaction.isoformat(),
+                    'confidence': state.confidence
+                } for concept, state in self.knowledge_states.items()
+            },
+            'interaction_history': [
+                {
+                    'subject': interaction.subject,
+                    'level': interaction.level,
+                    'mastery': interaction.mastery,
+                    'last_seen': interaction.last_seen,
+                    'time_spent': interaction.time_spent,
+                    'quiz_response': interaction.quiz_response,
+                    'questions_asked': interaction.questions_asked,
+                    'explanation_depth_requested': interaction.explanation_depth_requested,
+                    'source': interaction.source
+                } for interaction in self.interaction_history
+            ]
+        }
+    
 class UserInteraction:   
     """Stores user interaction data"""
     subject: str = ""
@@ -34,6 +64,36 @@ class UserInteraction:
     questions_asked: List[str] | None = None
     explanation_depth_requested: str = ""
     source: str = "Chapter 3"
+
+import time
+
+class UserState:
+    def __init__(self):
+        self.confidence = {}      # cid -> [0,1]
+        self.exposure = {}        # cid -> int
+        self.last_seen = {}       # cid -> timestamp
+
+    def update(self, cid: str, signal: float, alpha: float = 0.85):
+        """
+        
+        Update user state for a concept based on new signal
+
+        Each time a concept appears:
+
+        cv(t)=α⋅cv(t−1)+(1−α)⋅sv(t)
+
+        Where:
+            sv(t): signal (read, answered question, lingered, skipped)
+            α: memory decay
+
+        This is basically Bayesian belief update / exponential smoothing.
+        
+        """
+        prev = self.confidence.get(cid, 0.0)
+        self.confidence[cid] = alpha * prev + (1 - alpha) * signal
+        self.exposure[cid] = self.exposure.get(cid, 0) + 1
+        self.last_seen[cid] = time.time()
+
 
 class BayesianKnowledgeTracer:
     """

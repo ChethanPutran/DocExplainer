@@ -46,8 +46,6 @@ class MainWindow(QMainWindow):
         self.voice_input = VoiceInput()
         self.voice_input.voice_text.connect(self.handle_voice_text)
 
-        
-
 
         self.voice_output = VoiceOutput()
 
@@ -92,7 +90,6 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(toggle_sidebar_btn)
 
         
-
         # Connect document selection signal to sidebar update
         # self.doc_viewer.text_selected.connect(self.handle_text_selection)
 
@@ -115,10 +112,12 @@ class MainWindow(QMainWindow):
         if not path:
             return
 
-        doc_id = self.window_manager.pipeline.register_document(path)
+        doc_id = self.window_manager.on_document_registered(path)
 
         viewer = create_viewer(path)
+
         viewer.set_doc_id(doc_id)  
+
         viewer.text_action.connect(self.handle_text_action)
 
         name = os.path.basename(path)
@@ -132,23 +131,34 @@ class MainWindow(QMainWindow):
         else:
             self.dock.show()
 
+    def get_selection(self) -> str:
+        """Retrieve selected text from the current document viewer."""
+        current_viewer = self.tabs.currentWidget()
+        if current_viewer:
+            return current_viewer.get_selected_text()
+        return ""
+    
     def handle_text_action(self, action: str, doc_id: str, text: str):
+        section_id = self.get_user_selection()
         if action == APIActions.EXPLAIN:
             self.window_manager.on_explain(
                 doc_id=doc_id,
-                text=text
+                text=text,
+                section_id=section_id
             )
 
         elif action == APIActions.SUMMARIZE:
             self.window_manager.on_summarize(
                 doc_id=doc_id,
-                text=text
+                text=text,
+                section_id=section_id
             )
 
         elif action == APIActions.ASK:
             self.window_manager.on_ask(
                 doc_id=doc_id,
-                text=text
+                text=text,
+                section_id=section_id
             )
 
         elif action == APIActions.RELEASE:
