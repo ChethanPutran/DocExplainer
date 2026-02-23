@@ -1,69 +1,45 @@
 from PySide6.QtWidgets import QTextBrowser, QMenu
 from PySide6.QtGui import QAction
-from PySide6.QtCore import Signal
-from pymupdf import Document
-
-from ..utils.utils import load_document
 from .base_viewer import BaseViewer, ActionType
 
-
 class DocumentViewer(QTextBrowser, BaseViewer):
-
-    text_action = Signal(str, str)  # action, selected_text
-
     def __init__(self, parent=None):
-        super().__init__(parent)
+        QTextBrowser.__init__(self, parent)
+        BaseViewer.__init__(self)
         self.setReadOnly(True)
 
-    def set_doc_id(self, doc_id: str):
-        return super().set_doc_id(doc_id)
-    
-    def get_document(self) -> Document | None:
-        return super().get_document()
-    
     def load(self, path):
-        content = load_document(path)
-        self.setHtml(content)
+        # Assuming load_document returns HTML or plain text
+        from ..utils.utils import load_document
+        self.setHtml(load_document(path))
+
+    def _get_metadata(self):
+        cursor = self.textCursor()
+        pos = cursor.selectionStart()
+        if self.doc_model:
+            for section in self.doc_model.sections:
+                for para in section.paragraphs:
+                    if para.start <= pos <= para.end:
+                        return para.page, pos
+        return 1, pos
 
     def contextMenuEvent(self, event):
-        cursor = self.textCursor()
-        selected_text = cursor.selectedText().strip()
+        text = self.textCursor().selectedText().strip()
+        if not text:
+            return super().contextMenuEvent(event)
 
         menu = QMenu(self)
-
-        if selected_text:
-            explain = QAction("Explain Text", self)
-            summarize = QAction("Summarize", self)
-            ask = QAction("Ask Question", self)
-
-            menu.addActions([explain, summarize])
-            menu.addSeparator()
-            menu.addAction(ask)
-
-            action = menu.exec(event.globalPos())
-
-            if action == explain:
-                self.text_action.emit(ActionType.EXPLAIN.value, selected_text)
-            elif action == summarize:
-                self.text_action.emit(ActionType.SUMMARIZE.value, selected_text)
-            elif action == ask:
-                self.text_action.emit(ActionType.ASK.value, selected_text)
-        else:
-            copy_action = QAction("Copy", self)
-            select_all_action = QAction("Select All", self)
-
-            copy_action.triggered.connect(self.copy)
-            select_all_action.triggered.connect(self.selectAll)
-
-            menu.addActions([copy_action, select_all_action])
-            menu.exec(event.globalPos())
-
-    def mouseReleaseEvent(self, event):
-        super().mouseReleaseEvent(event)
-        selected_text = self.textCursor().selectedText().strip()
-        if selected_text:
-            self.text_action.emit(ActionType.RELEASE.value, selected_text)
+        explain = menu.addAction("Explain Text")
+        summarize = menu.addAction("Summarize")
+        
+        page, pos = self._get_metadata()
+        action = menu.exec(event.globalPos())
+        
+        if action == explain:
+            self.text_action.emit(ActionType.EXPLAIN.value, self.doc_id, text, page, pos)
+        elif action == summarize:
+            self.text_action.emit(ActionType.SUMMARIZE.value, self.doc_id, text, page, pos)
 
     def clear(self):
         super().clear()
-        self.setHtml("<h2>Load a document here</h2>")
+        self.doc_id = None

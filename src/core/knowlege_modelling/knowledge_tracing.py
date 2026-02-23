@@ -1,446 +1,360 @@
-import networkx as nx
-from typing import Dict, List, Tuple
-# import torch
-import re
-import plotly.graph_objects as go
-from src.core.knowlege_modelling.user_model import UserState
-from src.core.knowlege_modelling.base import Concept, ConceptRelationship, ConceptNode, ConceptNodeRelationship, ConceptGraph, GraphDelta
-from src.core.document.document_processing import DocumentChunk, DocumentNode, DocumentTree
-from src.core.document.document_cacher import DocumentCacher
-from src.models.text import TextModels
+from typing import Dict, List
+import pickle
+from datetime import datetime
+from src.core.knowlege_modelling.base import Concept
+from src.core.knowlege_modelling.user_model import UserKnowledgeState, KnowledgeState
+from src.core.knowlege_modelling.graph.state_manager import GraphStateManager
 
-
-
-class GraphUpdater:
-    def __init__(self, base_graph: ConceptGraph, user_state: UserState):
-        self.graph = base_graph
-        self.user = user_state
-
-    def apply_delta(self, delta: GraphDelta):
-        # Add new concepts
-        for concept in delta.new_concepts.values():
-            self.graph.add_concept(concept)
-
-        # Add new edges
-        for edge in delta.new_edges:
-            w = self.compute_weight(edge)
-            self.graph.add_relationship(edge.concept1, edge.concept2, w)
-
-        # Update existing edges
-        for (u, v), dw in delta.edge_updates.items():
-            self.graph.update_relationship(u, v, dw)
-
-    def compute_weight(self, edge: ConceptNodeRelationship):
-        cu = self.user.confidence.get(edge.concept1.primary_concept.name, 0.5)
-        cv = self.user.confidence.get(edge.concept2.primary_concept.name, 0.5)
-        return edge.relationship.strength * min(cu, cv)
-
-
-class ConceptBuilder:
+class BayesianKnowledgeTracer:
     """
-    Builds knowledge graph from document concepts
+    Implements Bayesian Knowledge Tracing (BKT) for user modeling
+    
+    BKT parameters for each concept:
+    - p(L0): Initial probability of knowing
+    - p(T): Probability of learning after opportunity
+    - p(G): Probability of guessing correctly if unknown
+    - p(S): Probability of slipping if known
     """
-    GRAPH = "concept_graph"
-    def __init__(self, text_model : TextModels) -> None:
-        self.ner_model = text_model.get_ner_model()
-        self.ner_regex = text_model.get_ner_regex()
-        self.ner_llm = text_model.get_ner_llm()
-        self.document_cacher = DocumentCacher()
-        self.concept_embeddings = {}
+    
+    def __init__(self):
+        self.user_state = UserKnowledgeState()
+        # Pointer for easier access
+        self.user_states = self.user_state.knowledge_states
 
-    def _build_concept_graph(self, concepts: List[Tuple[Concept, List[Tuple[Concept,ConceptRelationship]]]], doc_sub_tree: DocumentTree) -> ConceptGraph:
+    def update_from_interaction(self, concept_obj: Concept, response_data: Dict):
         """
-        Build concept graph from list of concepts
+        Update knowledge state based on user interaction
+        Implements the BKT posterior update:
+        P(L_n-1 | Result) -> P(L_n) = P(L_n-1|Result) + (1 - P(L_n-1|Result)) * P(T)
+        response_data should contain:
+        - correct: bool (whether response was correct)
+        - time_spent: float (seconds spent)
+        - explanation_depth: str ('beginner', 'intermediate', 'advanced')
+        - asked_question: bool (whether user asked follow-up)
+       
+     
         """
 
-        graph = ConceptGraph()
-        # Create initial graph
-        # self._build_initial_graph(concepts, [doc_sub_tree])
+        if concept_obj not in self.user_states:
+            self.user_states[concept_obj] = KnowledgeState(
+                concept=concept_obj,
+                p_knowledge=0.1,
+                p_learn=0.3,
+                p_guess=0.2,
+                p_slip=0.1,
+                n_attempts=0,
+                n_correct=0,
+                last_interaction=datetime.now(),
+                confidence=0.5
+            )
         
-        # Add relationships
-        # self._extract_relationships(filtered_concepts, all_text)
-        for main_concept, list_tup in concepts:
-            concept_node = ConceptNode(primary_concept=main_concept)
-            for sec_concept, rel in list_tup:
-                sec_concept_node = graph.get_concept(sec_concept.name)
-                if sec_concept_node is None:
-                    sec_concept_node = ConceptNode(primary_concept=sec_concept)
-                    graph.add_concept(sec_concept_node)
-                edge = ConceptNodeRelationship(
-                    concept1=concept_node,
-                    concept2=sec_concept_node,
-                    relationship=rel)
-                graph.add_relationship(concept_node, sec_concept_node, relationship=edge)
-    
-        return graph
-    
-    
-    def extract_concepts_from_document(self, document_tree: DocumentTree, section:int = 0, paragraph = 0, context = 0) -> List[Tuple[Concept, List[Tuple[Concept, ConceptRelationship]]]]:
-        """
-        Extract the concepts from the document in  the selected section and paragraph and build knowledge graph
-
-        Used the cached knowlege for previous parts of the document if available
-
-        Extract concepts using hybrid approach:
-        1. NER for named entities
-        2. Pattern matching for definitions
-        3. LLM for abstract concepts
-        """
-        print("Extracting concepts from document...")
-
-        cur_section = document_tree.get_section(section)
-        # previous_sections = document_tree.get_previous_sections(section)
-
-        # Check for cached concepts
-        cached_knowledge = self.document_cacher.retrieve_document(section)
+        state = self.user_states[concept_obj]
+        state.last_interaction = datetime.now()
+        state.n_attempts += 1
         
-        # Add logioc for some context from previous sections/paragraphs if needed
-        if cached_knowledge:
-            return cached_knowledge
+        # Extract interaction features
+        correct = response_data.get('correct', None)
+        time_spent = response_data.get('time_spent', 0)
+        explanation_depth = response_data.get('explanation_depth', 'intermediate')
+        asked_question = response_data.get('asked_question', False)
+        
+        # Bayesian update if we have correctness information
+        if correct is not None:
+            if correct:
+                # 1. Calculate P(L | Action) - Posterior
+                state.n_correct += 1
+                # If correct and known: (1 - p_slip) * p_knowledge
+                # If correct and unknown: p_guess * (1 - p_knowledge)
+                numerator = (1 - state.p_slip) * state.p_knowledge
+                denominator = numerator + state.p_guess * (1 - state.p_knowledge)
+               
+            else:
+                # If incorrect and known: p_slip * p_knowledge
+                # If incorrect and unknown: (1 - p_guess) * (1 - p_knowledge)
+                numerator = state.p_slip * state.p_knowledge
+                denominator = numerator + (1 - state.p_guess) * (1 - state.p_knowledge)
+                
+      
+            p_lt_given_action = numerator / denominator if denominator > 0 else 0
+            
+            # 2. Account for transition (Learning)
+            state.p_knowledge = p_lt_given_action + (1 - p_lt_given_action) * state.p_learn
 
-        texts = []
-        for paragraph_node in cur_section:
-            for sentence_node in paragraph_node.children:
-                text = sentence_node.chunk.text
-                texts.append(text)
-        all_concepts = []
+            # Clamp values
+            state.p_knowledge = max(0.01, min(0.99, state.p_knowledge))
 
+            # Update learning probability based on performance
+            if correct and state.p_knowledge < 0.9:
+                # Successful interaction increases learning rate slightly
+                state.p_learn = min(0.8, state.p_learn + 0.05)
+            elif not correct and state.p_knowledge < 0.5:
+                # Difficulty might indicate need for different approach
+                state.p_learn = max(0.1, state.p_learn - 0.02)
+        
+        # Update based on time spent (longer time might indicate difficulty)
+        if time_spent > 60:  # More than 60 seconds
+            state.p_knowledge *= 0.9  # Slight decrease
+        elif time_spent < 10:  # Very quick response
+            if correct:
+                state.p_knowledge = min(0.999, state.p_knowledge * 1.1)
+        
+        # Update based on explanation depth requested
+        if explanation_depth == 'beginner':
+            # Requesting beginner explanation suggests lower knowledge
+            state.p_knowledge *= 0.85
+        elif explanation_depth == 'advanced':
+            # Requesting advanced explanation suggests higher knowledge
+            state.p_knowledge = min(1.0, state.p_knowledge * 1.15)
+        
+        # Update based on questions asked
+        if asked_question:
+            # Asking questions is good! Shows engagement
+            state.p_learn = min(0.8, state.p_learn + 0.1)
+        
+        # Update confidence based on number of observations
+        state.confidence = min(0.95, 0.5 + (state.n_attempts * 0.1))
+        
+        # Ensure probabilities stay in valid range
+        state.p_knowledge = max(0.01, min(0.99, state.p_knowledge))
+        state.p_learn = max(0.05, min(0.9, state.p_learn))
+        state.p_guess = max(0.05, min(0.5, state.p_guess))
+        state.p_slip = max(0.01, min(0.3, state.p_slip))
+        
+        return state
   
-        # Method 1: NER for named entities
-        ner_concepts = self.ner_model.extract_concepts(texts)
-
-        # Method 2: Pattern-based extraction
-        pattern_concepts = self.ner_regex.extract_concepts(texts)
-
-        # Method 3: LLM-based extraction (if available)
-        llm_concepts = []
-
-        if self.ner_llm:
-            llm_concepts = self.ner_llm.extract_concepts(texts)
+    def infer_knowledge_from_text(self, user_text: str, concepts: List[Concept]) -> Dict[str, float]:
+        """
+        Infer knowledge levels from user's free-form text
+        Uses semantic similarity and keyword matching
+        """
+        from sentence_transformers import SentenceTransformer, util
         
-        # Combine and deduplicate concepts
-        all_concepts_t = list(set(ner_concepts + pattern_concepts + llm_concepts))
-        all_concepts = self._build_concepts(all_concepts_t)
-
-        # Filter and rank concepts
-        filtered_concepts = self._filter_concepts(all_concepts)
-
-        concept_relationships = self._extract_relationships(filtered_concepts, text=" ".join(texts))
-
-        return concept_relationships
-
-    def _build_concepts(self, text_concepts: List[str]) -> List[Concept]:
-        concepts = []
-        for t_concept in text_concepts:
-            concept = Concept(name=t_concept, description=t_concept)
-            concepts.append(concept)
-        return concepts
-
-
-    def _filter_concepts(self, concepts: List[Concept]) -> List[Concept]:
-        """Filter and rank concepts by importance"""
-        # Score concepts based on frequency and position
-        scored_concepts = []
+        embedder = SentenceTransformer('all-MiniLM-L6-v2')
+        user_embedding = embedder.encode(user_text, convert_to_tensor=True)
+        
+        knowledge_scores = {}
         
         for concept in concepts:
-            concept_name = concept.name
-            concept_text = concept.description
-            n = len(concept_text)
-
-            if n < 3 or n > 50:
-                continue
+            # Get concept embedding (could be pre-computed)
+            concept_embedding = embedder.encode(concept, convert_to_tensor=True)
             
-            # Frequency in text
-            frequency = concept_text.lower().count(concept_name)
+            # Semantic similarity
+            semantic_sim = util.cos_sim(user_embedding, concept_embedding).item()
             
-            # Position of first occurrence (earlier = more important)
-            first_pos = concept_text.lower().find(concept_name)
-            position_score = 1.0 if first_pos == -1 else 1.0 / (1 + first_pos/1000)
-            
-            # Length score (medium length concepts are best)
-            words = len(concept_text.split())
-            length_score = 1.0 if 1 <= words <= 4 else 0.5
+            # Keyword presence
+            keyword_score = 1.0 if concept.lower() in user_text.lower() else 0.0
             
             # Combined score
-            score = frequency * position_score * length_score
+            combined_score = 0.7 * semantic_sim + 0.3 * keyword_score
+
+            #  # Combine similarity with keyword matching
+            # keyword_bonus = 0.3 if concept.name.lower() in user_text.lower() else 0.0
+            # total_score = min(1.0, similarity + keyword_bonus)
             
-            if score > 0.5:  # Threshold
-                concept.score = score
-                concept.frequency = frequency
-                concept.first_position = first_pos
+            # Update knowledge state if concept exists
+            if concept in self.user_states:
+                current_knowledge = self.user_states[concept].p_knowledge
+                # Weighted update: trust new evidence more if we have little data
+                confidence = self.user_states[concept].confidence
+                new_knowledge = (confidence * current_knowledge + combined_score) / (confidence + 1)
+                self.user_states[concept].p_knowledge = new_knowledge
+                self.user_states[concept].confidence = min(0.95, confidence + 0.1)
 
-                scored_concepts.append(concept)
-        
-        # Sort by score
-        scored_concepts.sort(key=lambda x: x.score, reverse=True)
-
-        # Return top 50 concepts
-        return scored_concepts[:50]
-
-    
-    def _extract_relationships(self, concepts: List[Concept], text: str)-> List[Tuple[Concept, List[Tuple[Concept, ConceptRelationship]]]]:
-        """Extract relationships between concepts"""
-        concepts_with_relationships = []
-
-        # Co-occurrence relationships
-        for i, concept1 in enumerate(concepts):
-            concept_relations = []
-            for concept2 in concepts[i+1:]:
-                # Check if concepts appear together in sentences
-                sentences = re.split(r'[.!?]+', text)
-                co_occurrence_count = 0
-                texts = []
-                for sentence in sentences:
-                    if (concept1.name.lower() in sentence.lower() and 
-                        concept2.name.lower() in sentence.lower()):
-                        co_occurrence_count += 1
-                        texts.append(sentence.strip())
-               
-                if co_occurrence_count > 0:
-
-                    weight = co_occurrence_count / len(sentences)
-
-                    relationship = ConceptRelationship(
-                        concept1,
-                        concept2,
-                        description=f"Co-occurs in {co_occurrence_count} sentences.",
-                        attributes={'count': co_occurrence_count, 'weight': weight, 'texts': texts}
-                    )
-                    concept_relations.append((concept2, relationship))
-            concepts_with_relationships.append((concept1, concept_relations))
-        return concepts_with_relationships
-        # # Hierarchical relationships (is_a, part_of)
-        # hierarchical_patterns = [
-        #     (r'(\w+)\s+(?:is a|is an|are)\s+(\w+)', 'is_a'),
-        #     (r'(\w+)\s+(?:consists of|comprises|includes)\s+(\w+)', 'has_part'),
-        #     (r'(\w+)\s+(?:is part of|is component of)\s+(\w+)', 'part_of'),
-        # ]
-        
-        # for pattern, relation_type in hierarchical_patterns:
-        #     matches = re.finditer(pattern, text, re.IGNORECASE)
-        #     for match in matches:
-        #         concept_a, concept_b = match.group(1), match.group(2)
-                
-        #         # Check if both concepts are in our graph
-        #         if concept_a in self.graph and concept_b in self.graph:
-        #             self.graph.add_edge(
-        #                 concept_a, concept_b,
-        #                 relation=relation_type,
-        #                 weight=1.0
-        #             )
-
-    def visualize_graph(self, graph: nx.Graph, max_nodes=30):
-        """Create interactive visualization of concept graph"""
-        # Get top concepts by score
-        nodes = list(graph.nodes(data=True))
-        nodes.sort(key=lambda x: x[1].get('score', 0), reverse=True)
-        top_nodes = [n[0] for n in nodes[:max_nodes]]
-        
-        # Create subgraph
-        subgraph = graph.subgraph(top_nodes)
-        
-        # Create Plotly visualization
-        pos = nx.spring_layout(subgraph, seed=42)
-        
-        edge_traces = []
-        for edge in subgraph.edges(data=True):
-            x0, y0 = pos[edge[0]]
-            x1, y1 = pos[edge[1]]
+                #    # Update existing state using exponential smoothing
+                # alpha = 0.2 # Trust text inference less than direct quiz results
+                # self.user_states[concept].p_knowledge = (
+                #     (1 - alpha) * self.user_states[concept].p_knowledge + alpha * total_score
+                # )
             
-            edge_trace = go.Scatter(
-                x=[x0, x1, None],
-                y=[y0, y1, None],
-                line=dict(width=edge[2].get('weight', 0.5) * 5, color='#888'),
-                hoverinfo='none',
-                mode='lines'
+            knowledge_scores[concept] = combined_score
+        
+        return knowledge_scores
+
+    def get_user_knowledge_state(self) -> UserKnowledgeState:
+        """Retrieve knowledge state for a concept"""
+        return self.user_state
+
+    def initialize_user(self, concept_list: List[Concept]):
+        """Initialize knowledge states for all concepts"""
+        for concept in concept_list:
+            # Initialize with reasonable priors
+            self.user_state.knowledge_states[concept] = KnowledgeState(
+                concept=concept,
+                p_knowledge=0.1,  # Assume unknown initially
+                p_learn=0.3,      # Moderate learning rate
+                p_guess=0.2,      # Low guess probability (for complex concepts)
+                p_slip=0.1,       # Low slip probability
+                n_attempts=0,
+                n_correct=0,
+                last_interaction=datetime.now(),
+                confidence=0.5    # Low initial confidence
             )
-            edge_traces.append(edge_trace)
+
+    def update_knowledge(self, user_response:Dict):
+        concept_name = user_response.get("concept") or user_response.get("text") or user_response.get("question")
+        if not concept_name:
+            return
+
+        concept = None
+        for existing in self.user_state.knowledge_states.keys():
+            if existing.name == str(concept_name):
+                concept = existing
+                break
+        if concept is None:
+            concept = Concept(name=str(concept_name), description=str(concept_name))
+            self.user_state.knowledge_states[concept] = KnowledgeState(
+                concept=concept,
+                p_knowledge=0.2,
+                p_learn=0.3,
+                p_guess=0.2,
+                p_slip=0.1,
+                n_attempts=0,
+                n_correct=0,
+                last_interaction=datetime.now(),
+                confidence=0.5,
+            )
+
+        state = self.user_state.knowledge_states[concept]
+        state.n_attempts += 1
+        state.last_interaction = datetime.now()
+        state.p_knowledge = min(0.95, state.p_knowledge + 0.02)
+        state.confidence = min(0.95, state.confidence + 0.02)
+
+    def get_user_profile(self) -> Dict:
+        """Get comprehensive user profile"""
+        known_concepts = []
+        unknown_concepts = []
+        learning_concepts = []
         
-        node_x, node_y, node_text, node_size = [], [], [], []
-        for node in subgraph.nodes():
-            x, y = pos[node]
-            node_x.append(x)
-            node_y.append(y)
-            node_text.append(f"{node}<br>Score: {subgraph.nodes[node].get('score', 0):.2f}")
-            node_size.append(subgraph.nodes[node].get('score', 1) * 50 + 10)
+        for concept, state in self.user_states.items():
+            if state.p_knowledge > 0.7 and state.confidence > 0.6:
+                known_concepts.append({
+                    'concept': concept,
+                    'knowledge': state.p_knowledge,
+                    'confidence': state.confidence,
+                    'attempts': state.n_attempts
+                })
+            elif state.p_knowledge < 0.3 and state.n_attempts > 0:
+                unknown_concepts.append({
+                    'concept': concept,
+                    'knowledge': state.p_knowledge,
+                    'confidence': state.confidence,
+                    'attempts': state.n_attempts
+                })
+            else:
+                learning_concepts.append({
+                    'concept': concept,
+                    'knowledge': state.p_knowledge,
+                    'confidence': state.confidence,
+                    'attempts': state.n_attempts
+                })
         
-        node_trace = go.Scatter(
-            x=node_x, y=node_y,
-            mode='markers+text',
-            text=node_text,
-            textposition="top center",
-            marker=dict(
-                size=node_size,
-                color=node_size,
-                colorscale='Viridis',
-                showscale=True,
-                colorbar=dict(title='Importance')
-            ),
-            hoverinfo='text'
+        # Sort by knowledge level
+        known_concepts.sort(key=lambda x: x['knowledge'], reverse=True)
+        unknown_concepts.sort(key=lambda x: x['knowledge'])
+        learning_concepts.sort(key=lambda x: x['knowledge'], reverse=True)
+        
+        # Calculate overall metrics
+        total_concepts = len(self.user_states)
+        if total_concepts > 0:
+            avg_knowledge = sum(s.p_knowledge for s in self.user_states.values()) / total_concepts
+            learning_rate = sum(s.p_learn for s in self.user_states.values()) / total_concepts
+        else:
+            avg_knowledge = 0
+            learning_rate = 0
+        
+        return {
+            'known_concepts': known_concepts[:10],  # Top 10 known
+            'unknown_concepts': unknown_concepts[:10],  # Top 10 unknown
+            'learning_concepts': learning_concepts[:10],
+            'metrics': {
+                'total_concepts_tracked': total_concepts,
+                'average_knowledge': avg_knowledge,
+                'average_learning_rate': learning_rate,
+                'total_interactions': sum(s.n_attempts for s in self.user_states.values())
+            }
+        }
+    
+    def recommend_learning_path(self, target_concept: Concept, concept_graph) -> List[Dict]:
+        """
+        Recommend learning path to target concept based on knowledge gaps
+        """
+        if target_concept not in self.user_states:
+            # Initialize if new concept
+            self.user_states[target_concept] = KnowledgeState(
+                concept=target_concept,
+                p_knowledge=0.1,
+                p_learn=0.3,
+                p_guess=0.2,
+                p_slip=0.1,
+                n_attempts=0,
+                n_correct=0,
+                last_interaction=datetime.now(),
+                confidence=0.5
+            )
+        
+        # Find prerequisite chain
+        prerequisites = concept_graph.find_prerequisites(
+            target_concept, 
+            set(self.get_known_concepts(threshold=0.7))
         )
         
-        fig = go.Figure(data=edge_traces + [node_trace],
-                       layout=go.Layout(
-                           title='Concept Knowledge Graph',
-                           showlegend=False,
-                           hovermode='closest',
-                           margin=dict(b=20, l=5, r=5, t=40),
-                           xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                           yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)
-                       ))
-        
-        return fig
-    
-    # def find_prerequisites(self, target_concept: str, user_knowledge: Set[str]) -> List[str]:
-        """
-        Find prerequisite concepts for a target concept
-        """
-        if target_concept not in self.graph:
-            return []
-        
-        # BFS to find prerequisite chain
-        visited = set()
-        queue = [(target_concept, 0)]
-        prerequisites = []
-        
-        while queue:
-            concept, depth = queue.pop(0)
-            if concept in visited:
-                continue
+        # Sort by user knowledge (unknown first)
+        learning_path = []
+        for prereq in prerequisites:
+            concept = prereq['concept']
+            if concept in self.user_states:
+                knowledge = self.user_states[concept].p_knowledge
+            else:
+                knowledge = 0.1
             
-            visited.add(concept)
-            
-            # Get incoming edges (concepts that this depends on)
-            for predecessor in self.graph.predecessors(concept):
-                edge_data = self.graph.get_edge_data(predecessor, concept)
-                
-                # Check if it's a prerequisite relationship
-                if edge_data and edge_data.get('relation') in ['is_a', 'part_of', 'prerequisite']:
-                    if predecessor not in user_knowledge:
-                        prerequisites.append({
-                            'concept': predecessor,
-                            'depth': depth + 1,
-                            'relation': edge_data.get('relation'),
-                            'importance': self.graph.nodes[predecessor].get('score', 0)
-                        })
-                    
-                    if depth < 3:  # Limit search depth
-                        queue.append((predecessor, depth + 1))
+            learning_path.append({
+                'concept': concept,
+                'knowledge_gap': 1.0 - knowledge,
+                'importance': prereq['importance'],
+                'relation': prereq['relation'],
+                'current_knowledge': knowledge,
+                'priority': (1.0 - knowledge) * prereq['importance']
+            })
         
-        # Sort by importance and depth
-        prerequisites.sort(key=lambda x: (-x['importance'], x['depth']))
+        # Sort by priority (high knowledge gap × high importance)
+        learning_path.sort(key=lambda x: x['priority'], reverse=True)
         
-        return prerequisites[:10]  # Return top 10
+        return learning_path
     
-
-class DocumentChain:
-    """
-    Represents a chain of document sections or paragraphs.
-    """
-    def __init__(self):
-        self.sections = None
-        self.chain: List[GraphDelta] = []
-        self.init_graph = ConceptGraph()
-       
-
-    def _append(self, delta):
-        self.chain.append(delta)
+    def get_known_concepts(self, threshold: float = 0.7) -> List[Concept]:
+        """Get concepts known above threshold"""
+        return [
+            concept for concept, state in self.user_states.items()
+            if state.p_knowledge >= threshold and state.confidence > 0.6
+        ]
     
-    def get_concept_graph_upto(self, idx: int):
-        return self.chain[:idx + 1]
-
-    def get_document_context(self, check_point) -> Dict:
-        context = {
-            "text": "",
-            "embeddings": []
-        }
-        text = ""
-        for delta in self.chain[:check_point]:
-            text += delta.data.text + "\n"
-        context["text"] = text
-        return context
-
-
-class GraphStateManager:
-    def __init__(self, text_models: TextModels):
-        self.document_chain = DocumentChain()
-        self.concept_builder = ConceptBuilder(text_models)
-        self.graph = ConceptGraph()
-        self.graph_updater = GraphUpdater(self.graph, UserState())
-
-    def get_concept_graph_upto(self, idx: int):
-        for delta in self.document_chain.get_concept_graph_upto(idx):
-            self.graph_updater.apply_delta(delta)
-        return self.graph
+    def get_unknown_concepts(self, threshold: float = 0.3) -> List[Concept]:
+        """Get concepts unknown below threshold"""
+        return [
+            concept for concept, state in self.user_states.items()
+            if state.p_knowledge <= threshold and state.n_attempts > 0
+        ]
     
-    def build_chain(self, document: DocumentTree):
-        self.document = document
-        self.sections = document.get_sections()
+    def save_user_model(self, filepath: str):
+        """Save user model to file"""
+        with open(filepath, 'wb') as f:
+            pickle.dump({
+                'user_states': self.user_states,
+                'timestamp': datetime.now()
+            }, f)
+    
+    def load_user_model(self, filepath: str):
+        """Load user model from file"""
+        with open(filepath, 'rb') as f:
+            data = pickle.load(f)
+            self.user_states = data['user_states']
 
-        # Chain building logic (temporal chain of sections)
-        for section_id, section in enumerate(self.sections):
-            # Extract concepts for the section
-            concepts = self.concept_builder.extract_concepts_from_document(document, section=section_id)
 
-            # Create delta
-            delta = GraphDelta(section_id=section_id, data=section)
-            delta.create(self.graph, concepts)
-            
-            # Append to document chain
-            self.document_chain._append(delta)
-    
-    def get_document_context(self, check_point) -> Dict:
-        return self.document_chain.get_document_context(check_point)
-    
-    
+
 if __name__ == "__main__":
-    document_text = """
-    Intelligent Systems for Autonomous Decision Making
-1. Introduction
+    bkt = BayesianKnowledgeTracer()
 
-Autonomous systems are increasingly deployed in real-world environments where they must perceive, reason, and act under uncertainty. These systems rely on a combination of sensing, learning, and control mechanisms to operate safely and efficiently. Recent advances in machine learning have enabled autonomous agents to handle complex scenarios that were previously considered intractable.
-
-The core challenge in autonomous decision making lies in integrating heterogeneous information sources. Sensor data such as images, lidar measurements, and inertial signals must be processed jointly to produce a coherent understanding of the environment. This understanding is then used to generate actions that satisfy safety, efficiency, and robustness constraints.
-
-2. System Architecture
-
-A typical autonomous system consists of three primary modules: perception, decision making, and control. The perception module transforms raw sensor inputs into structured representations such as object lists, maps, or latent features. These representations provide the foundation for downstream reasoning.
-
-The decision-making module operates on the perceived state of the environment. It may use rule-based logic, optimization techniques, or learned policies to determine appropriate actions. Reinforcement learning has emerged as a powerful framework for learning decision policies directly from interaction data.
-
-3. Learning and Adaptation
-
-Machine learning enables autonomous systems to adapt to new environments and changing conditions. Supervised learning is often used for perception tasks, while reinforcement learning is commonly applied to sequential decision problems. Unsupervised methods can assist in representation learning and anomaly detection.
-
-Adaptation remains challenging due to limited data availability and safety constraints. Online learning techniques must balance exploration and exploitation while avoiding catastrophic failures. Incorporating prior knowledge and human feedback can significantly improve learning efficiency and system reliability.
-
-4. Evaluation and Challenges
-
-Evaluating autonomous systems requires carefully designed metrics that capture both performance and safety. Simulation environments are frequently used to test algorithms under controlled conditions before real-world deployment. However, simulation-to-reality gaps can limit the effectiveness of this approach.
-
-Key challenges include robustness to distribution shifts, interpretability of learned models, and scalability to complex environments. Addressing these challenges is critical for the widespread adoption of autonomous technologies in safety-critical domains.
-
-5. Conclusion
-
-Autonomous decision-making systems combine perception, learning, and control to operate in uncertain environments. Advances in machine learning have significantly expanded their capabilities, but important challenges remain. Continued research in adaptive learning, robust evaluation, and human-in-the-loop systems is essential for building trustworthy autonomous agents.
-    """
-    sections = re.split(r'(?=^##\s+\d+\.\s+.+$)', document_text, flags=re.MULTILINE)
-
-    chunk = DocumentChunk(text=document_text)
-    root = DocumentNode(chunk)
-    doc = DocumentTree("Root", root)
-    doc.hierarchy = {
-            'document': chunk,
-            'sections': [DocumentChunk(text=s) for s in sections],
-            'paragraphs': [
-                DocumentChunk(text=p) for s in sections for p in re.split(r'\n\s*\n', s) if p.strip()
-            ],
-            'sentences': [
-                DocumentChunk(text=sent) for s in sections for p in re.split(r'\n\s*\n', s) if p.strip() for sent in re.split(r'(?<=[.!?]) +', p) if sent.strip()       
-            ]
-        }
-    
-    manager = GraphStateManager(TextModels())
-    manager.build_chain(doc)
-    G = manager.get_concept_graph_upto(0)
-    G.visualize()
+    concepts = [
+        
+    ]

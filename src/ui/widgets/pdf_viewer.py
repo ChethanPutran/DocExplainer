@@ -1,147 +1,115 @@
-# import fitz
-# from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QScrollArea
-# from PySide6.QtGui import QPixmap, QImage
-# from PySide6.QtCore import Qt, Signal
-# from .base_viewer import BaseViewer, ActionType
-# from .pdf_page import PDFPageWidget
-
-
-# class PDFViewer(QWidget, BaseViewer):
-
-#     text_action = Signal(str, str)  # action, selected_text
-
-#     def __init__(self, parent=None):
-#         super().__init__(parent)
-
-#         self.scroll = QScrollArea(self)
-#         self.scroll.setWidgetResizable(True)
-
-#         self.container = QWidget()
-#         self.layout = QVBoxLayout(self.container)
-#         self.layout.setAlignment(Qt.AlignTop)
-
-#         self.scroll.setWidget(self.container)
-
-#         main = QVBoxLayout(self)
-#         main.addWidget(self.scroll)
-
-#         self.doc = None
-
-#     def load(self, path):
-#         self.clear()
-#         self.doc = fitz.open(path)
-
-#         scale = 1.5
-#         mat = fitz.Matrix(scale, scale)
-
-#         for page in self.doc:
-#             pix = page.get_pixmap(matrix=mat)
-#             img = QImage(
-#                 pix.samples,
-#                 pix.width,
-#                 pix.height,
-#                 pix.stride,
-#                 QImage.Format_RGB888
-#             )
-
-#             words = page.get_text("words")
-
-#             page_widget = PDFPageWidget(
-#                 QPixmap.fromImage(img),
-#                 words,
-#                 scale
-#             )
-
-#             page_widget.text_selected.connect(self._on_page_text_selected)
-#             self.layout.addWidget(page_widget)
-
-#             self.layout.addWidget(page_widget)
-
-#     def _on_page_text_selected(self, text):
-#         self.text_action.emit(ActionType.SELECT.value, text)
-
-
-
-#     def clear(self):
-#         while self.layout.count():
-#             item = self.layout.takeAt(0)
-#             widget = item.widget()
-#             if widget:
-#                 widget.deleteLater()
-
 import fitz
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea
-from PySide6.QtGui import QImage, QPixmap
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QLabel, QMenu
+from PySide6.QtGui import QImage, QPixmap, QPainter, QColor, QAction
+from PySide6.QtCore import Qt, Signal, QRect
 from .base_viewer import BaseViewer, ActionType
-from .pdf_page import PDFPageWidget
 
+class PDFPageWidget(QLabel):
+    # Signals to parent: action, text, page_num
+    page_text_action = Signal(str, str, int)
+
+    def __init__(self, pixmap: QPixmap, words, page_num: int, scale=1.5, parent=None):
+        super().__init__(parent)
+        self.setPixmap(pixmap)
+        self.words = words
+        self.page_num = page_num
+        self.scale = scale
+        self.sel_start = None
+        self.sel_end = None
+        self.selection_rects = []
+        self.setMouseTracking(True)
+
+    def glyph_at_pos(self, pos):
+        for i, word in enumerate(self.words):
+            x0, y0, x1, y1 = [int(coord * self.scale) for coord in word[:4]]
+            if QRect(x0, y0, x1 - x0, y1 - y0).contains(pos):
+                return i
+        return None
+
+    
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            idx = self.glyph_at_pos(event.pos())
+            self.sel_start = idx
+            self.sel_end = idx
+            self._update_selection()
+
+    def mouseMoveEvent(self, event):
+        if self.sel_start is not None and (event.buttons() & Qt.LeftButton):
+            idx = self.glyph_at_pos(event.pos())
+            if idx is not None:
+                self.sel_end = idx
+                self._update_selection()
+
+    def _update_selection(self):
+        self.selection_rects.clear()
+        if self.sel_start is None: return
+        start, end = min(self.sel_start, self.sel_end), max(self.sel_start, self.sel_end)
+        for i in range(start, end + 1):
+            x0, y0, x1, y1 = [int(coord * self.scale) for coord in self.words[i][:4]]
+            self.selection_rects.append(QRect(x0, y0, x1 - x0, y1 - y0))
+        self.update()
+
+    def get_selected_text(self):
+        if self.sel_start is None: return ""
+        start, end = min(self.sel_start, self.sel_end), max(self.sel_start, self.sel_end)
+        return " ".join([self.words[i][4] for i in range(start, end + 1)])
+
+    def contextMenuEvent(self, event):
+        text = self.get_selected_text()
+        if not text: return
+        
+        menu = QMenu(self)
+        explain = menu.addAction("Explain Text")
+        summarize = menu.addAction("Summarize")
+        
+        action = menu.exec(event.globalPos())
+        if action == explain:
+            self.page_text_action.emit(ActionType.EXPLAIN.value, text, self.page_num)
+        elif action == summarize:
+            self.page_text_action.emit(ActionType.SUMMARIZE.value, text, self.page_num)
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self.selection_rects:
+            painter = QPainter(self)
+            painter.setBrush(QColor(255, 0, 0, 80))
+            painter.setPen(Qt.NoPen)
+            for rect in self.selection_rects:
+                painter.drawRect(rect)
 
 class PDFViewer(QWidget, BaseViewer):
-    text_action = Signal(str, str)  # action, selected_text
-
     def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.scroll_ = QScrollArea(self)
+        QWidget.__init__(self, parent)
+        BaseViewer.__init__(self)
+        
+        self.layout_ = QVBoxLayout(self)
+        self.scroll_ = QScrollArea()
         self.scroll_.setWidgetResizable(True)
-
         self.container = QWidget()
-        self.layout_ = QVBoxLayout(self.container)
-        self.layout_.setAlignment(Qt.AlignTop)
-        self.layout_.setWidget(self.container)
-
-        main_layout = QVBoxLayout(self)
-        main_layout.addWidget(self.scroll_)
-        self.setLayout(main_layout)
-        self.doc_id = None
-        self.doc : fitz.Document | None = None
-    
-    def get_document(self) -> fitz.Document | None:
-        return super().get_document()
-    
-    def set_doc_id(self, doc_id: str):
-        return super().set_doc_id(doc_id)
+        self.container_layout = QVBoxLayout(self.container)
+        self.scroll_.setWidget(self.container)
+        self.layout_.addWidget(self.scroll_)
 
     def load(self, path):
-        """Load PDF and create page widgets"""
         self.clear()
         self.doc = fitz.open(path)
-        scale = 1.5
+        for i, page in enumerate(self.doc):
+            pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
+            img = QImage(pix.samples, pix.width, pix.height, pix.stride, QImage.Format_RGB888)
+            
+            page_widget = PDFPageWidget(QPixmap.fromImage(img), page.get_text("words"), page_num=i+1)
+            page_widget.page_text_action.connect(self._handle_page_signal)
+            self.container_layout.addWidget(page_widget)
 
-        for page in self.doc:
-            pix = page.get_pixmap(matrix=fitz.Matrix(scale, scale))
-            img = QImage(
-                pix.samples,
-                pix.width,
-                pix.height,
-                pix.stride,
-                QImage.Format_RGB888
-            )
-            words = page.get_text("words")
-
-            page_widget = PDFPageWidget(
-                pixmap=QPixmap.fromImage(img),
-                words=words,
-                scale=scale
-            )
-
-            page_widget.text_action.connect(self._on_page_text_selected)
-            self.layout_.addWidget(page_widget)
-
-    def _on_page_text_selected(self, action, text):
-        """
-        action: SELECT / EXPLAIN / SUMMARIZE / ASK
-        text: the selected text
-        """
-        # Directly emit to parent / sidebar
-        self.text_action.emit(action, text)
+    def _handle_page_signal(self, action, text, page_num):
+        self.last_selection = text
+        self.text_action.emit(action, self.doc_id, text, page_num, 0)
 
     def clear(self):
-        """Clear all page widgets"""
-        while self.layout_.count():
-            item = self.layout_.takeAt(0)
-            widget = item.widget()
-            if widget:
-                widget.deleteLater()
-        self.doc = None
+        while self.container_layout.count():
+            item = self.container_layout.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
+        if self.doc:
+            self.doc.close()
+            self.doc = None

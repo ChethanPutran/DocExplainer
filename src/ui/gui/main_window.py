@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFileDialog
-
+from PySide6.QtGui import QKeySequence, QAction
 from src.api.actions import APIActions
 from src.ui.widgets.sidebar import Sidebar
 from src.ui.widgets.voice_input import VoiceInput
@@ -22,6 +22,11 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.window_manager = window_manager
         self.setWindowTitle("Doc Explainer")
+
+        close_action = QAction(self)
+        close_action.setShortcut(QKeySequence("Ctrl+W")) # Or "Ctrl+X"
+        close_action.triggered.connect(lambda: self.close_tab(self.tabs.currentIndex()))
+        self.addAction(close_action)
 
         # # Central Widget: Document Viewer
         # self.doc_viewer = DocumentViewer()
@@ -98,31 +103,42 @@ class MainWindow(QMainWindow):
             # You can send `text` to your AI sidebar or LLM
 
     def close_tab(self, index):
-        """Close tab at given index."""
-        self.tabs.removeTab(index)
+        """Close tab at given index and free resources."""
+        widget = self.tabs.widget(index)
+        if widget:
+            # Explicitly tell the viewer to close its file handles
+            if hasattr(widget, 'clear'):
+                widget.clear()
+            
+            # Remove the tab from the UI
+            self.tabs.removeTab(index)
+            
+            # Schedule the widget for deletion to free memory
+            widget.deleteLater()
+
 
     def open_document(self):
-        """Open a file dialog to select and load a document."""
-        path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Open Document",
-            "",
-            "All Files (*.*)"
-        )
-        if not path:
-            return
+        path, _ = QFileDialog.getOpenFileName(self, "Open Document", "", "All Files (*.*)")
+        if not path: return
+        
+        doc_id = str(self.window_manager.on_document_registered(path))
 
-        doc_id = self.window_manager.on_document_registered(path)
-
+        # 1. Create the viewer via factory
         viewer = create_viewer(path)
 
-        viewer.set_doc_id(doc_id)  
+        # 2. Trigger the rendering of the file
+        # Since create_viewer can return different types, 
+        # ensure it has the load method (both your PDF and Doc viewers should)
+        if hasattr(viewer, 'load'):
+            viewer.load(path)
 
+        viewer.set_doc_id(doc_id)  
         viewer.text_action.connect(self.handle_text_action)
 
         name = os.path.basename(path)
         self.tabs.addTab(viewer, name)
         self.tabs.setCurrentWidget(viewer)
+
 
     def toggle_sidebar(self):
         """Show/hide the sidebar dock."""
@@ -131,38 +147,27 @@ class MainWindow(QMainWindow):
         else:
             self.dock.show()
 
-    def get_selection(self) -> str:
-        """Retrieve selected text from the current document viewer."""
-        current_viewer = self.tabs.currentWidget()
-        if current_viewer:
-            return current_viewer.get_selected_text()
-        return ""
-    
-    def handle_text_action(self, action: str, doc_id: str, text: str):
-        section_id = self.get_user_selection()
+    def handle_text_action(self, action: str, doc_id: str, text: str, page: int, pos: int):
+        """Receives detailed selection data from any viewer."""
+        print(f"Action: {action} | Page: {page} | Offset: {pos}")
+        
+        doc_id_int = int(doc_id)
+        
+        # Use a dictionary to avoid repeating code for every action
+        kwargs = {
+            "doc_id": doc_id_int,
+            "text": text,
+            "page": page,
+            "position": pos
+        }
+
         if action == APIActions.EXPLAIN:
-            self.window_manager.on_explain(
-                doc_id=doc_id,
-                text=text,
-                section_id=section_id
-            )
-
+            self.window_manager.on_explain(**kwargs)
         elif action == APIActions.SUMMARIZE:
-            self.window_manager.on_summarize(
-                doc_id=doc_id,
-                text=text,
-                section_id=section_id
-            )
-
+            self.window_manager.on_summarize(**kwargs)
         elif action == APIActions.ASK:
-            self.window_manager.on_ask(
-                doc_id=doc_id,
-                text=text,
-                section_id=section_id
-            )
-
+            self.window_manager.on_ask(**kwargs)
         elif action == APIActions.RELEASE:
-            # Optional: preview selection, highlight, etc.
             pass
 
 

@@ -1,7 +1,7 @@
 from typing import Dict
 
-from core.knowlege_modelling.base import ConceptGraph
-from core.knowlege_modelling.user_model import UserKnowledgeState
+from src.core.knowlege_modelling.base import ConceptGraph
+from src.core.knowlege_modelling.user_model import UserKnowledgeState
 
 class SessionMemory:
     """Stores and retrieves long-term user knowledge"""
