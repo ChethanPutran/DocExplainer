@@ -1,72 +1,94 @@
-# 📘 Project: Doc Explainer - A Context-Aware, Knowledge-Adaptive Document Tutor Using Large Language Models
+# 📘 Project: Doc Explainer
 
-An **AI-augmented document viewer** that:
+## A Context-Aware, Knowledge-Adaptive Document Tutor Using Large Language Models
 
-1. Explains **selected text** in context
+---
+
+## 1. Overview
+
+**Doc Explainer** is an AI-augmented, document-centric intelligent tutoring system designed to deliver personalized, dependency-aware explanations of technical and educational content.
+
+The system:
+
+1. Explains **user-selected text** in context
 2. Maintains **full-document understanding**
 3. Builds and updates a **user knowledge model**
 4. Adapts explanation **depth dynamically**
 5. Supports **voice interaction**
 6. Recommends **prerequisites or deeper material**
 
-
-## 1. Problem 
-
-
-Project focuses on modular development of an adaptive, document-centric intelligent tutoring system. By combining scalable document retrieval, flexible user modeling, and multimodal interaction within a unified architecture, the system enables rigorous experimentation while remaining deployable in real-world educational settings.
+The project focuses on modular development of an adaptive tutoring architecture that combines scalable document retrieval, structured concept modeling, and multimodal interaction. The system is designed for both rigorous experimentation and real-world deployment.
 
 ---
 
+## 2. Problem Definition
 
+Given:
 
-Given a:
+### 1. Document Structure
 
-1. **Document Tree**
+A hierarchical document tree:
 
-   * Chapter → Section → Paragraph → Sentence
-2. **User stops at a paragraph**
+```
+Chapter
+ └── Section
+      └── Paragraph
+           └── Sentence
+```
 
-   * Input sentence → Get Paragraph ID → Section ID
-   * Extract user selected texts
-3. **Dependencies**
+### 2. User Interaction
 
-   * The paragraph depends on concepts introduced earlier
-4. **User Knowledge**
+* The user stops at a paragraph.
+* The system:
 
-   * User current knowlege (Which chapters/concepts the user knows)
-   * Possibly *how well* they know them
-5. **Goal**
+  * Identifies the selected sentence.
+  * Retrieves the corresponding Paragraph ID and Section ID.
+  * Extracts the selected text span.
 
-   * Explain the paragraph:
+### 3. Concept Dependencies
 
-     * Using only concepts the user already knows 
-     * Re-explaining missing prerequisites (User choise)
-     * At the *right depth* for that user
+* The paragraph may depend on concepts introduced earlier.
+* These dependencies are tracked through a concept graph.
 
-It’s a **Personalized, dependency-aware, concept-grounded explanation generation**
+### 4. User Knowledge State
+
+* The system maintains:
+
+  * Which chapters/concepts the user knows.
+  * Optionally, how well they know them.
+
+### 5. Goal
+
+Generate an explanation of the selected paragraph that:
+
+* Uses only concepts the user already knows.
+* Re-explains missing prerequisites if needed (user-controlled).
+* Matches the appropriate depth for the user.
+
+This results in:
+
+> Personalized, dependency-aware, concept-grounded explanation generation.
 
 ---
 
-## Key Functionalities
+## 3. Key Functionalities
 
-### 🔹 1. Selected Text Explanation (Core Feature)
+### 3.1 Selected Text Explanation (Core Feature)
 
-**Input:**
+**Inputs:**
 
 * Selected text span
-* Surrounding section
+* Surrounding section context
 * Entire document summary
 * User knowledge state
 
-
-
-This is **contextual explanation**, not generic paraphrasing.
+The explanation is contextual and document-grounded, not generic paraphrasing.
 
 ---
 
-### 🔹 2. Full-Document Context Awareness
+### 3.2 Full-Document Context Awareness
 
-Use **hierarchical memory**:
+The system uses hierarchical memory:
 
 ```
 Document
@@ -76,11 +98,11 @@ Document
 │
 ├── Concept map
 │     ├── Concept → Sections
-|
-├── Knowlege map
+│
+├── Knowledge map
 ```
 
-**Methods:**
+#### Methods
 
 * Recursive chunking
 * Section-level embeddings
@@ -88,127 +110,89 @@ Document
 
 This enables:
 
-* Cross-references (“As defined earlier in Section 2…”)
-* Avoids hallucination
-DocExplainer: Complete Implementation Guide
-
-
-
-## 3. How This Differs From Existing Systems
-
-| System       | Limitation                     |
-| ------------ | ------------------------------ |
-| ChatGPT      | No persistent user knowledge   |
-| Kindle hints | Static, non-personal           |
-| Khan Academy | Linear curriculum              |
-| Copilot      | Task-oriented, not pedagogical |
-
-This system is:
-
-> **Dynamic + personalized + dependency-aware**
-
-
-## 4. Project structure
-```python
-# File Structure:
-# doc_explainer/
-# ├── core/
-# │   ├── document
-# │   │     ├── document_processor.py    # Document parsing & chunking
-# │   │     ├── document_processor.py    # Document parsing & chunking
-# │   ├── knowlege_modeling
-# │   │     ├── knowledge_graph.py       # knowlege graph implementation
-# │   │     ├── knowledge_tracing.py     # Concept extraction & graph building for the document
-# │   │     ├── user_model.py       # User knowlege state modeling / Bayesian knowledge tracing
-# │   ├── explanation_engine           
-# │   │     ├── adaptive_explainer.py   # Context-aware explanations
-# │   │         └── resource_recomender.py   # Resource recomendation engine for new topics
-# |   ├── interraction 
-# │   │     ├──  voice_interface.py      # ASR + TTS
-# |   ├── evaluation 
-# |   |     ├── knowledge_evaluator.py   # Quiz generation
-# |   |     ├── Explanation_evaluator.py # Explanation quality
-# │   │     └── 
-# ├── models/
-# │   ├── embedding_model.py      # Custom embedding fine-tuning
-# │   └── concept_extractor.py    # NER + LLM concept extraction
-# ├── memory/
-# │   ├── hierarchical_memory.py   # Document context memory
-# │   └── vector_store.py         # FAISS + ChromaDB
-# ├── ui/
-# |   ├── gui
-# │   │     ├── ...py   
-# │   ├── web_app.py              # Streamlit/FastAPI interface
-# │   |     ├── ...py  
-# └── 
-```
+* Cross-referencing within the document
+* Reduced hallucination
+* Structured retrieval
 
 ---
 
+## 4. Differentiation from Existing Systems
+
+| System       | Limitation                        |
+| ------------ | --------------------------------- |
+| ChatGPT      | No persistent user knowledge      |
+| Kindle hints | Static, non-personal explanations |
+| Khan Academy | Linear curriculum structure       |
+| Copilot      | Task-oriented, not pedagogical    |
+
+Doc Explainer is:
+
+> Dynamic + Personalized + Dependency-Aware
 
 ---
 
-
-
-### Tasks to be completed
-
+## 5. Implemented Tasks
 
 * Concept graph extraction
-* Knowledge mastery estimation
-* Simple user profile (known / unknown)
 * Adaptive explanation depth
-* Context-aware RAG
-* Prerequisite suggestion (recomendation)
-* Personalized curriculum generation
-* Quiz-based feedback loop
-* Reinforcement learning for tutoring policy
-* Multi-doc knowledge transfer
-* Manual concept graph
-* Paragraph → concept tagging
-* Rule-based explanation prompt
-* LLM-based explanation
+* Prerequisite suggestion (recommendation)
+* LLM-based explanation generation
 * Automatic concept extraction
 * Embedding-based concept linking
 * Persistent user knowledge store
-* Explanation quality feedback loop
-* RL-based explanation depth tuning
-* Multimodal (equations + diagrams)
 
 ---
-## PART 1: DOCUMENT PROCESSOR 
-* PDF viewer
-* Text selection → sidebar explanation
-## PART 2: HIERARCHICAL MEMORY (INCLUDING CACHE)
-## PART 3: CONCEPT EXTRACTION & KNOWLEDGE GRAPH
-## PART 4: BAYESIAN KNOWLEDGE TRACING & USER MODELING
-## PART 5: ADAPTIVE EXPLAINER & CONTEXT-AWARE GENERATION
-## PART 6: VOICE INTERFACE & ASR/TTS
-* Basic voice input/output
-## PART 7: MAIN APPLICATION & INTEGRATION
 
+## 6. Pending Tasks
 
-COMPONENTS TO IMPLEMENT:
-## Core module
-    * document  
-        - Document caching
-        - Document processing
-    * memory
-        - long_term_memory
-        - knowlege caching
-    * knowlege modelling
-        - concept extrcaction 
-        - knowlege graph / concept graph
-        - user / knowlege model
-    * explanation engine
-        - adaptive explainer
-        - resource recomender
-        - voice interface
-    * evaluation
-        - knowledge_evaluator
-    * ui
-        - gui
-        - web app
+* Context-aware RAG
+* Knowledge mastery estimation
+* Simple user profile (known / unknown concepts)
+* Personalized curriculum generation
+* Quiz-based feedback loop
+* Reinforcement learning for tutoring policy
+* Multi-document knowledge transfer
+* Manual concept graph support
+* Paragraph → concept tagging
+* Explanation quality feedback loop
+* RL-based explanation depth tuning
+* Multimodal support (equations + diagrams)
 
+---
 
+## 7. System Modules
 
+### 7.1 Core Module
 
+#### Document
+
+* Document caching
+* Document processing
+
+#### Memory
+
+* Long-term memory
+* Knowledge caching
+
+#### Knowledge Modeling
+
+* Concept extraction
+* Knowledge graph / Concept graph
+* User knowledge model
+
+#### Explanation Engine
+
+* Adaptive explainer
+* Resource recommender
+* Voice interface
+
+#### Evaluation
+
+* Knowledge evaluator
+
+#### UI
+
+* GUI
+* Web application
+
+---
