@@ -1,4 +1,4 @@
-from src.core.knowlege_modelling.base import (
+from core.knowlege_modelling.graph.base import (
     Concept,
     ConceptGraph,
     ConceptNode,
@@ -9,7 +9,7 @@ from src.core.knowlege_modelling.base import (
 from src.core.knowlege_modelling.graph.hierarchy import build_document_hierarchy
 from src.core.knowlege_modelling.graph.state_manager import GraphStateManager
 from src.core.knowlege_modelling.graph.updater import GraphUpdater
-from src.core.knowlege_modelling.knowledge_tracing import BayesianKnowledgeTracer
+from core.knowlege_modelling.user.knowledge_tracing import BayesianKnowledgeTracer
 from src.core.knowlege_modelling.knowlege_graph import (
     ConceptBuilder,
     DocumentChain,
@@ -17,8 +17,8 @@ from src.core.knowlege_modelling.knowlege_graph import (
     GraphUpdater as CompatGraphUpdater,
     build_document_hierarchy as compat_build_document_hierarchy,
 )
-from core.knowlege_modelling.extraction import LLMRelationshipExtractor
-from src.core.knowlege_modelling.user_model import UserKnowledgeState, UserState
+from core.knowlege_modelling.extraction.extraction import LLMRelationshipExtractor
+from core.knowlege_modelling.user.model import UserKnowledgeState, UserState
 
 
 class _ExtractorStub:
@@ -26,7 +26,25 @@ class _ExtractorStub:
         self._concepts = concepts
 
     def extract_concepts(self, _texts):
-        return list(self._concepts)
+        concepts = [Concept('transformer', aliases=['transformer'], definitions=['A neural network architecture that uses self-attention to process and generate sequential data.']),
+                    Concept('code generation', aliases=['code generation'], definitions=[
+                            'The automated creation of programming source code by an artificial intelligence model.']),
+                    Concept('diffusion', aliases=['diffusion model', 'diffusion'], definitions=[
+                            'A class of generative models that create data by iteratively removing noise from a random starting state.']),
+                    Concept('sequence', aliases=['sequence'], definitions=[
+                        'An ordered list of data points, such as words in a sentence or frames in a video.']),
+                    Concept('self - attention mechanism', aliases=['self-attention mechanism', 'self - attention mechanism'], definitions=[
+                        'A process that allows a model to weigh the importance of different parts of the input data relative to each other.']),
+                    Concept('gpt-5', aliases=['gpt-5'], definitions=[
+                        'A specific iteration of the Generative Pre-trained Transformer large language model.']),
+                    Concept('gemini-3', aliases=['gemini-3'], definitions=[
+                        'A specific multimodal artificial intelligence model developed by Google    .']),
+                    Concept('claude-4.5', aliases=['claude-4.5'], definitions=[
+                        'A specific large language model developed by Anthropic.']),
+                    Concept('video generation', aliases=['video generation'], definitions=[
+                        'The process of using AI to create moving visual content from textual or other prompts.']),
+                    Concept('random noise', aliases=['random noise'], definitions=['Unstructured data used as the initial input for diffusion-based generative processes.'])]
+        return concepts
 
 
 class _TextModelsStub:
@@ -87,11 +105,13 @@ def test_concept_graph_merges_duplicate_edge_strength():
     alpha = ConceptNode(Concept("alpha"))
     beta = ConceptNode(Concept("beta"))
 
-    rel_1 = ConceptRelationship(alpha.primary_concept, beta.primary_concept, strength=0.4)
+    rel_1 = ConceptRelationship(
+        alpha.primary_concept, beta.primary_concept, strength=0.4)
     edge_1 = ConceptNodeRelationship(alpha, beta, rel_1)
     graph.add_relationship(alpha, beta, edge_1)
 
-    rel_2 = ConceptRelationship(alpha.primary_concept, beta.primary_concept, strength=0.6)
+    rel_2 = ConceptRelationship(
+        alpha.primary_concept, beta.primary_concept, strength=0.6)
     edge_2 = ConceptNodeRelationship(alpha, beta, rel_2)
     graph.add_relationship(alpha, beta, edge_2)
 
@@ -105,7 +125,8 @@ def test_graph_delta_create_collects_nodes_and_edges():
     beta = Concept("beta")
     rel = ConceptRelationship(alpha, beta, strength=0.7)
 
-    delta = GraphDelta(section_id=1, data=type("Chunk", (), {"text": "alpha beta"})())
+    delta = GraphDelta(section_id=1, data=type(
+        "Chunk", (), {"text": "alpha beta"})())
     delta.create(graph, [(alpha, [(beta, rel)])])
 
     assert "alpha" in delta.new_concepts
@@ -123,8 +144,10 @@ def test_graph_updater_applies_delta_and_adds_subjective_weight():
 
     alpha = Concept("alpha")
     beta = Concept("beta")
-    rel = ConceptRelationship(alpha, beta, strength=0.5, attributes={"weight": 0.5})
-    delta = GraphDelta(section_id=2, data=type("Chunk", (), {"text": "alpha beta"})())
+    rel = ConceptRelationship(
+        alpha, beta, strength=0.5, attributes={"weight": 0.5})
+    delta = GraphDelta(section_id=2, data=type(
+        "Chunk", (), {"text": "alpha beta"})())
     delta.create(graph, [(alpha, [(beta, rel)])])
 
     updater.apply_delta(delta)

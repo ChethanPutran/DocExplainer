@@ -7,7 +7,7 @@ import sounddevice as sd
 import numpy as np
 import whisper
 from src.core.explanation_engine.adaptive_explainer import AdaptiveExplainer
-from src.core.knowlege_modelling.knowledge_tracing import BayesianKnowledgeTracer
+from core.knowlege_modelling.user.knowledge_tracing import BayesianKnowledgeTracer
 
 class VoiceInterface:
     """

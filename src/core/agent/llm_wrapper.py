@@ -14,22 +14,25 @@ from langchain_core.output_parsers import StrOutputParser
 from src.core.agent.agent import model
 
 class LLMWrapper:
-    def __init__(self, prompt_template: Optional[PromptTemplate] = None, output_parser: Any = None):
+    def __init__(self, prompt_template: Optional[PromptTemplate] = None, output_parser: Any = None, json_output: bool = False):
         self.model = model
         self.prompt_template = prompt_template
-        self.parser = output_parser if output_parser else StrOutputParser()
+        if json_output:
+            self.parser = JsonOutputParser()
+        else:
+            self.parser = output_parser if output_parser else StrOutputParser()
         self._rebuild_chain()
 
     def _rebuild_chain(self):
         """Internal helper to update the LCEL chain whenever components change."""
-        if self.prompt:
-            self.chain = self.prompt | self.model | self.parser
+        if self.prompt_template:
+            self.chain = self.prompt_template | self.model | self.parser
         else:
             self.chain = None
 
     def set_prompt(self, template: str):
         """Update the prompt template dynamically."""
-        self.prompt = PromptTemplate.from_template(template)
+        self.prompt_template = PromptTemplate.from_template(template)
         self._rebuild_chain()
 
     def set_parser(self, output_parser: Any):

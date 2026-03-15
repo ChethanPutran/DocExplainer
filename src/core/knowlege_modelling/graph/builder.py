@@ -1,21 +1,19 @@
 import math
 
 from typing import Dict, List, Set, Tuple
-
 import networkx as nx
 import plotly.graph_objects as go
 
-from src.core.document.document_cacher import DocumentCacher
-from src.core.document.document_structures import DocumentTree
-from src.core.knowlege_modelling.base import (
+from src.core.document import DocumentCacher,DocumentTree
+from src.core.knowlege_modelling.extraction import ConceptExtractor, RelationshipExtractor
+
+from .base import (
     Concept,
     ConceptGraph,
     ConceptNode,
     ConceptNodeRelationship,
     ConceptRelationship,
 )
-from core.knowlege_modelling.extraction import ConceptExtractor, RelationshipExtractor
-from src.models.text import TextModels
 
 
 class ConceptBuilder:

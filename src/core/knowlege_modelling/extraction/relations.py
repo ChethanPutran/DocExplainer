@@ -1,0 +1,22 @@
+from enum import Enum
+
+class Relations(Enum):
+    HYPERNYM = "hypernym"
+    HYPONYM = "hyponym"
+    INSTANCE_HYPERNYM = "instance_hypernym"
+    INSTANCE_HYPONYM = "instance_hyponym"
+    MEMBER_MERONYM = "member_meronym"
+    MEMBER_HOLOM = "member_holonym"
+    PART_MERONYM = "part_meronym"
+    PART_HOLOM = "part_holonym"
+    SUBSTANCE_MERONYM = "substance_meronym"
+    SUBSTANCE_HOLOM = "substance_holonym"
+    SIMILAR_TO = "similar_to"
+    VERB_GROUP = "verb_group"
+    DERIVATIONALLY_RELATED_FORM = "derivationally_related_form"
+    MEMBER_OF_DOMAIN_USAGE = "member_of_domain_usage"
+    HAS_DOMAIN_USAGE = "has_domain_usage"
+    MEMBER_OF_DOMAIN_REGION = "member_of_domain_region"
+    HAS_DOMAIN_REGION = "has_domain_region"
+    MEMBER_OF_DOMAIN_TOPIC = "member_of_domain_topic"
+    HAS_DOMAIN_TOPIC = "has_domain_topic"

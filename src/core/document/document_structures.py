@@ -34,7 +34,7 @@ class DocumentChunk:
     chunk_type: ChunkType = ChunkType.DOCUMENT
     level: ChunkLevel = ChunkLevel.DOCUMENT
     chunk_id: int  = 0
-    summary: str  
+    summary: str = ''
     parent_id: int | None = None
     embedding: np.ndarray | None = None
     metadata: MetaData | None = None

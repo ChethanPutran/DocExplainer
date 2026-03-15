@@ -167,7 +167,7 @@ class NERModel:
 
 class SpacyExtractor:
     def __init__(self):
-        self.nlp = spacy.load("en_core_web_lg")
+        self.nlp = spacy.load("en_core_web_sm")
 
     def extract_noun_phrases(self, text: str):
         doc = self.nlp(text)
@@ -186,6 +186,9 @@ class TextModels:
     
     def get_ner_regex(self):
         return NERRegex()
+    
+    def get_spacy_model(self):
+        return SpacyExtractor()
     
     def get_ner_llm(self):
         if self.llm_client is None:

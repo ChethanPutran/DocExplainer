@@ -1,50 +1,42 @@
 from typing import Dict
 from src.core.document.document_manager import DocumentManager
-from src.core.document.document_processing import HierarchicalDocumentProcessor as DocumentProcessor
-from src.models.text import TextModels
 from src.core.explanation_engine.adaptive_explainer import AdaptiveExplainer, Explanation
-from src.core.knowlege_modelling.knowledge_tracing import (
-    BayesianKnowledgeTracer,
-    GraphStateManager,
-)
-from src.core.memory.long_term_memory import LongTermMemory
-from src.core.memory.session import Context, Context, SessionChain
+from src.core.knowlege_modelling.graph import  GraphStateManager
+from src.core.memory.memory_manager import MemoryManager
+from src.core.memory.session import Context, Context, SessionManager
+from src.core.knowlege_modelling.user import UserManager
+
 
 class DocExplainerPipeline:
     def __init__(self):
         self.doc_manager = DocumentManager()
-        self.processor = DocumentProcessor(self.doc_manager)
-        self.text_models = TextModels()
-        self.long_term_memory = LongTermMemory()
-        self.session_chain = SessionChain()
+        self.memory_manager = MemoryManager()
+        self.session_manager = SessionManager()
         self.explainer = AdaptiveExplainer()
+        self.graph_state_manager = GraphStateManager()
+        self.user_manager = UserManager() 
+        # self.user = self.long_term_memory.integrate_with_user_model(self.user_model_engine)
         
-        # Consistent naming for the BKT engine
-        self.user_model_engine = BayesianKnowledgeTracer() 
-        self.user = self.long_term_memory.integrate_with_user_model(self.user_model_engine)
-        
-        self.graph_state_manager = GraphStateManager(self.text_models)
 
     # --- Core Pipeline Actions ---
 
     def summarize(self, doc_id: int, selected_text: str, section_id: int = 0) -> Explanation:
         self._check_document_set(doc_id)
-        self.session_chain.add_interaction("summarize", selected_text)
+        self.session_manager.handle_interaction("summarize", selected_text)
         context = self._get_context(section_id=section_id)
-        
         response = self.explainer.summarize(text=selected_text, context=context)
         
         # BKT Update: Summaries provide moderate familiarity
         for concept in response.unknown_concepts_explained:
             self.user_model_engine.update_knowledge({"concept": concept, "correct": True})
 
-        self.session_chain.add_interaction("summarization_response", response.explanation)
-        self.long_term_memory.store_summarization(selected_text, response)
+        self.session_manager.handle_interaction("summarization_response", response.explanation)
+        self.memory_manager.handle_event("summarization", {"text": selected_text, "summary": response.explanation})
         return response
     
     def answer_question(self, doc_id: int, question: str, section_id: int = 0) -> Explanation:
         self._check_document_set(doc_id)
-        self.session_chain.add_interaction("answer_question", question)
+        self.session_manager.handle_interaction("answer_question", question)
         context = self._get_context(section_id=section_id)
         
         response = self.explainer.ask(question, context=context)
@@ -54,14 +46,14 @@ class DocExplainerPipeline:
             self.user_model_engine.update_knowledge({"concept": concept, "correct": True})
             
         self._update_user_model({"question": question, "answer": response.explanation})
-        self.long_term_memory.store_question_answer(question, response)
-        self.session_chain.add_interaction("answer_response", response.explanation)
+        self.memory_manager.handle_event("question_answer", {"question": question, "answer": response.explanation})
+        self.session_manager.handle_interaction("answer_response", response.explanation)
         return response
 
     def explain(self, doc_id: int, selected_text: str, section_id: int = 0) -> Explanation:
         print("Explain text : ", selected_text, doc_id)
         self._check_document_set(doc_id)
-        self.session_chain.add_interaction("explain", selected_text)
+        self.session_manager.handle_interaction("explain", selected_text)
         context = self._get_context(section_id=section_id)
         
         response = self.explainer.explain(text=selected_text, context=context)
@@ -71,8 +63,8 @@ class DocExplainerPipeline:
             self.user_model_engine.update_knowledge({"concept": concept, "correct": True})
 
         self._update_user_model({"text": selected_text, "explanation": response.explanation})
-        self.long_term_memory.store_explanation(selected_text, response)
-        self.session_chain.add_interaction("explain_response", response.explanation)
+        self.memory_manager.handle_event("explanation", {"text": selected_text, "explanation": response.explanation})
+        self.session_manager.handle_interaction("explain_response", response.explanation)
         return response
     
 
@@ -131,7 +123,7 @@ class DocExplainerPipeline:
         user_knowledge = self.user.get_user_knowledge_state()
 
         # Session state
-        session_context = self.session_chain.get_session_context()
+        session_context = self.session_manager.get_session_context()
 
         # Documents state till the time
         document_context = self.graph_state_manager.get_document_context(

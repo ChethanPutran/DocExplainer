@@ -1,13 +1,14 @@
-from src.core.document.document_loader import PDFTreeParser, TreeToModelConverter
-from src.core.document.document_cacher import DocumentCacher
-from src.core.document.document import Document
+from .parser.parser import PDFTreeParser
+from .document_cacher import DocumentCacher
+from .document_modals import Document
+from .document_processing import HierarchicalDocumentProcessor as DocumentProcessor
 
 
 class DocumentManager:
     def __init__(self):
         self.cacher = DocumentCacher()
         self.parser = PDFTreeParser()
-        self.tree_to_model = TreeToModelConverter()
+        self.processor = DocumentProcessor()
         self.documents = {}
 
     def get_document(self, doc_id: int) -> Document:
@@ -20,8 +21,7 @@ class DocumentManager:
         raise ValueError("Documnet not found!")
     
     def load_document(self, path: str) -> int:
-        tree_root =  self.parser.parse(path)
-        doc = self.tree_to_model.convert(tree_root)
+        doc =  self.parser.parse(path)
         self.documents[doc.doc_id] = doc
         self.cacher.cache_document(doc.doc_id,doc)
         return doc.doc_id

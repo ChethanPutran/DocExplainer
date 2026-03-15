@@ -1,4 +1,4 @@
-from src.core.document.document_structures import DocumentChunk, DocumentNode, DocumentTree
+from src.core.document import DocumentChunk, DocumentNode, DocumentTree
 
 
 def build_document_hierarchy(document_text: str):

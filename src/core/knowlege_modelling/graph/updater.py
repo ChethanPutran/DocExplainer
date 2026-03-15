@@ -1,5 +1,6 @@
-from src.core.knowlege_modelling.base import ConceptGraph, ConceptNodeRelationship, GraphDelta
-from src.core.knowlege_modelling.user_model import UserKnowledgeState
+from core.knowlege_modelling.user import UserKnowledgeState
+
+from .base import ConceptGraph, ConceptNodeRelationship, GraphDelta
 
 
 class GraphUpdater:
@@ -48,3 +49,4 @@ class GraphUpdater:
         cu = self.user.confidence.get(edge.concept1.primary_concept.name, 0.5)
         cv = self.user.confidence.get(edge.concept2.primary_concept.name, 0.5)
         return edge.relationship.strength * min(cu, cv)
+

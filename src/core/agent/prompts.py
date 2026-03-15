@@ -116,34 +116,50 @@ ask_prompt = PromptTemplate(
 # --- CONCEPT RELATIONSHIP PROMPT ---
 relation_extractor_prompt = PromptTemplate(
     template="""
-        You are constructing a prerequisite graph for learning.
-
-        Concepts:
+        You are an Ontological Engineer building a knowledge graph.
+        
+        ### Goal
+        Extract structured relationships between specific concepts based on the provided text.
+        
+        ### Provided Concepts
         {concept_names}
+        
+        ### Context (Previously covered)
+        {context}
 
-        Previous section: {context}
-
-        Text:
+        ### Source Text
         {text}
 
-        For each concept, answer:
-        "To understand X, what other concepts from the list must be understood first?"
+        ### Mapping Rules
+        Classify the relationship between two concepts using ONLY these authorized 'relation' types:
+        - "depends_on": Use for "uses", "relies_on", "based_on", "built_on", or strict prerequisites.
+        - "is_a": Use for inheritance, categorization, or "type of" relationships.
+        - "part_of": Use for composition (A is a component of B).
+        - "enables": Use when A makes B possible or easier, but isn't a hard dependency.
+        - "similar_to": Use for analogous concepts.
 
-        Only use given concepts.
-        Only create meaningful prerequisite relationships.
+        ### Extraction Logic
+        1. **Directionality**: "source" is the base/fundamental concept; "target" is the derived/complex concept.
+        2. **Strength**: Assign a float (0.0 to 1.0) based on how central the relationship is to the text.
+        3. **Attributes**: Populate this dictionary with "rationale" (a brief quote or reason) and "context_type" (e.g., theoretical, practical).
 
-        Output JSON:
+        ### Output JSON Format:
         [
-        {{
-            "source": "prerequisite_concept",
-            "target": "dependent_concept",
-            "relation": "prerequisite_of"
-        }}
+          {{
+            "source": "concept_name",
+            "target": "concept_name",
+            "relation": "depends_on",
+            "strength": 0.85,
+            "attributes": {{
+                "rationale": "...",
+                "context_type": "..."
+            }}
+          }}
         ]
-        
     """,
     input_variables=["text", "concept_names", "context"],
 )
+
 # # --- CONCEPT RELATIONSHIP PROMPT ---
 # relation_extractor_prompt = PromptTemplate(
 #     template="""

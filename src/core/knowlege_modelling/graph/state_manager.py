@@ -1,29 +1,29 @@
 from typing import Dict
 from collections import defaultdict
-from src.core.document.document_structures import DocumentTree
-from src.core.document.document_cacher import DocumentCacher
-from src.core.knowlege_modelling.base import ConceptGraph, GraphDelta
-from src.core.knowlege_modelling.user_model import UserKnowledgeState
+from src.core.document import DocumentTree, DocumentCacher
+from src.core.knowlege_modelling.user import UserKnowledgeState
 from src.core.knowlege_modelling.extraction import ConceptExtractor,RelationshipExtractor
 from src.models.text import TextModels
 
+from .base import ConceptGraph, GraphDelta
 from .builder import ConceptBuilder
 from .chain import DocumentChain
 from .updater import GraphUpdater
 
 
 class GraphStateManager:
-    def __init__(self, text_models: TextModels, bkt_tracer=None):
+    def __init__(self, bkt_tracer=None):
         self.document_chain = DocumentChain()
         self.document_cacher = DocumentCacher()
-        self.concept_extractor = ConceptExtractor(text_models)
+        self.text_models = TextModels()
+        self.concept_extractor = ConceptExtractor(self.text_models)
         self.relation_extractor = RelationshipExtractor()
         self.concept_builder = ConceptBuilder(self.concept_extractor,self.relation_extractor,self.document_cacher)
         self.concept_graph = ConceptGraph()
 
         if bkt_tracer is None:
             # Backward compatibility for call sites that only passed text_models.
-            from src.core.knowlege_modelling.knowledge_tracing import BayesianKnowledgeTracer
+            from core.knowlege_modelling.user.knowledge_tracing import BayesianKnowledgeTracer
 
             bkt_tracer = BayesianKnowledgeTracer()
 
@@ -41,7 +41,6 @@ class GraphStateManager:
             user_knowlege_state.confidence[concept.name] = state.p_knowledge
         return user_knowlege_state
 
-    
     def get_concept_graph_upto(self, section_id: int):
         """
         Get the info till section
@@ -113,3 +112,12 @@ class GraphStateManager:
                         section_prereq[s2.id].add(dep_intro_id)
 
         return section_prereq
+    
+
+if __name__ == "__main__":
+    from src.core.document import DocumentParser
+
+    document = DocumentParser().parse("src/assets/sample_doc.txt")
+    gsm = GraphStateManager()
+    gsm.build_chain(document)
+    print(gsm.detect_section_prerequisites())

@@ -2,7 +2,9 @@ import spacy
 from typing import Dict, List, Any
 
 # Assuming these are defined in your src directory
-from src.core.document.document_structures import (
+from src.models.text import EmbeddingModel
+
+from .document_structures import (
     ChunkLevel,
     ChunkType,
     DocumentChunk,
@@ -10,9 +12,6 @@ from src.core.document.document_structures import (
     DocumentTree,
     SimpleMetaDataCreator,
 )
-from src.core.document.document import Document
-from src.core.document.document_manager import DocumentManager
-from src.models.text import EmbeddingModel
 
 class HierarchicalDocumentProcessor:
     """
@@ -20,8 +19,7 @@ class HierarchicalDocumentProcessor:
     Handles recursive sections, paragraphs, and spaCy-based sentence splitting.
     """
 
-    def __init__(self, doc_manager: DocumentManager, embedding_model=EmbeddingModel.DEFAULT_MODEL_NAME):
-        self.doc_manager = doc_manager
+    def __init__(self, embedding_model=EmbeddingModel.DEFAULT_MODEL_NAME):
         self.embedding_model = EmbeddingModel(embedding_model)
         
         # Initialize SpaCy for accurate sentence splitting (abbreviation-aware)
@@ -37,9 +35,7 @@ class HierarchicalDocumentProcessor:
         self.document_trees: Dict[int, DocumentTree] = {}
 
 
-    def process_document(self,doc_id: int) -> DocumentTree:
-
-        document = self.doc_manager.get_document(doc_id)
+    def process_document(self,document) -> DocumentTree:
         """Main entry point: Converts Document dataclass to a DocumentTree."""
         doc_text = document.raw_text
         

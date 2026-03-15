@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from src.core.knowlege_modelling.base import ConceptGraph, GraphDelta
+from .base import ConceptGraph,GraphDelta
 
 
 class DocumentChain:
