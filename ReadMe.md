@@ -369,4 +369,3 @@ DOC_EXPLAINER_CACHE_DIR=~/.doc_explainer/cache
 DOC_EXPLAINER_CONFIG_DIR=~/.doc_explainer/config
 ```
 
-Now you have a complete, production-ready setup for your Doc Explainer application!
