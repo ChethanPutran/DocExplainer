@@ -196,3 +196,177 @@ Doc Explainer is:
 * Web application
 
 ---
+
+
+## Installation Instructions
+
+### 1. Basic Installation (Development)
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/doc-explainer.git
+cd doc-explainer
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install in development mode
+pip install -e .
+
+# Or install with development dependencies
+pip install -e .[dev]
+```
+
+### 2. Installation from Source
+
+```bash
+# Build the package
+python -m build
+
+# Install the built package
+pip install dist/doc-explainer-1.0.0.tar.gz
+```
+
+### 3. Installation with pip (from repository)
+
+```bash
+# Direct install from git
+pip install git+https://github.com/yourusername/doc-explainer.git
+
+# Install with specific extras
+pip install git+https://github.com/yourusername/doc-explainer.git#egg=doc-explainer[full]
+```
+
+### 4. Running after Installation
+
+```bash
+# Run as installed package
+doc-explainer
+doc-explainer /path/to/document.pdf
+doc-explainer --theme dark document.pdf
+
+# Run as module
+python -m src.ui.gui.app
+
+# Run with Python directly
+python run.py
+```
+
+### 5. Platform-Specific Setup
+
+#### Linux
+```bash
+# Install system dependencies
+sudo apt-get update
+sudo apt-get install -y \
+    python3-dev \
+    python3-pip \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    poppler-utils \
+    tesseract-ocr \
+    portaudio19-dev \
+    libportaudio2
+
+# Install spaCy model
+python -m spacy download en_core_web_sm
+```
+
+#### macOS
+```bash
+# Install system dependencies
+brew install \
+    poppler \
+    tesseract \
+    portaudio \
+    libxml2 \
+    libxslt
+
+# Install spaCy model
+python -m spacy download en_core_web_sm
+```
+
+#### Windows
+```powershell
+# Install spaCy model
+python -m spacy download en_core_web_sm
+
+# Note: You may need to install Visual C++ Build Tools
+# Download from: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+```
+
+### 6. Docker Installation
+
+Create a `Dockerfile`:
+
+```dockerfile
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpoppler-cpp-dev \
+    tesseract-ocr \
+    portaudio19-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m spacy download en_core_web_sm
+
+COPY . .
+
+RUN pip install -e .
+
+CMD ["doc-explainer"]
+```
+
+Build and run:
+
+```bash
+docker build -t doc-explainer .
+docker run -v /path/to/documents:/documents doc-explainer /documents/paper.pdf
+```
+
+### 7. Configuration File
+
+Create `~/.doc_explainer/config/config.json`:
+
+```json
+{
+    "theme": "light",
+    "llm_provider": "gemini",
+    "gemini_api_key": "YOUR_API_KEY_HERE",
+    "openai_api_key": "YOUR_API_KEY_HERE",
+    "window_width": 1200,
+    "window_height": 800,
+    "sidebar_visible": true,
+    "voice_enabled": true
+}
+```
+
+### 8. Environment Variables
+
+Create `.env` file:
+
+```env
+# API Keys
+GEMINI_API_KEY=your_gemini_api_key
+OPENAI_API_KEY=your_openai_api_key
+
+# Configuration
+DOC_EXPLAINER_THEME=light
+DOC_EXPLAINER_DEBUG=false
+DOC_EXPLAINER_LOG_LEVEL=INFO
+
+# Paths
+DOC_EXPLAINER_CACHE_DIR=~/.doc_explainer/cache
+DOC_EXPLAINER_CONFIG_DIR=~/.doc_explainer/config
+```
+
+Now you have a complete, production-ready setup for your Doc Explainer application!

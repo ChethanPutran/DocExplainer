@@ -7,11 +7,11 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.core.document.document_manager import DocumentManager
-from src.core.document.document_processing import HierarchicalDocumentProcessor
-from src.core.knowlege_modelling.graph.hierarchy import build_document_hierarchy
-from src.core.knowlege_modelling.graph.state_manager import GraphStateManager
-from core.knowlege_modelling.user.knowledge_tracing import BayesianKnowledgeTracer
+from core.document.manager import DocumentManager
+from core.document.builder.processor import HierarchicalDocumentProcessor
+from src.core.knowlege.graph.hierarchy import build_document_hierarchy
+from src.core.knowlege.graph.state_manager import GraphStateManager
+from core.knowlege.user.knowledge_tracing import BayesianKnowledgeTracer
 from src.models.text import TextModels,NERRegex
 
 

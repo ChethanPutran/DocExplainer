@@ -1,9 +1,9 @@
 import uuid
 
-from core.document.document_modals import Document
-from src.core.document.document_cacher import DocumentCache, DocumentCacher
-from src.core.document.document_manager import DocumentManager
-from src.core.document.document_processing import HierarchicalDocumentProcessor
+from core.document.base import Document
+from core.document.cacher import DocumentCache, DocumentCacher
+from core.document.manager import DocumentManager
+from core.document.builder.processor import HierarchicalDocumentProcessor
 
 
 

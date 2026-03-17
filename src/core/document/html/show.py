@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# src/core/document/html/show.py
 """
 Document Visualization Tool
 Usage: python visualize_document.py <json_file> [output_html]

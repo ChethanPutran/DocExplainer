@@ -15,7 +15,7 @@ class EmbeddingModel:
         # self.model = SentenceTransformer(model_name)
         self.model = None
 
-    def encode(self, text: str) -> np.ndarray:
+    def encode(self, texts: List[str]) -> np.ndarray:
         if self.model is not None:
             return self.model.encode(text).tolist()
 
@@ -180,9 +180,12 @@ class SpacyExtractor:
 class TextModels:
     def __init__(self,llm_client = None) -> None:
         self.llm_client = llm_client
-        
+    
     def get_ner_model(self):
         return NERModel()
+    
+    def get_embedding_model(self):
+        return EmbeddingModel()
     
     def get_ner_regex(self):
         return NERRegex()

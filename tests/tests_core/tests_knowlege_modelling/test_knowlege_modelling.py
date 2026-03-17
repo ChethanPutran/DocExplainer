@@ -1,4 +1,4 @@
-from core.knowlege_modelling.graph.base import (
+from core.knowlege.graph.base import (
     Concept,
     ConceptGraph,
     ConceptNode,
@@ -6,19 +6,19 @@ from core.knowlege_modelling.graph.base import (
     ConceptRelationship,
     GraphDelta,
 )
-from src.core.knowlege_modelling.graph.hierarchy import build_document_hierarchy
-from src.core.knowlege_modelling.graph.state_manager import GraphStateManager
-from src.core.knowlege_modelling.graph.updater import GraphUpdater
-from core.knowlege_modelling.user.knowledge_tracing import BayesianKnowledgeTracer
-from src.core.knowlege_modelling.knowlege_graph import (
+from src.core.knowlege.graph.hierarchy import build_document_hierarchy
+from src.core.knowlege.graph.state_manager import GraphStateManager
+from src.core.knowlege.graph.updater import GraphUpdater
+from core.knowlege.user.knowledge_tracing import BayesianKnowledgeTracer
+from src.core.knowlege.knowlege_graph import (
     ConceptBuilder,
     DocumentChain,
     GraphStateManager as CompatGraphStateManager,
     GraphUpdater as CompatGraphUpdater,
     build_document_hierarchy as compat_build_document_hierarchy,
 )
-from core.knowlege_modelling.extraction.extraction import LLMRelationshipExtractor
-from core.knowlege_modelling.user.model import UserKnowledgeState, UserState
+from core.knowlege.extraction.extractor import LLMRelationshipExtractor
+from core.knowlege.user.model import UserKnowledgeState, UserState
 
 
 class _ExtractorStub:

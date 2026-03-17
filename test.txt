@@ -1,0 +1,207 @@
+ ├── document/
+│   │   ├── __init__.py
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   ├── chunk.py
+│   │   │   ├── node.py
+│   │   │   └── tree.py
+│   │   ├── parser/
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py
+│   │   │   ├── text_parser.py
+│   │   │   ├── json_parser.py
+│   │   │   └── pdf_parser.py
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── document_manager.py
+│   │   │   ├── document_cacher.py
+│   │   │   └── summarizer.py
+│   │   └── config.py                     # Document module configuration
+│   │
+│   ├── agent/
+│   │   ├── __init__.py
+│   │   ├── prompts/
+│   │   │   ├── __init__.py
+│   │   │   ├── concept.py
+│   │   │   ├── relation.py
+│   │   │   └── templates.py
+│   │   ├── llm_wrapper.py
+│   │   └── config.py                     # LLM configuration
+│   │
+│   └── common/
+│       ├── __init__.py
+│       ├── interfaces/
+│       │   ├── __init__.py
+│       │   ├── repository.py              # Base repository interfaces
+│       │   ├── service.py                 # Base service interfaces
+│       │   └── factory.py                  # Base factory interfaces
+│       ├── utils/
+│       │   ├── __init__.py
+│       │   ├── text_utils.py
+│       │   ├── embedding_utils.py
+│       │   ├── cache.py
+│       │   └── logger.py
+│       ├── decorators/
+│       │   ├── __init__.py
+│       │   ├── error_handling.py
+│       │   ├── logging.py
+│       │   └── caching.py
+│       ├── exceptions/
+│       │   ├── __init__.py
+│       │   └── custom_exceptions.py
+│       └── config/
+│           ├── __init__.py
+│           ├── base_config.py
+│           └── settings.py
+│
+├── store/
+│   ├── __init__.py
+│   ├── base/
+│   │   ├── __init__.py
+│   │   ├── repository.py                 # Base repository classes
+│   │   └── unit_of_work.py                # Unit of Work pattern
+│   ├── knowledge/
+│   │   ├── __init__.py
+│   │   ├── concept_repository.py
+│   │   ├── relationship_repository.py
+│   │   ├── graph_repository.py
+│   │   ├── index_repository.py
+│   │   └── serializers.py
+│   ├── user/
+│   │   ├── __init__.py
+│   │   ├── user_repository.py
+│   │   └── serializers.py
+│   ├── document/
+│   │   ├── __init__.py
+│   │   ├── document_repository.py
+│   │   └── serializers.py
+│   └── factories/
+│       ├── __init__.py
+│       └── repository_factory.py
+│
+├── api/
+│   ├── __init__.py
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── knowledge.py
+│   │   ├── user.py
+│   │   ├── document.py
+│   │   └── analytics.py
+│   ├── controllers/
+│   │   ├── __init__.py
+│   │   ├── knowledge_controller.py
+│   │   ├── user_controller.py
+│   │   └── document_controller.py
+│   ├── middlewares/
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── logging.py
+│   │   └── error_handler.py
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── knowledge_schemas.py
+│   │   ├── user_schemas.py
+│   │   └── document_schemas.py
+│   └── dependencies/
+│       ├── __init__.py
+│       └── container.py                    # Dependency injection container
+│
+├── services/                               # Application-level services
+│   ├── __init__.py
+│   ├── learning/
+│   │   ├── __init__.py
+│   │   ├── path_generator.py
+│   │   └── progress_tracker.py
+│   ├── analytics/
+│   │   ├── __init__.py
+│   │   ├── knowledge_analytics.py
+│   │   └── user_analytics.py
+│   └── notification/
+│       ├── __init__.py
+│       └── notification_service.py
+│
+├── models/
+│   ├── __init__.py
+│   └── text.py                              # TextModels class
+│
+├── pipelines/                               # Processing pipelines
+│   ├── __init__.py
+│   ├── extraction_pipeline.py
+│   ├── learning_pipeline.py
+│   └── analysis_pipeline.py
+│
+└── di/                                      # Dependency Injection
+    ├── __init__.py
+    ├── container.py
+    └── providers.py
+
+tests/
+├── __init__.py
+├── unit/
+│   ├── core/
+│   │   ├── knowledge/
+│   │   │   ├── extraction/
+│   │   │   ├── graph/
+│   │   │   └── services/
+│   │   ├── user/
+│   │   └── document/
+│   ├── store/
+│   └── api/
+├── integration/
+│   ├── test_knowledge_flow.py
+│   ├── test_user_learning.py
+│   └── test_api_endpoints.py
+├── fixtures/
+│   ├── documents/
+│   ├── user_data/
+│   └── knowledge_graphs/
+└── conftest.py
+
+config/
+├── __init__.py
+├── development.yaml
+├── production.yaml
+├── testing.yaml
+└── logging.yaml
+
+migrations/                                  # Database migrations (if using DB)
+├── versions/
+└── env.py
+
+scripts/
+├── setup.py
+├── run_tests.sh
+├── seed_data.py
+└── deploy.sh
+
+docs/
+├── api/
+├── architecture/
+└── user_guides/
+
+data/
+├── user_data/                               # User data storage
+├── knowledge_graphs/                         # Serialized graphs
+└── cache/                                    # Cache directory
+
+logs/
+├── app.log
+├── extraction.log
+└── errors.log
+
+docker/
+├── Dockerfile
+├── docker-compose.yaml
+└── .dockerignore
+
+requirements/
+├── base.txt
+├── development.txt
+├── production.txt
+└── test.txt
+
+pyproject.toml                                 # Project configuration
+setup.py                                       # Package setup
+README.md
+.gitignore
+.env.example

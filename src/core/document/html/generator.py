@@ -1,3 +1,5 @@
+# src/core/document/html/generator.py
+
 import json
 import os
 import base64
