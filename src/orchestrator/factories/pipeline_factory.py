@@ -8,15 +8,15 @@ from ..services.document_service import DocumentService
 from ..services.user_service import UserService
 from ..services.context_service import ContextService
 
-from src.core.document.manager import DocumentManager
+from src.core.document import DocumentManager
 from src.core.explanation_engine.adaptive_explainer import AdaptiveExplainer
-from src.core.user.user_manager import UserManager
+from src.core.user import UserManager
 from src.core.memory.managers.memory_manager import MemoryManager
 from src.core.memory.managers.session_manager import SessionManager
-from src.core.knowledge.graph.state_manager import GraphStateManager
-from src.core.knowledge.services.prerequisite_analyzer import PrerequisiteAnalyzer
-from src.core.knowledge.services.learning_path import LearningPathGenerator
-from src.core.knowledge.services.recommendation import RecommendationService
+from src.core.knowledge import GraphStateManager
+from src.core.knowledge import PrerequisiteAnalyzer
+from src.core.knowledge import LearningPathGenerator
+from src.core.knowledge import RecommendationService
 from src.core.agent.llm.factories.llm_factory import LLMFactory
 from src.models.text import TextModels
 from store.knowledge_store import KnowledgeStore

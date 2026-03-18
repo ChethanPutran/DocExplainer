@@ -4,7 +4,17 @@ from .base import Serializable, Identifiable
 from .content import Paragraph, Image, Table, Equation
 import uuid
 
-
+@dataclass
+class FontInfo:
+    """Font information for text span"""
+    size: float
+    name: str
+    flags: int
+    
+    @property
+    def is_bold(self) -> bool:
+        return "Bold" in self.name or (self.flags & 16)
+    
 @dataclass
 class Section(Serializable, Identifiable):
     """Represents a section in a document"""

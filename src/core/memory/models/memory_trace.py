@@ -27,7 +27,7 @@ class MemoryTrace:
 @dataclass
 class ConceptMemoryTrace(MemoryTrace):
     """Memory trace for a concept"""
-    concept: str
+    concept: str = ""
     understanding_level: float = 0.0  # 0-1
     review_count: int = 0
     next_review: Optional[datetime] = None

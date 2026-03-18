@@ -2,7 +2,7 @@ import os
 import uuid
 from typing import List, Dict, Any, Optional
 import fitz
-from ..models.content import Image
+from ...models.content import Image
 
 
 class ImageExtractor:

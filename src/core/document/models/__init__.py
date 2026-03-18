@@ -1,5 +1,5 @@
 from .content import Sentence, Paragraph, Image, Table, Equation
-from .structure import Section, Document
+from .structure import Section, Document, FontInfo
 from .tree import DocumentNode, DocumentTree, ChunkType, ChunkLevel, DocumentChunk
 from .metadata import Metadata, MetadataCreator, SimpleMetadataCreator
 
@@ -11,6 +11,7 @@ __all__ = [
     'Equation',
     'Section',
     'Document',
+    'FontInfo',
     'DocumentNode',
     'DocumentTree',
     'ChunkType',

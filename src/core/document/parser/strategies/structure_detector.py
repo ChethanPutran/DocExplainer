@@ -1,7 +1,7 @@
 import re
 from typing import Dict, Optional, Any, Tuple
-from ..models import FontInfo
-
+from ...models import FontInfo
+from dataclasses import dataclass
 
 class StructureDetector:
     """Detects document structure elements"""
@@ -84,13 +84,3 @@ class StructureDetector:
         return {"type": "paragraph", "text": text}
 
 
-@dataclass
-class FontInfo:
-    """Font information for text span"""
-    size: float
-    name: str
-    flags: int
-    
-    @property
-    def is_bold(self) -> bool:
-        return "Bold" in self.name or (self.flags & 16)

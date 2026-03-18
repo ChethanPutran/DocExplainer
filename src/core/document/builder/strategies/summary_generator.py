@@ -1,12 +1,12 @@
 from typing import Optional
-from src.core.agent.llm_wrapper import LLMWrapper
+from src.core.agent.base import LLMInterface
 from src.core.agent.prompts import text_summarization_template
 
 
 class SummaryGenerator:
     """Generates summaries for document chunks"""
     
-    def __init__(self, llm_wrapper: Optional[LLMWrapper] = None):
+    def __init__(self, llm_wrapper: Optional[LLMInterface] = None):
         self.llm = llm_wrapper
         if self.llm:
             self.llm.set_prompt_template(text_summarization_template)

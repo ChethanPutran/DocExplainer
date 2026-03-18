@@ -1,7 +1,7 @@
 from typing import Optional, List, Tuple
-from ..models.structure import Document, Section
-from ..models.tree import DocumentTree, DocumentNode, DocumentChunk, ChunkType, ChunkLevel
-from ..models.metadata import SimpleMetadataCreator
+from ...models.structure import Document, Section
+from ...models.tree import DocumentTree, DocumentNode, DocumentChunk, ChunkType, ChunkLevel
+from ...models.metadata import SimpleMetadataCreator
 from .summary_generator import SummaryGenerator
 
 

@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Any
 from enum import Enum, auto
 import numpy as np
 from .metadata import Metadata
-from src.core.knowledge.models.concept import Concept
+from src.core.knowledge.models import Concept
 from src.core.knowledge.models.relationship import ConceptRelationship
 
 

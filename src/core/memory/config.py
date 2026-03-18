@@ -3,7 +3,7 @@ from typing import Optional
 
 
 @dataclass
- class LongTermMemoryConfig:
+class LongTermMemoryConfig:
     """Configuration for long-term memory"""
     file_path: str = "data/memory/user_memory.json"
     auto_save: bool = True

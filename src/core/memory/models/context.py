@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional
-from src.core.knowledge.models.graph import ConceptGraph
+from src.core.knowledge.models.concept import ConceptGraph
 from src.core.user.models.knowledge_state import UserKnowledgeState
-
+from datetime import datetime
 
 @dataclass
 class SessionContext:
@@ -15,7 +15,6 @@ class SessionContext:
     
     def __post_init__(self):
         if not self.start_time:
-            from datetime import datetime
             self.start_time = datetime.now()
     
     def update_concepts(self, new_concepts: Dict):

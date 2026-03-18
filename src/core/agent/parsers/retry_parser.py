@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from langchain.output_parsers import RetryWithErrorOutputParser
+from langchain_classic.output_parsers import RetryWithErrorOutputParser
 from langchain_core.language_models import BaseLanguageModel
 
 from .base import BaseParser
