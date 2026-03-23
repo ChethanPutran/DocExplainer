@@ -204,8 +204,8 @@ Doc Explainer is:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/doc-explainer.git
-cd doc-explainer
+git clone https://github.com/ChethanPutran/DocExplainer.git
+cd docexplainer
 
 # Create virtual environment
 python -m venv venv
@@ -232,10 +232,10 @@ pip install dist/doc-explainer-1.0.0.tar.gz
 
 ```bash
 # Direct install from git
-pip install git+https://github.com/yourusername/doc-explainer.git
+pip install git+https://github.com/ChethanPutran/DocExplainer.git
 
 # Install with specific extras
-pip install git+https://github.com/yourusername/doc-explainer.git#egg=doc-explainer[full]
+pip install git+https://github.com/ChethanPutran/DocExplainer.git#egg=doc-explainer[full]
 ```
 
 ### 4. Running after Installation
