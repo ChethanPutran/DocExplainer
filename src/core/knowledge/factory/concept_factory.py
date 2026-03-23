@@ -1,6 +1,6 @@
 from time import time
 from typing import List, Optional, Any
-from src.core.knowledge.models.concept import Concept
+from ..models.concept import Concept
 
 class ConceptFactory:
     """Factory for creating Concept objects"""

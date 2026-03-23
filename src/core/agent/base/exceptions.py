@@ -8,7 +8,7 @@ class LLMError(AgentError):
     pass
 
 
-class ParsingError(AgentError):
+class ParserError(AgentError):
     """Raised when output parsing fails"""
     pass
 

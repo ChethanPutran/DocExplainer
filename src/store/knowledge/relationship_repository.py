@@ -2,7 +2,7 @@ from typing import List, Optional, Dict, Tuple
 import json
 import os
 from src.core.knowledge.models.relationship import ConceptRelationship, ConceptNodeRelationship
-from src.store.base.repository import RelationshipRepositoryBase
+from src.core.knowledge.repository.relation_repository import RelationshipRepositoryBase
 from .serializers import RelationshipSerializer
 from .concept_repository import ConceptRepository
 
@@ -28,31 +28,36 @@ class RelationshipRepository(RelationshipRepositoryBase):
         safe_name = "".join(c for c in safe_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
         return os.path.join(self.storage_path, f"{safe_name}.json")
     
-    def save_relationship(self, relationship: ConceptRelationship) -> ConceptRelationship:
+    def save(self, entity: ConceptRelationship) -> ConceptRelationship:
         """Save a concept relationship"""
         # Ensure both concepts are saved
-        self.concept_repo.save_concept(relationship.concept1)
-        self.concept_repo.save_concept(relationship.concept2)
+        self.concept_repo.save(entity.concept1)
+        self.concept_repo.save(entity.concept2)
         
         filepath = self._get_relationship_path(
-            relationship.concept1.name, 
-            relationship.concept2.name
+            entity.concept1.name, 
+            entity.concept2.name
         )
         
         with open(filepath, 'w') as f:
-            json.dump(RelationshipSerializer.serialize_relationship(relationship), f, indent=2)
+            json.dump(RelationshipSerializer.serialize_relationship(entity), f, indent=2)
         
-        cache_key = (relationship.concept1.name, relationship.concept2.name)
-        self.cache[cache_key] = relationship
+        cache_key = (entity.concept1.name, entity.concept2.name)
+        self.cache[cache_key] = entity
         
-        return relationship
+        return entity
     
     def save_node_relationship(self, relationship: ConceptNodeRelationship) -> ConceptNodeRelationship:
         """Save a node relationship"""
         # Extract the core relationship and save it
-        self.save_relationship(relationship.relationship)
+        self.save(relationship.relationship)
         return relationship
     
+    def get(self, id: int) -> Optional[ConceptRelationship]:
+        """Get relationship by ID"""
+        # This method is not implemented as relationships are identified by concept pairs, not IDs
+        raise NotImplementedError("Relationships are identified by concept pairs, not IDs.")
+
     def get_relationship(self, concept1_name: str, concept2_name: str) -> Optional[ConceptRelationship]:
         """Get relationship between two concepts"""
         # Check cache first
@@ -110,7 +115,7 @@ class RelationshipRepository(RelationshipRepositoryBase):
         
         return relationships
     
-    def get_all_relationships(self) -> List[ConceptRelationship]:
+    def find_all(self) -> List[ConceptRelationship]:
         """Get all relationships"""
         relationships = []
         
@@ -154,6 +159,11 @@ class RelationshipRepository(RelationshipRepositoryBase):
         
         return True
     
+    def delete(self, id: int) -> bool:
+        """Delete a relationship"""
+        # This method is not implemented as relationships are identified by concept pairs, not IDs
+        raise NotImplementedError("Relationships are identified by concept pairs, not IDs.")
+
     def find_relationships_by_type(self, relation_type: str) -> List[ConceptRelationship]:
         """Find relationships by type"""
         relationships = []

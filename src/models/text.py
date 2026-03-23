@@ -17,7 +17,9 @@ class EmbeddingModel:
 
     def encode(self, texts: List[str]) -> np.ndarray:
         if self.model is not None:
-            return self.model.encode(text).tolist()
+            return self.model.encode(texts).tolist()
+        
+        text = " ".join(texts)
 
         # Deterministic lightweight fallback vector for local development.
         digest = hashlib.sha256(text.encode("utf-8")).digest()
@@ -85,10 +87,10 @@ class NERModel:
         
         if self.backend == "spacy":
             try:
-                self.model = spacy.load("en_core_web_md")
+                self.model = spacy.load("en_core_web_sm")
             except:
                 spacy.cli.download("en_core_web_md")
-                self.model = spacy.load("en_core_web_md")
+                self.model = spacy.load("en_core_web_sm")
 
         elif self.backend == "keyphrase":
             self.model = pipeline(
@@ -169,12 +171,12 @@ class SpacyExtractor:
     def __init__(self):
         self.nlp = spacy.load("en_core_web_sm")
 
-    def extract_noun_phrases(self, text: str):
-        doc = self.nlp(text)
+    def extract_noun_phrases(self, text: List[str]):
+        doc = self.nlp(" ".join(text))
         return list(set([chunk.text.strip() for chunk in doc.noun_chunks]))
 
-    def extract_named_entities(self, text: str):
-        doc = self.nlp(text)
+    def extract_named_entities(self, text: List[str]):
+        doc = self.nlp(" ".join(text))
         return list(set([ent.text.strip() for ent in doc.ents]))
     
 class TextModels:

@@ -8,7 +8,7 @@ from .models.requests import (
     RegisterDocumentRequest, GetContextRequest
 )
 from .models.responses import (
-    SummarizeResponse, ExplainResponse, AnswerResponse,
+    BaseResponse, SummarizeResponse, ExplainResponse, AnswerResponse,
     DocumentResponse, ContextResponse
 )
 from .pipeline.document_pipeline import DocumentPipeline
@@ -24,21 +24,26 @@ class DocExplainerOrchestrator:
     def __init__(self, config: Optional[OrchestratorConfig] = None):
         self.config = config or OrchestratorConfig()
         self.logger = logging.getLogger(self.__class__.__name__)
+        try:
         
-        # Initialize factory
-        self.factory = PipelineFactory(config=self.config.to_dict())
+            # Initialize factory
+            self.factory = PipelineFactory(config=self.config.to_dict())
+            
+            # Initialize pipelines
+            self.document_pipeline:DocumentPipeline = self.factory.create_document_pipeline()
+            self.explanation_pipeline : ExplanationPipeline= self.factory.create_explanation_pipeline()
+            self.knowledge_pipeline: KnowledgePipeline = self.factory.create_knowledge_pipeline()
+            
+            # Cache for document info
+            self.document_info: Dict[str, Dict[str, Any]] = {}
         
-        # Initialize pipelines
-        self.document_pipeline = self.factory.create_document_pipeline()
-        self.explanation_pipeline = self.factory.create_explanation_pipeline()
-        self.knowledge_pipeline = self.factory.create_knowledge_pipeline()
-        
-        # Cache for document info
-        self.document_info: Dict[str, Dict[str, Any]] = {}
+        except Exception as e:
+            self.logger.error(f"Error initializing orchestrator: {e}")
+            raise OrchestratorError
     
     def summarize(self, doc_id: str, selected_text: str,
                   section_id: int = 0,
-                  user_id: Optional[str] = None) -> SummarizeResponse:
+                  user_id: Optional[str] = None) -> BaseResponse:
         """Summarize selected text"""
         user_id = user_id or self.config.default_user_id
         
@@ -54,7 +59,7 @@ class DocExplainerOrchestrator:
     def explain(self, doc_id: str, selected_text: str,
                 section_id: int = 0,
                 style: Optional[str] = None,
-                user_id: Optional[str] = None) -> ExplainResponse:
+                user_id: Optional[str] = None) -> BaseResponse:
         """Explain selected text"""
         user_id = user_id or self.config.default_user_id
         
@@ -70,7 +75,7 @@ class DocExplainerOrchestrator:
     
     def answer(self, doc_id: str, question: str,
                section_id: int = 0,
-               user_id: Optional[str] = None) -> AnswerResponse:
+               user_id: Optional[str] = None) -> BaseResponse:
         """Answer question about document"""
         user_id = user_id or self.config.default_user_id
         
@@ -85,7 +90,7 @@ class DocExplainerOrchestrator:
     
     def register_document(self, path: str,
                           build_graph: bool = True,
-                          user_id: Optional[str] = None) -> DocumentResponse:
+                          user_id: Optional[str] = None) -> BaseResponse:
         """Register a document"""
         user_id = user_id or self.config.default_user_id
         
@@ -97,7 +102,7 @@ class DocExplainerOrchestrator:
         
         response = self.document_pipeline.process(request)
         
-        if response.success and response.doc_id:
+        if response.success and type(response) is DocumentResponse and response.doc_id:
             self.document_info[response.doc_id] = {
                 'path': path,
                 'title': response.title,
@@ -107,7 +112,7 @@ class DocExplainerOrchestrator:
         return response
     
     def get_context(self, doc_id: str, section_id: int = 0,
-                   user_id: Optional[str] = None) -> ContextResponse:
+                   user_id: Optional[str] = None) -> BaseResponse:
         """Get context for document and section"""
         user_id = user_id or self.config.default_user_id
         
@@ -165,15 +170,22 @@ if __name__ == "__main__":
     response = orchestrator.register_document(doc_path)
     
     if response.success:
-        doc_id = response.doc_id
-        print(f"Document registered with ID: {doc_id}")
-        
-        # Ask a question
-        answer_response = orchestrator.answer(
-            doc_id=doc_id,
-            question="What is the main finding of this report?",
-            section_id=0
-        )
-        
-        if answer_response.success:
-            print(f"Answer: {answer_response.answer}")
+        if type(response) is DocumentResponse and response.doc_id:
+            doc_id = response.doc_id
+            print(f"Document registered with ID: {doc_id}")
+            
+            # Ask a question
+            answer_response = orchestrator.answer(
+                doc_id=doc_id,
+                question="What is the main finding of this report?",
+                section_id=0
+            )
+            if type(answer_response) is AnswerResponse:
+                if answer_response.success:
+                    print(f"Answer: {answer_response.answer}")
+                else:
+                    print("Failed to get answer")
+            else:
+                print("Unexpected response type for answer")
+        else:
+            print("Document registration response did not contain doc_id")

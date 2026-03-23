@@ -2,17 +2,18 @@ from typing import Optional, List, Dict, Any, Tuple
 import uuid
 import numpy as np
 
-from ..models.content import Sentence, Paragraph, Image, Table, Equation
-from ..models.structure import Section, Document
-from ..models.tree import DocumentTree, DocumentNode, DocumentChunk, ChunkType, ChunkLevel, create_empty_tree
-from ..models.metadata import Metadata, SimpleMetadataCreator
-from ..parser.pdf_parser import PDFParser
-from ..builder.engine import DocumentEngine
-from ..services.document_manager import DocumentManager
-from ..storage.repository import DocumentRepository
-from ..visualization.html_generator import HTMLGenerator
-from ..visualization.console_printer import ConsolePrinter
-
+from ..builder.base import DocumentBuilder
+from ..models import (
+    Sentence, Paragraph, Image, Table, Equation, Section, Document,
+    DocumentTree, DocumentNode, DocumentChunk, ChunkType, ChunkLevel, 
+    Metadata, SimpleMetadataCreator)
+from ..builder import create_empty_tree
+from ..parser import PDFParser
+from ..builder import DocumentEngine
+from ..services import DocumentManager
+from ..visualization import HTMLGenerator, ConsolePrinter
+from ..builder import HierarchicalProcessor
+from ..repository.base import BaseDocumentRepository
 
 class DocumentFactory:
     """Factory for creating document-related objects"""
@@ -216,31 +217,34 @@ class DocumentFactory:
     # ==========================================
     # Service Factories
     # ==========================================
+    def create_document_processor(self, llm_wrapper=None, embedding_model=None)->DocumentBuilder:
+        """Create a document processor"""
+        return HierarchicalProcessor(llm_wrapper=llm_wrapper, embedding_model=embedding_model)
     
     def create_pdf_parser(self, output_dir: str = "output") -> PDFParser:
         """Create a PDF parser"""
         return PDFParser(output_dir=output_dir)
     
-    def create_document_engine(self, llm_wrapper=None, embedding_model=None,
+    def create_document_engine(self, processor,
                               persist_directory: Optional[str] = None) -> DocumentEngine:
         """Create a document engine"""
         return DocumentEngine(
-            llm_wrapper=llm_wrapper,
-            embedding_model=embedding_model,
+            processor=processor,
             persist_directory=persist_directory
         )
     
-    def create_document_manager(self, persist_directory: Optional[str] = None,
-                               llm_wrapper=None, embedding_model=None) -> DocumentManager:
+    def create_document_manager(self,
+                               repository: BaseDocumentRepository,
+                               document_engine: DocumentEngine) -> DocumentManager:
         """Create a document manager"""
         return DocumentManager(
-            persist_directory=persist_directory,
-            llm_wrapper=llm_wrapper,
-            embedding_model=embedding_model
+            repository,
+            document_engine
         )
     
-    def create_document_repository(self, storage_path: str = "data/documents/") -> DocumentRepository:
+    def create_document_repository(self, storage_path: str = "data/documents/") -> BaseDocumentRepository:
         """Create a document repository"""
+        from src.store.document import DocumentRepository
         return DocumentRepository(storage_path=storage_path)
     
     def create_html_generator(self, template_dir: Optional[str] = None) -> HTMLGenerator:
@@ -464,11 +468,15 @@ class DocumentFactory:
             Dictionary with keys: 'parser', 'engine', 'manager', 'repository',
                                   'html_generator', 'console_printer'
         """
+        processor = self.create_document_processor(llm_wrapper, embedding_model)
+        repository = self.create_document_repository()
+        engine = self.create_document_engine(processor, persist_directory)
         return {
             'parser': self.create_pdf_parser(),
-            'engine': self.create_document_engine(llm_wrapper, embedding_model, persist_directory),
-            'manager': self.create_document_manager(persist_directory, llm_wrapper, embedding_model),
-            'repository': self.create_document_repository(),
+            'processor': processor,
+            'repository': repository,
+            'engine': engine,
+            'manager': self.create_document_manager(repository, engine),
             'html_generator': self.create_html_generator(),
             'console_printer': self.create_console_printer()
         }

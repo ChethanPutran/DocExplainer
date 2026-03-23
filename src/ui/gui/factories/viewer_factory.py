@@ -1,10 +1,7 @@
 import os
 from typing import Optional
-
 from ..base.exceptions import UnsupportedFileTypeError
-from ..widgets.viewers.pdf_viewer import PDFViewer
-from ..widgets.viewers.text_viewer import TextViewer
-from ..widgets.viewers.html_viewer import HTMLViewer
+from ..widgets.viewers import PDFViewer, TextViewer,  HTMLViewer, DocumentViewer
 from ..models.signals import UISignals
 
 
@@ -25,7 +22,7 @@ class ViewerFactory:
         cls._viewers[extension.lower()] = viewer_class
     
     @classmethod
-    def create_viewer(cls, path: str, signals: UISignals = None) -> Optional:
+    def create_viewer(cls, path: str, signals: UISignals = None) -> DocumentViewer:
         """Create appropriate viewer for file"""
         ext = os.path.splitext(path)[1].lower()
         

@@ -179,6 +179,7 @@ class Agent:
             unknown_concepts_explained=parsed.unknown_concepts_explained,
             follow_up_questions=parsed.follow_up_questions,
             metadata=parsed.metadata,
+            suggested_resources=parsed.suggested_resources,
             resources=[]  # To be filled by resource recommender
         )
     
@@ -201,6 +202,7 @@ class Agent:
                 gap_bridging=False,
                 processing_time_ms=0
             ),
+            suggested_resources=[],
             resources=[]
         )
     

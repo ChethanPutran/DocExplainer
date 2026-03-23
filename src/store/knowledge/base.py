@@ -1,77 +1,88 @@
-from typing import List, Optional
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
+from typing import List, Tuple, Optional
+from src.core.knowledge.models.concept import Concept
+from src.core.knowledge.models.relationship import ConceptRelationship
 
-from src.core.knowledge.models.relationship import ConceptNode, ConceptNodeRelationship
-from src.core.knowledge.models import ConceptGraph, ConceptInvertedIndex
 
-class BaseKnowledgeStore(ABC):
-    graph = ConceptGraph()  # Shared graph instance for all implementations
+class UnitOfWork(ABC):
+    """Unit of Work pattern for managing transactions"""
+    
+    def __init__(self):
+        self._concepts_to_save: List[Concept] = []
+        self._concepts_to_delete: List[int] = []
+        self._relationships_to_save: List[ConceptRelationship] = []
+        self._relationships_to_delete: List[Tuple[str, str]] = []
+        self._occurrences_to_add: List[Tuple[int, int, int, int]] = []
+    
     @abstractmethod
-    def save_concept(self, node: ConceptNode):
-        pass
-
-    @abstractmethod
-    def get_concept_by_name(self, name: str) -> Optional[ConceptNode]:
-        pass
-
-    @abstractmethod
-    def save_relationship(self, edge: ConceptNodeRelationship):
-        pass
-
-    @abstractmethod
-    def upsert_concepts(self, concepts: List[ConceptNode]):
+    def begin(self):
+        """Begin a transaction"""
         pass
     
     @abstractmethod
-    def get_inverted_index(self) -> ConceptInvertedIndex:
+    def commit(self):
+        """Commit the transaction"""
         pass
+    
+    @abstractmethod
+    def rollback(self):
+        """Rollback the transaction"""
+        pass
+    
+    def register_concept_save(self, concept: Concept):
+        """Register a concept to be saved"""
+        self._concepts_to_save.append(concept)
+    
+    def register_concept_delete(self, concept_id: int):
+        """Register a concept to be deleted"""
+        self._concepts_to_delete.append(concept_id)
+    
+    def register_relationship_save(self, relationship: ConceptRelationship):
+        """Register a relationship to be saved"""
+        self._relationships_to_save.append(relationship)
+    
+    def register_relationship_delete(self, concept1_name: str, concept2_name: str):
+        """Register a relationship to be deleted"""
+        self._relationships_to_delete.append((concept1_name, concept2_name))
+    
+    def register_occurrence(self, concept_id: int, section_id: int, 
+                           section_order: int, paragraph_id: int):
+        """Register an occurrence to be added"""
+        self._occurrences_to_add.append((concept_id, section_id, section_order, paragraph_id))
+    
+    @contextmanager
+    def transaction(self):
+        """Context manager for transactions"""
+        try:
+            self.begin()
+            yield self
+            self.commit()
+        except Exception as e:
+            self.rollback()
+            raise e
+
+
+class UnitOfWorkManager:
+    """Manages Unit of Work instances"""
+    
+    def __init__(self, uow_factory):
+        self.uow_factory = uow_factory
+        self.current_uow: Optional[UnitOfWork] = None
+    
+    def start(self) -> UnitOfWork:
+        """Start a new Unit of Work"""
+        if self.current_uow:
+            raise RuntimeError("A Unit of Work is already in progress")
         
-class KnowledgeStore(BaseKnowledgeStore):
-    def __init__(self, storage_path="db/knowledge_graph.gpickle"):
-        self.path = storage_path
-        self.concepts = {}
-        self.relationships = {}
-        self.graph = ConceptGraph()
-        self.inverted_index = ConceptInvertedIndex()
-
-    def get_inverted_index(self) -> ConceptInvertedIndex:
-        return self.inverted_index
+        self.current_uow = self.uow_factory()
+        return self.current_uow
     
-    def save_concept(self, node: ConceptNode):
-        # Store serialized concept data in NetworkX nodes
-        self.graph.add_concept_node(node)
-        
-    def has_concept(self, name):
-        return name in self.concepts
+    def get_current(self) -> Optional[UnitOfWork]:
+        """Get the current Unit of Work"""
+        return self.current_uow
     
-    def get_concept_graph(self):
-        return self.graph
-    
-    def add_concept(self, concept):
-        self.concepts[concept.name] = concept
-    
-    def save_relationship(self, edge: ConceptNodeRelationship):
-        key = (edge.concept1, edge.concept2)
-        self.relationships[key] = edge
-        self.graph.add_relationship(edge.concept1, edge.concept2, edge)
-
-    def get_concept_by_name(self, name):
-        return self.concepts.get(name)
-    
-    def get_relationship(self, concept1_name, concept2_name):
-        key = (concept1_name, concept2_name)
-        return self.relationships.get(key)
-    
-    def get_related_concepts(self, concept, relationship_type=None):
-        related_concepts = []
-        for (concept1, concept2), relationship in self.relationships.items():
-            if concept1 == concept.name:
-                related_concepts.append(concept2)
-            elif concept2 == concept.name:
-                related_concepts.append(concept1)
-        return related_concepts
-
-    def upsert_concepts(self, concepts):
-        for concept in concepts:
-            self.add_concept(concept)
-
+    def complete(self):
+        """Complete the current Unit of Work"""
+        if self.current_uow:
+            self.current_uow = None

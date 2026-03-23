@@ -2,10 +2,11 @@ import json
 from typing import Any, Optional
 from langchain_core.output_parsers import JsonOutputParser
 
-from ..base.exceptions import ParsingError
+from ..base.exceptions import ParserError
+from .base import BaseParser
 
 
-class JSONParser(JsonOutputParser):
+class JSONParser(BaseParser, JsonOutputParser):
     """JSON output parser with error handling"""
     
     def parse(self, text: str) -> Any:
@@ -21,4 +22,4 @@ class JSONParser(JsonOutputParser):
                     return json.loads(json_match.group())
                 except:
                     pass
-            raise ParsingError(f"Failed to parse JSON: {e}") from e
+            raise ParserError(f"Failed to parse JSON: {e}") from e

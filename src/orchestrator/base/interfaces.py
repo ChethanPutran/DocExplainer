@@ -4,11 +4,16 @@ from ..models.requests import BaseRequest
 from ..models.responses import BaseResponse
 
 
-class Pipeline(ABC):
+class  Pipeline(ABC):
     """Base interface for pipelines"""
     
     @abstractmethod
     def process(self, request: BaseRequest) -> BaseResponse:
+        """Process a request through the pipeline"""
+        pass
+
+    @abstractmethod
+    def _process(self, request: BaseRequest) -> BaseResponse:
         """Process a request through the pipeline"""
         pass
     

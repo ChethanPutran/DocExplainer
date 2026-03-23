@@ -4,7 +4,7 @@ from .models.interaction import UserInteraction
 from .services.knowledge_tracing import BayesianKnowledgeTracer
 from .services.user_manager import UserManager
 from .services.profile_analyzer import ProfileAnalyzer
-from .repository.interaction_repository import InteractionRepository
+from .repository.user_repository import BaseUserRepository
 
 __all__ = [
     'User',
@@ -14,5 +14,5 @@ __all__ = [
     'BayesianKnowledgeTracer',
     'UserManager',
     'ProfileAnalyzer',
-    'InteractionRepository'
+    'BaseUserRepository'
 ]

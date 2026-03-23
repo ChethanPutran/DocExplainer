@@ -26,8 +26,8 @@ class FollowUpPanel(QWidget):
         
         # Separator
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         layout.addWidget(line)
         
         # Questions container
@@ -36,7 +36,7 @@ class FollowUpPanel(QWidget):
         
         # Placeholder
         self.placeholder = QLabel("No follow-up questions available")
-        self.placeholder.setAlignment(Qt.AlignCenter)
+        self.placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.placeholder.setStyleSheet("color: #999; padding: 20px;")
         self.questions_layout.addWidget(self.placeholder)
         

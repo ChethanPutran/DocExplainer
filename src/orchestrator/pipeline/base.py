@@ -45,8 +45,7 @@ class BasePipeline(Pipeline, ABC):
         except Exception as e:
             self.logger.exception(f"Unexpected error: {e}")
             return self._create_error_response(f"Unexpected error: {str(e)}", request)
-    
-    @abstractmethod
+   
     def _process(self, request: BaseRequest) -> BaseResponse:
         """Internal process method to be implemented by subclasses"""
         pass

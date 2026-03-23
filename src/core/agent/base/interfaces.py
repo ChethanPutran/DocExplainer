@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any
 from langchain_core.prompts import PromptTemplate
 from langchain_core.language_models import BaseLanguageModel
 
@@ -25,7 +25,8 @@ class LLMInterface(ABC):
 
 class ParserInterface(ABC):
     """Interface for output parsers"""
-    
+    pydantic_model = None
+
     @abstractmethod
     def parse(self, output: str) -> Any:
         """Parse LLM output"""

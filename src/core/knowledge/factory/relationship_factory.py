@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any
-from src.core.knowledge.models.concept import Concept
-from src.core.knowledge.models.relationship import ConceptRelationship, ConceptNode, ConceptNodeRelationship
+from ..models.concept import Concept
+from ..models.relationship import ConceptRelationship, ConceptNode, ConceptNodeRelationship
 
 class RelationshipFactory:
     """Factory for creating relationship objects"""

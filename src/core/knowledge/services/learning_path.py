@@ -1,8 +1,6 @@
 from typing import List, Dict, Optional
-from src.core.knowledge.models.concept import Concept
-from src.core.knowledge.models.graph import ConceptGraph
-from src.core.user.user_manager import UserManager
-from src.store.knowledge_store import BaseKnowledgeStore
+from ..repository import BaseKnowledgeStore
+from src.core.user import UserManager
 
 class LearningPathGenerator:
     """Generates personalized learning paths"""

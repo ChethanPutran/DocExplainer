@@ -1,11 +1,12 @@
 from typing import List, Dict, Optional
-from src.models.text import TextModels
-from src.core.knowledge.models.concept import Concept
-from src.core.knowledge.models.index import ConceptInvertedIndex
-from src.core.knowledge.extraction.canonicalization.pipeline import ConceptCanonicalizer
-from src.core.knowledge.extraction.scoring.composite_scorer import CompositeScoringStrategy
-from src.core.knowledge.extraction.filters.subset_pruner import SubsetPrunerStrategy
-from src.core.agent.base.interfaces import LLMInterface
+from src.models import TextModels
+from src.core.agent import LLMInterface
+
+
+from ..models import Concept,  ConceptInvertedIndex
+from .scoring import CompositeScoringStrategy
+from .filters import SubsetPrunerStrategy
+from .canonicalization import ConceptCanonicalizer
 
 class ConceptExtractor:
     """Main orchestrator for concept extraction"""
@@ -59,7 +60,7 @@ class ConceptExtractor:
 
         return concept
 
-    def extract(self, text: str, context: str, section_id: int, paragraph_id: int) -> List[Concept]:
+    def extract(self, text: List[str], context: str, section_id: str, paragraph_id: str) -> List[Concept]:
         """Extract concepts from text"""
         
         # Extract candidates using multiple strategies
@@ -125,7 +126,7 @@ class ConceptExtractor:
 
         return filtered_concepts
 
-    def _filter_concepts(self, concepts: List[Concept], context_text: str) -> List[Concept]:
+    def _filter_concepts(self, concepts: List[Concept], context_text: List[str]) -> List[Concept]:
         """Rank and filter concepts"""
         if not concepts:
             return []

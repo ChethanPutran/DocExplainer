@@ -3,12 +3,12 @@ from datetime import datetime
 
 from .base import BasePipeline
 from ..base.exceptions import DocumentNotFoundError
-from ..models.requests import SummarizeRequest, ExplainRequest, AnswerRequest
-from ..models.responses import SummarizeResponse, ExplainResponse, AnswerResponse
+from ..models.requests import SummarizeRequest, ExplainRequest, AnswerRequest, BaseRequest
+from ..models.responses import SummarizeResponse, ExplainResponse, AnswerResponse, BaseResponse
 from ..services.document_service import DocumentService
 from ..services.context_service import ContextService
-from src.core.explanation_engine.adaptive_explainer import AdaptiveExplainer
-from src.core.user.user_manager import UserManager
+from src.core.explanation_engine import AdaptiveExplainer
+from src.core.user import UserManager
 from src.core.memory.managers.memory_manager import MemoryManager
 from src.core.memory.managers.session_manager import SessionManager
 

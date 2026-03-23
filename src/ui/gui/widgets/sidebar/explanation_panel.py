@@ -24,21 +24,21 @@ class ExplanationPanel(QWidget):
         
         # Separator
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         layout.addWidget(line)
         
         # Explanation content in scroll area
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setFrameShape(QFrame.NoFrame)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
         
         self.content_widget = QWidget()
         self.content_layout = QVBoxLayout(self.content_widget)
         
         self.explanation_label = QLabel("Select text to get an explanation")
         self.explanation_label.setWordWrap(True)
-        self.explanation_label.setTextFormat(Qt.RichText)
+        self.explanation_label.setTextFormat(Qt.TextFormat.RichText)
         self.content_layout.addWidget(self.explanation_label)
         
         # Known concepts section

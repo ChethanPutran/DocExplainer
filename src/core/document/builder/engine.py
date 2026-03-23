@@ -1,15 +1,16 @@
 from typing import Optional, List
-from ..models.structure import Document
-from ..models.tree import DocumentTree, create_empty_tree
-from .processor import HierarchicalProcessor
+from ..models import Document, DocumentTree
+from .base import BaseDocumentEngine, DocumentBuilder
 
 
-class DocumentEngine:
+class DocumentEngine(BaseDocumentEngine):
     """Orchestrates document processing pipeline"""
     
-    def __init__(self, llm_wrapper=None, embedding_model=None, persist_directory: Optional[str] = None):
+    def __init__(self, 
+                 processor: DocumentBuilder,
+                 persist_directory: Optional[str] = None):
         self.persist_directory = persist_directory
-        self.processor = HierarchicalProcessor(llm_wrapper, embedding_model)
+        self.processor = processor
         self.full_db = None
         self.tree_db = None
         self.tree = None

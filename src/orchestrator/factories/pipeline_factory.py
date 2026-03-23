@@ -9,18 +9,17 @@ from ..services.user_service import UserService
 from ..services.context_service import ContextService
 
 from src.core.document import DocumentManager
-from src.core.explanation_engine.adaptive_explainer import AdaptiveExplainer
+from src.core.explanation_engine import AdaptiveExplainer
 from src.core.user import UserManager
-from src.core.memory.managers.memory_manager import MemoryManager
-from src.core.memory.managers.session_manager import SessionManager
+from src.core.memory import MemoryManager, SessionManager
 from src.core.knowledge import GraphStateManager
 from src.core.knowledge import PrerequisiteAnalyzer
 from src.core.knowledge import LearningPathGenerator
 from src.core.knowledge import RecommendationService
 from src.core.agent.llm.factories.llm_factory import LLMFactory
 from src.models.text import TextModels
-from store.knowledge_store import KnowledgeStore
-from store.user_store import UserStore
+from src.store.knowledge import KnowledgeStore, KnowledgeRepository
+from src.store.user import UserRepository
 
 # Default user ID
 DEFAULT_USER_ID = "user_123"
@@ -33,13 +32,33 @@ class PipelineFactory:
         self.config = config or {}
         self._instances = {}
         self.logger = logging.getLogger(self.__class__.__name__)
+
+    def create_documnet_repository(self) -> Any:
+        """Create document repository"""
+        if 'document_repository' not in self._instances:
+            from src.store.document import DocumentRepository
+            self._instances['document_repository'] = DocumentRepository()
+        return self._instances['document_repository']
+    
+    def create_document_engine(self) -> Any:
+        """Create document engine"""
+        if 'document_engine' not in self._instances:
+            from src.core.document import DocumentEngine
+            from src.core.document.builder import HierarchicalProcessor
+            document_processor = HierarchicalProcessor(
+                self.create_llm(),
+                self.create_text_models().get_embedding_model()
+            )
+            self._instances['document_engine'] = DocumentEngine(document_processor)
+        return self._instances['document_engine']
     
     def create_document_manager(self) -> DocumentManager:
         """Create document manager"""
         if 'document_manager' not in self._instances:
             persist_dir = self.config.get('persist_directory', 'db/vector_dbs')
             self._instances['document_manager'] = DocumentManager(
-                persist_directory=persist_dir
+                repository=self.create_documnet_repository(),
+                document_engine=self.create_document_engine(),
             )
         return self._instances['document_manager']
     
@@ -69,10 +88,10 @@ class PipelineFactory:
             )
         return self._instances['knowledge_store']
     
-    def create_user_store(self) -> UserStore:
+    def create_user_store(self) -> UserRepository:
         """Create user store"""
         if 'user_store' not in self._instances:
-            self._instances['user_store'] = UserStore()
+            self._instances['user_store'] = UserRepository()
         return self._instances['user_store']
     
     def create_user_manager(self, user_id: str = DEFAULT_USER_ID) -> UserManager:
@@ -145,7 +164,7 @@ class PipelineFactory:
             filter_strategy = SubsetPrunerStrategy()
             
             self._instances['concept_extractor'] = ConceptExtractor(
-                text_models=text_models,
+                text_model=text_models,
                 llm_wrapper=llm,
                 canonicalizer=canonicalizer,
                 scoring_strategy=scoring_strategy,
@@ -174,12 +193,10 @@ class PipelineFactory:
     def create_graph_state_manager(self) -> GraphStateManager:
         """Create graph state manager"""
         if 'graph_state_manager' not in self._instances:
-            from src.core.knowledge.graph.builder import ConceptGraphBuilder
-            from src.core.knowledge.graph.chain import DocumentChain
-            from src.core.knowledge.graph.updater import GraphUpdater
-            from src.core.knowledge.graph.repository import KnowledgeRepository
-            from src.core.knowledge.graph.state_manager import GraphStateManager
-            from src.core.document.cacher import DocumentCacher
+            from src.core.knowledge.graph import (
+                ConceptGraphBuilder, DocumentChain, GraphUpdater, GraphStateManager, 
+            )
+            from src.store.document import DocumentCache
             
             concept_extractor = self.create_concept_extractor()
             llm_relationship = self._instances.get('llm_relationship_extractor')
@@ -190,7 +207,7 @@ class PipelineFactory:
                 llm_relationship = self._instances['llm_relationship_extractor']
                 statistical_relationship = self._instances['statistical_relationship_extractor']
             
-            document_cacher = DocumentCacher()
+            document_cacher = DocumentCache()
             user_manager = self.create_user_manager()
             knowledge_store = self.create_knowledge_store()
             
@@ -219,7 +236,7 @@ class PipelineFactory:
     def create_explainer(self) -> AdaptiveExplainer:
         """Create adaptive explainer"""
         if 'explainer' not in self._instances:
-            from src.core.explanation_engine.adaptive_explainer import AdaptiveExplainer
+            from src.core.explanation_engine import AdaptiveExplainer
             from src.core.agent.agent import Agent
             from src.core.agent.config import AgentConfig
             
@@ -231,8 +248,8 @@ class PipelineFactory:
             agent = Agent(config=agent_config)
             
             self._instances['explainer'] = AdaptiveExplainer(
-                embedding_model=self.create_text_models().get_embedding_model(),
-                explanation_style=self.config.get('explanation_style', 'intermediate')
+                agent=agent,
+                recommender=self.create_knowledge_pipeline().recommendation_service,
             )
             # Set the agent
             self._instances['explainer'].agent = agent

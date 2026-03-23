@@ -1,15 +1,42 @@
 import os
 import json
 import pickle
-from typing import Optional, List
-from ..models.structure import Document
-from ..models.tree import DocumentTree
-from .base import DocumentStorage
-from .cache import DocumentCache
+from typing import Dict, Any, Optional, List
+from src.core.document import Document, DocumentTree, BaseDocumentRepository, BaseDocumentCache, DocumentChunk
+
 from .serializers import DocumentSerializer, TreeSerializer
 
 
-class DocumentRepository(DocumentStorage):
+class DocumentCache(BaseDocumentCache):
+    """In-memory cache for documents"""
+    
+    def __init__(self):
+        self._cache: Dict[str, Any] = {}
+    
+    def get(self, key: str) -> Optional[Any]:
+        """Get item from cache"""
+        return self._cache.get(key)
+    
+    def set(self, key: str, value: Any):
+        """Set item in cache"""
+        self._cache[key] = value
+    
+    def has(self, key: str) -> bool:
+        """Check if key exists in cache"""
+        return key in self._cache
+    
+    def delete(self, key: str) -> bool:
+        """Delete item from cache"""
+        if key in self._cache:
+            del self._cache[key]
+            return True
+        return False
+    
+    def clear(self):
+        """Clear cache"""
+        self._cache.clear()
+
+class DocumentRepository(BaseDocumentRepository):
     """File-based document repository"""
     
     def __init__(self, storage_path: str = "data/documents/"):
@@ -30,6 +57,19 @@ class DocumentRepository(DocumentStorage):
     def _get_tree_path(self, doc_id: str) -> str:
         """Get tree file path"""
         return os.path.join(self.storage_path, "trees", f"{doc_id}.pkl")
+    
+    def save_chunk(self, chunk: DocumentChunk, chunk_id: str) -> str:
+        """Save document chunk"""
+        filepath = os.path.join(self.storage_path, "chunks", f"{chunk_id}.json")
+        
+        with open(filepath, 'w') as f:
+            json.dump({
+                'text': chunk.text,
+                'summary': getattr(chunk, 'summary', ''),
+                'metadata': getattr(chunk, 'metadata', {})
+            }, f, indent=2)
+        
+        return filepath
     
     def save_document(self, document: Document, doc_id: str) -> bool:
         """Save document to JSON"""
@@ -71,7 +111,7 @@ class DocumentRepository(DocumentStorage):
         try:
             filepath = self._get_tree_path(doc_id)
             with open(filepath, 'wb') as f:
-                pickle.dump(tree, f)
+                pickle.dump(TreeSerializer.serialize(tree), f)
             
             self.cache.set(f"tree_{doc_id}", tree)
             return True
@@ -93,7 +133,7 @@ class DocumentRepository(DocumentStorage):
         
         try:
             with open(filepath, 'rb') as f:
-                tree = pickle.load(f)
+                tree = TreeSerializer.deserialize(pickle.load(f))
                 self.cache.set(f"tree_{doc_id}", tree)
                 return tree
         except Exception as e:

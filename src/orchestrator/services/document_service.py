@@ -1,10 +1,9 @@
+from __future__ import annotations
 from typing import Optional, Dict, Any
 import logging
 
-from src.core.document.manager import DocumentManager
-from src.core.document.base import Document
-from src.core.document.models.tree import DocumentTree
-from src.core.knowledge.graph.state_manager import GraphStateManager
+from src.core.document import DocumentManager, Document, DocumentTree
+from src.core.knowledge import GraphStateManager
 
 from ..base.exceptions import DocumentNotFoundError
 
@@ -30,7 +29,7 @@ class DocumentService:
         doc_id = self.document_manager.load_document(path)
         
         # Build document tree
-        document_tree = self.document_manager.build_document_context(doc_id)
+        document_tree = self.document_manager.build_document_tree(doc_id)
         self.document_trees[doc_id] = document_tree
         
         # Build knowledge graph if requested
@@ -44,7 +43,7 @@ class DocumentService:
     def get_document(self, doc_id: str) -> Optional[Document]:
         """Get document by ID"""
         try:
-            return self.document_manager.get_document(int(doc_id))
+            return self.document_manager.get_document(doc_id)
         except Exception as e:
             self.logger.error(f"Error getting document {doc_id}: {e}")
             return None
@@ -56,7 +55,7 @@ class DocumentService:
     def has_document(self, doc_id: str) -> bool:
         """Check if document exists"""
         try:
-            return self.document_manager.has_document(int(doc_id))
+            return self.document_manager.has_document(doc_id)
         except:
             return False
     
@@ -70,12 +69,12 @@ class DocumentService:
             for para in section.paragraphs:
                 if position == 0:
                     if para.page == page:
-                        return section.sec_id
+                        return int(section.id)
                 elif para.page == page and (para.start <= position <= para.end):
-                    return section.sec_id
+                    return int(section.id)
         
         return -1
     
     def get_document_context(self, doc_id: str, section_id: int) -> Dict[str, Any]:
         """Get document context up to section"""
-        return self.graph_state_manager.get_document_context(section_id)
+        return self.graph_state_manager.get_document_context(str(section_id))

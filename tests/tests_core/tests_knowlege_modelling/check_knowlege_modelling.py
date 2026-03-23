@@ -9,7 +9,7 @@ if str(ROOT) not in sys.path:
 
 from core.document.manager import DocumentManager
 from core.document.builder.processor import HierarchicalDocumentProcessor
-from src.core.knowledge.graph.hierarchy import build_document_hierarchy
+from core.document.builder.hierarchy import build_document_hierarchy
 from src.core.knowledge.graph.state_manager import GraphStateManager
 from core.knowlege.user.knowledge_tracing import BayesianKnowledgeTracer
 from src.models.text import TextModels,NERRegex

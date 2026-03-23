@@ -1,26 +1,69 @@
+from __future__ import annotations
 import pickle
 import json
 import networkx as nx
-from typing import Optional, List
+from typing import Optional, List, TYPE_CHECKING
 import os
-from src.core.knowledge.models.graph import ConceptGraph
-from src.core.knowledge.models.concept import Concept
-from src.core.knowledge.models.relationship import ConceptRelationship
+
+from src.core.knowledge import ConceptInvertedIndex, ConceptNodeRelationship
+
+from .concept_repository import ConceptRepository
+
+
+
+from .serializers import GraphSerializer
 from .concept_repository import ConceptRepository
 from .relationship_repository import RelationshipRepository
-from .serializers import GraphSerializer
 
+from src.core.knowledge import (
+    BaseDocumentChain,
+    GraphDelta ,
+    ConceptGraph,
+      ConceptNode,
+      BaseKnowledgeRepository)
 
-class GraphRepository:
+class KnowledgeRepository(BaseKnowledgeRepository):
     """Repository for graph persistence"""
-    
-    def __init__(self, storage_path: str = "data/knowledge/graphs/",
-                 concept_repo: Optional[ConceptRepository] = None,
-                 relationship_repo: Optional[RelationshipRepository] = None):
+    def __init__(self,
+                 document_chain: BaseDocumentChain=None, 
+                 concept_graph: ConceptGraph=None,
+                 storage_path: str = "data/knowledge/graphs/",
+                 concept_repo: Optional['ConceptRepository'] = None,
+                 relationship_repo: Optional['RelationshipRepository'] = None,
+                 ):
         self.storage_path = storage_path
-        self.concept_repo = concept_repo or ConceptRepository()
-        self.relationship_repo = relationship_repo or RelationshipRepository()
+
+        if concept_repo is None:
+            concept_repo = ConceptRepository()
+        if relationship_repo is None:
+            relationship_repo = RelationshipRepository()
+
+        self.concept_repo = concept_repo
+        self.relationship_repo = relationship_repo
+        self.chain = document_chain
+        self.graph = concept_graph
         self._ensure_storage()
+    
+    def save_delta(self, delta: GraphDelta):
+        """Save a delta to the chain"""
+        self.chain.add(delta.section_id, delta)
+
+    def get_deltas_upto(self, section_id: int) -> List[GraphDelta]:
+        """Get deltas up to section id"""
+        return self.chain.get_concept_graph_upto(section_id)
+
+    def get_concept_node_by_name(self, name: str) -> Optional[ConceptNode]:
+        """Get concept node by name"""
+        if self.graph.has_concept(name):
+            return self.graph.get_concept(name)
+        return None
+    
+    def get_concept_by_name(self, name: str) -> Optional[ConceptNode]:
+        pass
+
+    def get_concept_graph(self) -> ConceptGraph:
+        """Get the concept graph"""
+        return self.graph
     
     def _ensure_storage(self):
         """Ensure storage directory exists"""
@@ -99,6 +142,17 @@ class GraphRepository:
                 graphs.add(name)
         
         return list(graphs)
+    
+    def get_inverted_index(self) -> ConceptInvertedIndex:
+        return super().get_inverted_index()
+    
+    def update_graph(self, graph: ConceptGraph):
+        """Update the graph with new data"""
+        self.graph = graph
+        self.save_graph(graph)
+
+    def upsert_concepts(self, concepts: List[ConceptNode]):
+        return super().upsert_concepts(concepts)
     
     def build_graph_from_repositories(self) -> ConceptGraph:
         """Build a graph from concept and relationship repositories"""

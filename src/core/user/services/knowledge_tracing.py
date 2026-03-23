@@ -1,8 +1,7 @@
 from typing import Dict, List, Optional
 from datetime import datetime
-from src.core.knowledge.models.concept import Concept
-from src.core.user.models.knowledge_state import UserKnowledgeState, KnowledgeState
-from src.core.user.models.interaction import UserInteraction
+from src.core.knowledge import Concept
+from ..models import UserKnowledgeState, KnowledgeState,  UserInteraction
 
 class BayesianKnowledgeTracer:
     """

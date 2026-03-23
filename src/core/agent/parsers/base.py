@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from ..base.interfaces import ParserInterface
 
 
-class BaseParser(BaseOutputParser, ParserInterface):
+class BaseParser(ParserInterface):
     """Base class for output parsers"""
     
     def __init__(self, pydantic_model: Optional[Type[BaseModel]] = None):
@@ -16,7 +16,7 @@ class BaseParser(BaseOutputParser, ParserInterface):
     def parse(self, text: str) -> Any:
         """Parse LLM output"""
         pass
-    
+
     def get_format_instructions(self) -> str:
         """Get format instructions for prompts"""
         if hasattr(self, 'pydantic_model') and self.pydantic_model:

@@ -1,7 +1,7 @@
 from typing import Dict, List, Any
-from src.core.user.models.user import User
-from src.core.user.models.knowledge_state import KnowledgeState
-from src.core.knowledge.models.graph import ConceptGraph
+from src.core.knowledge import ConceptGraph
+
+from ..models import User,  KnowledgeState
 
 class ProfileAnalyzer:
     """Analyzes user profile and provides insights"""

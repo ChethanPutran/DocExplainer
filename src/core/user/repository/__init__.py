@@ -1,7 +1,5 @@
-from .user_repository import UserRepository
-from .interaction_repository import InteractionRepository
+from .user_repository import BaseUserRepository
 
 __all__ = [
-    'UserRepository',
-    'InteractionRepository'
+    'BaseUserRepository',
 ]

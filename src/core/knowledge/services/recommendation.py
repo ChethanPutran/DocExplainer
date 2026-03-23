@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from typing import List, Dict, Optional
-from src.core.knowledge.models.concept import Concept
-from src.core.user.user_manager import UserManager
-from src.store.knowledge_store import BaseKnowledgeStore
+from src.core.user import UserManager
+
+from ..models.concept import Concept
+from ..repository import BaseKnowledgeStore
 
 class RecommendationService:
     """Provides concept recommendations based on user state"""

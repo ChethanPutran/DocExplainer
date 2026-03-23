@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 import time
-from src.core.knowledge.models.concept import Concept
+from src.core.knowledge import Concept
 
 @dataclass
 class KnowledgeState:

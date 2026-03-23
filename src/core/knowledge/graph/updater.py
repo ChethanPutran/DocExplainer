@@ -1,8 +1,6 @@
-from src.core.user.user_manager import UserManager
-from src.core.knowledge.models.graph import ConceptGraph
-from src.core.knowledge.models.delta import GraphDelta
-from src.core.knowledge.models.relationship import ConceptNodeRelationship
-from store.knowledge_store import BaseKnowledgeStore
+from src.core.user import UserManager, UserKnowledgeState
+from ..repository import BaseKnowledgeStore
+from ..models import ConceptGraph, GraphDelta, ConceptNodeRelationship
 
 class GraphUpdater:
     """Updates the knowledge graph with new information"""
@@ -10,7 +8,7 @@ class GraphUpdater:
     def __init__(self, user_manager: UserManager, knowledge_store: BaseKnowledgeStore):
         self.user_manager = user_manager
         self.knowledge_store = knowledge_store
-        self.user = None
+        self.user_state:UserKnowledgeState = None
 
     def apply_delta(self, delta: GraphDelta, target_graph: ConceptGraph):
         """Apply delta to target graph"""

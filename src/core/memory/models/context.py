@@ -1,8 +1,11 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional
-from src.core.knowledge.models.concept import ConceptGraph
-from src.core.user.models.knowledge_state import UserKnowledgeState
+from typing import Dict, List, Any, Optional,  TYPE_CHECKING
 from datetime import datetime
+
+if TYPE_CHECKING:
+    from src.core.knowledge import ConceptGraph
+    from src.core.user import UserKnowledgeState    
 
 @dataclass
 class SessionContext:

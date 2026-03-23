@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional
 from ..base.interfaces import MemoryStorage as MemoryStorageInterface
 
 
-class MemoryStorage(ABC, MemoryStorageInterface):
+class MemoryStorage(MemoryStorageInterface):
     """Base class for memory storage"""
     
     def __init__(self):

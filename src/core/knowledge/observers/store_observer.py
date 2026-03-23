@@ -2,7 +2,7 @@ from typing import List
 from .base import KnowledgeGraphObserver
 from src.core.knowledge.models.concept import Concept
 from src.core.knowledge.models.relationship import ConceptNode, ConceptNodeRelationship
-from src.store.knowledge import BaseKnowledgeStore
+from ..repository import BaseKnowledgeStore
 
 class KnowledgeStoreObserver(KnowledgeGraphObserver):
     """Observer that persists data to knowledge store"""

@@ -4,10 +4,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.embeddings import Embeddings
 from langchain_core.documents import Document as LCDocument
 
-from ..models.structure import Document
-from ..models.tree import DocumentTree
-from .strategies.summary_generator import SummaryGenerator
-from .strategies.hierarchy_builder import HierarchyBuilder
+from ..models import Document, DocumentTree
+from .strategies import SummaryGenerator, HierarchyBuilder
 from .base import DocumentBuilder
 
 

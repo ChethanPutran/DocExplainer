@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional, List
 from ..base.interfaces import ChainInterface
 
 
-class BaseChain(ABC, ChainInterface):
+class BaseChain(ChainInterface):
     """Base class for chain structures"""
     
     def __init__(self):

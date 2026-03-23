@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from langchain_core.runnables import RunnableSequence
 
 from .base import BaseChain

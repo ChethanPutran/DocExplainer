@@ -1,15 +1,15 @@
-from .knowledge.concept_repository import ConceptRepository
-from .knowledge.relationship_repository import RelationshipRepository
-from .knowledge.graph_repository import GraphRepository
-from .knowledge.index_repository import InvertedIndexRepository
-from .user.user_repository import UserRepository
-from .document.document_repository import DocumentRepository
-from .factories.repository_factory import RepositoryFactory
+from .document import DocumentRepository
+from .knowledge import ConceptRepository
+from .knowledge import RelationshipRepository
+from .knowledge import BaseKnowledgeRepository
+from .knowledge import InvertedIndexRepository
+from .user import UserRepository
+from .factories import RepositoryFactory
 
 __all__ = [
     'ConceptRepository',
     'RelationshipRepository',
-    'GraphRepository',
+    'BaseKnowledgeRepository',
     'InvertedIndexRepository',
     'UserRepository',
     'DocumentRepository',

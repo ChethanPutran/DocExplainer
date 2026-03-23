@@ -1,14 +1,13 @@
-from typing import List
+from __future__ import annotations
+from typing import List, TYPE_CHECKING
 import networkx as nx
 import plotly.graph_objects as go
 
-from src.core.document import DocumentCacher, DocumentTree
-from src.core.knowledge.models.concept import Concept
-from src.core.knowledge.models.relationship import ConceptRelationship, ConceptNode, ConceptNodeRelationship
-from src.core.knowledge.models.graph import ConceptGraph
-from src.core.knowledge.extraction.extractor import ConceptExtractor
-from src.core.knowledge.extraction.strategies.relationship.llm_strategy import LLMRelationshipExtractor
-from src.core.knowledge.extraction.strategies.relationship.statistical_strategy import StatisticalRelationshipExtractor
+if TYPE_CHECKING:
+    from src.core.document import BaseDocumentCache, DocumentTree
+    
+from ..models import Concept, ConceptRelationship, ConceptNode, ConceptNodeRelationship,  ConceptGraph
+from ..extraction import ConceptExtractor, LLMRelationshipExtractor,  StatisticalRelationshipExtractor
 
 class ConceptGraphBuilder:
     """Builds knowledge graph from document concepts"""
@@ -19,11 +18,11 @@ class ConceptGraphBuilder:
                  concept_extractor: ConceptExtractor,
                  llm_relationship_extractor: LLMRelationshipExtractor,
                  statistical_relationship_extractor: StatisticalRelationshipExtractor,
-                 document_cacher: DocumentCacher) -> None:
-        self.document_cacher = document_cacher
+                 document_cacher: BaseDocumentCache) -> None:
         self.concept_extractor = concept_extractor
         self.llm_relationship_extractor = llm_relationship_extractor
         self.statistical_relationship_extractor = statistical_relationship_extractor
+        self.document_cacher = document_cacher
         self.graph = ConceptGraph()
 
     def _validate_no_cycles(self) -> bool:
@@ -153,11 +152,13 @@ class ConceptGraphBuilder:
         return fig
 
     def add_concepts_to_document(self, document_tree: DocumentTree, 
-                                section_id: int, top: int = 5):
+                                section_id: str, top: int = 5):
         """Extract concepts from a section and store in DocumentTree"""
         print("Extracting concepts from document...")
 
         cur_section = document_tree.get_section(section_id)
+        
+        assert cur_section is not None, f"Section with ID {section_id} not found in document tree"
 
         section_concepts = []
         section_concept_relations = []
@@ -165,6 +166,7 @@ class ConceptGraphBuilder:
         pre_section_summary = document_tree.get_previous_sections_summaries(section_id)
         pre_section_summary = "".join(pre_section_summary)
         para_summary = ""
+
 
         for paragraph_node in cur_section.children.values():
             texts = []
@@ -177,7 +179,7 @@ class ConceptGraphBuilder:
             context = pre_section_summary + para_summary
 
             # Extract concepts
-            concepts = self.concept_extractor.extract(text, context, section_id, paragraph_node.id)
+            concepts = self.concept_extractor.extract([text], context, section_id, paragraph_node.id)
             
             # Extract relationships
             stat_relations = self.statistical_relationship_extractor.extract(concepts, text, context)

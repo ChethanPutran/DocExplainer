@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Dict, Optional
 from ..storage.session_memory import SessionMemory
 from ..chains.session_chain import SessionChain

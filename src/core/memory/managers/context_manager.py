@@ -1,20 +1,33 @@
+from __future__ import annotations
 from typing import Optional, Any
 from ..models.context import Context, SessionContext
-from src.core.knowledge.models.graph import ConceptGraph
-from src.core.user.models.knowledge_state import UserKnowledgeState
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.core.knowledge import ConceptGraph
+    from src.core.user import UserKnowledgeState
 
 
 class ContextManager:
     """Manages comprehensive context for operations"""
     
-    def __init__(self, user_knowledge: Optional[UserKnowledgeState] = None,
+    def __init__(self, user_knowledge: Optional['UserKnowledgeState'] = None,
                  session_context: Optional[SessionContext] = None,
                  document_context: Optional[Any] = None,
-                 concept_graph: Optional[ConceptGraph] = None):
-        self.user_knowledge = user_knowledge or UserKnowledgeState()
-        self.session_context = session_context or SessionContext()
+                 concept_graph: Optional['ConceptGraph'] = None):
+        if user_knowledge is None:
+            from src.core.user import UserKnowledgeState
+            user_knowledge = UserKnowledgeState()
+        if session_context is None:            
+            session_context = SessionContext()
+        if concept_graph is None:
+            from src.core.knowledge import ConceptGraph
+            concept_graph = ConceptGraph()
+
+        self.user_knowledge = user_knowledge 
+        self.session_context = session_context 
         self.document_context = document_context
-        self.concept_graph = concept_graph or ConceptGraph()
+        self.concept_graph = concept_graph 
     
     def build_context(self) -> Context:
         """Build comprehensive context"""

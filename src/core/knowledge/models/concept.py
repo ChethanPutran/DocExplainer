@@ -16,9 +16,9 @@ class Concept:
     occurrences: List[Dict] = field(default_factory=list)
     
     def __post_init__(self):
-        self.id = int(time() * 1000)  # Generate unique ID
+        self.id = str(time() * 1000)  # Generate unique ID
     
-    def add_occurrence(self, section_id: int, paragraph_id: int, char_start: int, char_end: int, snippet: str):
+    def add_occurrence(self, section_id: str, paragraph_id: str, char_start: int, char_end: int, snippet: str):
         """Add an occurrence location"""
         self.occurrences.append({
             "section_id": section_id,

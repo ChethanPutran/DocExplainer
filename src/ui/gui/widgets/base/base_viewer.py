@@ -1,12 +1,10 @@
 from abc import abstractmethod
 from PySide6.QtCore import Signal
 from .base_widget import BaseWidget
-from ...base.interfaces import DocumentViewerInterface
 
-
-class BaseDocumentViewer(BaseWidget, DocumentViewerInterface):
+class BaseDocumentViewer(BaseWidget):
     """Base class for document viewers"""
-    
+    doc_id: str
     # Signal emitted when text is selected
     text_selected = Signal(str, str, int, int)  # action, doc_id, text, page, position
     # Signal emitted when document is loaded
@@ -14,7 +12,6 @@ class BaseDocumentViewer(BaseWidget, DocumentViewerInterface):
     
     def __init__(self, parent=None, signals=None):
         super().__init__(parent, signals)
-        self.doc_id: str = ""
         self.current_path: str = ""
         self.current_page: int = 1
         self.current_position: int = 0

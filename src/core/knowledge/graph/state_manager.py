@@ -1,14 +1,14 @@
-from typing import Dict
-from src.core.user.user_manager import UserManager
-from src.core.document import DocumentTree
-from src.core.user import UserKnowledgeState
-from src.store.knowledge_store import BaseKnowledgeStore
-from src.core.knowledge.models.graph import ConceptGraph
-from src.core.knowledge.models.delta import GraphDelta
+from __future__ import annotations
+from typing import Dict,TYPE_CHECKING
+from src.core.user import UserManager, UserKnowledgeState
+from ..repository import BaseKnowledgeStore, BaseKnowledgeRepository
+from ..models import ConceptGraph, GraphDelta
 from .builder import ConceptGraphBuilder
 from .chain import DocumentChain
 from .updater import GraphUpdater
-from .repository import KnowledgeRepository
+
+if TYPE_CHECKING:
+    from src.core.document import DocumentTree
 
 class GraphStateManager:
     """Manages the state of the knowledge graph"""
@@ -19,7 +19,7 @@ class GraphStateManager:
         concept_graph_builder: ConceptGraphBuilder,
         document_chain: DocumentChain,
         graph_updater: GraphUpdater,
-        repository: KnowledgeRepository,
+        repository: BaseKnowledgeRepository,
         knowledge_store: BaseKnowledgeStore 
     ):
         self.user_manager = user_manager
@@ -63,14 +63,14 @@ class GraphStateManager:
             self.document_chain.add(section.id, delta)
             self.repository.save_delta(delta)
 
-    def get_document_context(self, check_point: int) -> Dict:
+    def get_document_context(self, check_point: str) -> Dict:
         """Get document context up to checkpoint"""
         return self.document_chain.get_document_context(check_point)
 
-    def get_concept_graph_upto(self, section_id: int) -> ConceptGraph:
+    def get_concept_graph_upto(self, section_id: str) -> ConceptGraph:
         """Get concept graph up to section"""
         # Sync user state
-        self.graph_updater.user = self._sync_user_state()
+        self.graph_updater.user_state = self._sync_user_state()
         
         # Build view graph
         view_graph = ConceptGraph()

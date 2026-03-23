@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any
-from src.core.explanation_engine.adaptive_explainer import Explanation
-from src.core.document.base import Document
+from src.core.explanation_engine.models import Explanation
+from src.core.document.models import Document
 from src.core.memory.models.context import Context
 
 

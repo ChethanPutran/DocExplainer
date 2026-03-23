@@ -1,9 +1,7 @@
 from typing import Dict, Any
 from src.core.user.models.user import User
-from src.core.user.models.knowledge_state import UserKnowledgeState, KnowledgeState
+from src.core.user.models.knowledge_state import UserKnowledgeState
 from src.core.user.models.interaction import UserInteraction
-from src.core.knowledge.models.concept import Concept
-
 
 class UserSerializer:
     """Serializer for User objects"""
@@ -36,6 +34,8 @@ class UserSerializer:
             knowledge_state=knowledge_state,
             interaction_history=interaction_history
         )
+    
+    
 
 
 class UserKnowledgeStateSerializer:
@@ -73,3 +73,7 @@ class InteractionSerializer:
     def deserialize(data: Dict[str, Any]) -> UserInteraction:
         """Deserialize interaction"""
         return UserInteraction.from_dict(data)
+    
+
+
+   

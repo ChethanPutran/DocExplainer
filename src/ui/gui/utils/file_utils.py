@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 from datetime import datetime
@@ -161,3 +162,5 @@ class FileUtils:
             counter += 1
         
         return os.path.join(directory, new_filename)
+    
+

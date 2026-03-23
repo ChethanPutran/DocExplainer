@@ -9,6 +9,7 @@ class UserInteraction:
     level: str = ""
     mastery: float = 0.0
     last_seen: Optional[datetime] = None
+    timestamp: Optional[datetime] = None
     time_spent: float = 0.0
     quiz_response: str = ""
     questions_asked: List[str] = field(default_factory=list)

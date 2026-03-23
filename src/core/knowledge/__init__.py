@@ -1,45 +1,45 @@
-"""Backward-compatible exports for knowledge-modelling components. --- IGNORE ---
-This module serves as a central export point for all knowledge-modelling related components, including graph structures, user knowledge tracing, and concept extraction. --- IGNORE ---
-It re-exports modular implementations from various submodules within `src.core.knowlege_modelling`. --- IGNORE ---
-"""
-
-from src.core.knowledge.base import (
+from src.core.knowledge.models import (
     Concept,
     ConceptGraph,
     ConceptNode,
     ConceptNodeRelationship,
     ConceptRelationship,
     GraphDelta,
+    ConceptInvertedIndex
 )
 from src.core.knowledge.graph import (
-    ConceptBuilder,
+    ConceptGraphBuilder,
     DocumentChain,
     GraphStateManager,
-    GraphUpdater,
-    build_document_hierarchy,
+    GraphUpdater
 )
 
-from src.core.knowledge.extraction.extractor import RelationshipExtractor,ConceptExtractor
-from src.core.knowledge.graph.state_manager import GraphStateManager
-from src.core.knowledge.services.prerequisite_analyzer import PrerequisiteAnalyzer
-from src.core.knowledge.services.learning_path import LearningPathGenerator
-from src.core.knowledge.services.recommendation import RecommendationService
+from src.core.knowledge.extraction import (
+    ConceptExtractor, LLMRelationshipExtractor, StatisticalRelationshipExtractor)
+from src.core.knowledge.graph import GraphStateManager, BaseDocumentChain
+from .services import LearningPathGenerator, PrerequisiteAnalyzer, RecommendationService
+from .repository import BaseKnowledgeRepository, BaseKnowledgeStore, ConceptRepositoryBase
+
 __all__ = [
-    "BayesianKnowledgeTracer",
     "Concept",
-    "ConceptBuilder",
+    "ConceptGraphBuilder",
     "ConceptGraph",
     "ConceptNode",
     "ConceptNodeRelationship",
     "ConceptRelationship",
+    "ConceptInvertedIndex",
     "DocumentChain",
     "GraphDelta",
     "GraphStateManager",
     "GraphUpdater",
-    "KnowledgeState",
-    "RelationshipExtractor",
     "ConceptExtractor",
-    "UserKnowledgeState",
-    "build_document_hierarchy",
-    "UserManager"
+    "LLMRelationshipExtractor",
+    "StatisticalRelationshipExtractor",
+    "PrerequisiteAnalyzer",
+    "LearningPathGenerator",
+    "RecommendationService",
+    "BaseKnowledgeRepository",
+    "BaseKnowledgeStore",
+    "BaseDocumentChain",
+    'ConceptRepositoryBase'
 ]

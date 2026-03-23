@@ -8,6 +8,10 @@ class ParserFactory:
     
     _parsers = {
         '.pdf': PDFParser,
+        '.txt': None,  # Placeholder for TXTParser
+        '.html': None,  # Placeholder for HTMLParser
+        '.docx': None,  # Placeholder for DOCXParser
+        '.md': None,  # Placeholder for MarkdownParser
     }
     
     @classmethod

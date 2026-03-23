@@ -1,8 +1,8 @@
 from typing import Dict, Optional
 from src.core.user.models.user import User
-from src.core.user.models.knowledge_state import UserKnowledgeState
-from src.core.user.repository.user_repository import UserRepository
-from src.core.user.services.knowledge_tracing import BayesianKnowledgeTracer
+from ..models.knowledge_state import UserKnowledgeState
+from ..repository.user_repository import BaseUserRepository as UserRepository
+from .knowledge_tracing import BayesianKnowledgeTracer
 
 class UserManager:
     """Manages user operations and knowledge state"""

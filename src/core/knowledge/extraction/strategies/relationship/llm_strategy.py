@@ -2,13 +2,13 @@ from typing import List, Dict
 from ..base import BaseRelationshipExtractionStrategy
 from src.core.knowledge.models.concept import Concept
 from src.core.knowledge.models.relationship import ConceptRelationship
-from src.core.agent.llm_wrapper import LLMWrapper
+from src.core.agent import LLMInterface
 from src.core.agent.prompts import relation_extractor_prompt
 
 class LLMRelationshipExtractor(BaseRelationshipExtractionStrategy):
     """Extract relationships using LLM"""
     
-    def __init__(self, llm: LLMWrapper):
+    def __init__(self, llm: LLMInterface):
         self.llm = llm
         if self.llm:
             self.llm.set_prompt_template(relation_extractor_prompt, json_output=True)

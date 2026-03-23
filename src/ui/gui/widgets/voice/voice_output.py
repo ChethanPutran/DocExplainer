@@ -1,6 +1,6 @@
 import pyttsx3
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QLabel
-from PySide6.QtCore import Signal, QThread
+from PySide6.QtCore import Signal, QThread, Qt
 
 from ..base.base_widget import BaseWidget
 
@@ -55,7 +55,7 @@ class VoiceOutput(BaseWidget):
         layout = QVBoxLayout()
         
         self.status_label = QLabel("Ready")
-        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_label.setStyleSheet("color: #666; font-size: 9pt;")
         layout.addWidget(self.status_label)
         
@@ -83,7 +83,7 @@ class VoiceOutput(BaseWidget):
         else:
             self.stop_speaking()
     
-    def speak(self, text: str = None):
+    def speak(self, text: str = ''):
         """Start speaking"""
         if text:
             self.current_text = text

@@ -7,6 +7,7 @@ from .voice.voice_input import VoiceInput
 from .voice.voice_output import VoiceOutput
 from .common.toolbar import MainToolbar
 from .common.status_bar import StatusBar
+from .base import BaseDocumentViewer,BaseWidget
 
 __all__ = [
     'Sidebar',
@@ -17,5 +18,7 @@ __all__ = [
     'VoiceInput',
     'VoiceOutput',
     'MainToolbar',
-    'StatusBar'
+    'StatusBar',
+    'BaseDocumentViewer',
+    'BaseWidget'
 ]

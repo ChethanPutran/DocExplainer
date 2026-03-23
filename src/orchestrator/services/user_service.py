@@ -1,7 +1,7 @@
 from typing import Optional, Dict, Any
 import logging
 
-from src.core.user.user_manager import UserManager
+from src.core.user import UserManager
 from src.core.user.models.user import User
 from src.core.user.models.knowledge_state import UserKnowledgeState
 

@@ -18,6 +18,11 @@ class ConceptGraph:
         """Check if concept exists in graph"""
         return concept_name in self.graph
 
+    def update_relationship(self, concept1: ConceptNode, concept2: ConceptNode, relationship: ConceptNodeRelationship):
+        """Update relationship between two concepts"""
+        if self.graph.has_edge(concept1.primary_concept.name, concept2.primary_concept.name):
+            self.graph[concept1.primary_concept.name][concept2.primary_concept.name]['data'] = relationship
+            
     def get_concept(self, concept_name: str) -> Optional[ConceptNode]:
         """Get concept node by name"""
         if concept_name in self.graph:
@@ -33,4 +38,4 @@ class ConceptGraph:
         if not self.has_concept(u_name):
             self.add_concept_node(concept1)
         if not self.has_concept(v_name):
-            self
+            self.add_concept_node(concept2)

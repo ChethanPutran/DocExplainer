@@ -24,8 +24,8 @@ class RecommendationsPanel(QWidget):
         
         # Separator
         line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setFrameShadow(QFrame.Sunken)
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Sunken)
         layout.addWidget(line)
         
         # Resources container
@@ -34,7 +34,7 @@ class RecommendationsPanel(QWidget):
         
         # Placeholder
         self.placeholder = QLabel("No resources available")
-        self.placeholder.setAlignment(Qt.AlignCenter)
+        self.placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.placeholder.setStyleSheet("color: #999; padding: 20px;")
         self.resources_layout.addWidget(self.placeholder)
         
@@ -57,7 +57,7 @@ class RecommendationsPanel(QWidget):
         """Add a single resource"""
         # Resource container
         container = QFrame()
-        container.setFrameShape(QFrame.StyledPanel)
+        container.setFrameShape(QFrame.Shape.StyledPanel)
         container.setStyleSheet("""
             QFrame {
                 background-color: #f8f9fa;

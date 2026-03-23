@@ -29,6 +29,9 @@ class ThemeManager(QObject):
         if theme_name not in self.themes:
             return False
         
+        if theme_name == self.current_theme:
+            return True  # No change needed
+        
         self.current_theme = theme_name
         theme = self.themes[theme_name]
         
@@ -95,6 +98,14 @@ class ThemeManager(QObject):
         """Add a new theme"""
         self.themes[name] = theme
     
+
+    def toggle_theme(self):
+        """Toggle between light and dark themes"""
+        if self.current_theme == 'light':
+            self.set_theme('dark')
+        else:
+            self.set_theme('light')
+
     def remove_theme(self, name: str) -> bool:
         """Remove a theme"""
         if name in self.themes and name != self.current_theme:

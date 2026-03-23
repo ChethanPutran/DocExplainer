@@ -1,6 +1,11 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.core.document import DocumentChunk
+    
 from typing import Dict, List, Tuple
 from dataclasses import dataclass, field
-from src.core.document.models import DocumentChunk
 from .concept import Concept
 from .relationship import ConceptNode, ConceptNodeRelationship, ConceptRelationship
 from .graph import ConceptGraph
@@ -8,7 +13,7 @@ from .graph import ConceptGraph
 @dataclass
 class GraphDelta:
     """Represents changes to the graph from processing a section"""
-    section_id: int
+    section_id: str
     data: DocumentChunk
     new_concepts: Dict[str, ConceptNode] = field(default_factory=dict)
     new_edges: List[ConceptNodeRelationship] = field(default_factory=list)

@@ -5,8 +5,6 @@ Main entry point for the GUI application
 """
 
 import sys
-import os
-import argparse
 import logging
 import json
 from pathlib import Path
@@ -16,57 +14,35 @@ from PySide6.QtWidgets import QApplication, QSplashScreen, QMessageBox
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap, QIcon
 
-from .managers.window_manager import WindowManager
-from .managers.theme_manager import ThemeManager
-from .managers.shortcut_manager import ShortcutManager
-from .config import UIConfig
-from .styles.theme import LightTheme, DarkTheme, HighContrastTheme, SepiaTheme
-from .utils.file_utils import FileUtils
-from .utils.signal_utils import SignalInspector
-from .factories.widget_factory import WidgetFactory
-from .factories.viewer_factory import ViewerFactory
-from .windows.about_window import AboutWindow
-from .windows.settings_window import SettingsWindow
-from .widgets.common.status_bar import StatusBar
-from .widgets.common.toolbar import MainToolbar
-from .widgets.sidebar.sidebar import Sidebar
-from .widgets.voice.voice_input import VoiceInput
-from .widgets.voice.voice_output import VoiceOutput
-from .widgets.viewers.pdf_viewer import PDFViewer
-from .widgets.viewers.text_viewer import TextViewer
-from .widgets.viewers.html_viewer import HTMLViewer
-
-# Import orchestrator
-from src.orchestrator.orchestrator import DocExplainerOrchestrator
-from src.orchestrator.config import OrchestratorConfig
-
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(Path.home() / '.doc_explainer' / 'app.log'),
-        logging.StreamHandler()
-    ]
-)
-
-logger = logging.getLogger(__name__)
+from ..managers.window_manager import WindowManager
+from ..managers.theme_manager import ThemeManager
+from ..managers.shortcut_manager import ShortcutManager
+from ..config import UIConfig
+from ..styles.theme import LightTheme, DarkTheme, HighContrastTheme, SepiaTheme
+from ..utils.file_utils import FileUtils
+from ..utils.signal_utils import SignalInspector
+from ..factories.widget_factory import WidgetFactory
+from src.orchestrator import DocExplainerOrchestrator, OrchestratorConfig
 
 
 class DocExplainerApp:
     """Main application class"""
-    
-    def __init__(self, config_path: str = None, debug: bool = False):
+    app: QApplication
+    window_manager: WindowManager
+    theme_manager: ThemeManager 
+    shortcut_manager: ShortcutManager
+    widget_factory: WidgetFactory 
+    signal_inspector: SignalInspector
+    orchestrator: DocExplainerOrchestrator
+    config: UIConfig
+    logger: logging.Logger
+
+    def __init__(self, config_path: str = '', debug: bool = False):
+        # Import orchestrator
         self.debug = debug
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.config_path = config_path
         self.config = self._load_config(config_path)
-        self.app: Optional[QApplication] = None
-        self.window_manager: Optional[WindowManager] = None
-        self.theme_manager: Optional[ThemeManager] = None
-        self.shortcut_manager: Optional[ShortcutManager] = None
-        self.widget_factory: Optional[WidgetFactory] = None
-        self.signal_inspector: Optional[SignalInspector] = None
-        self.orchestrator: Optional[DocExplainerOrchestrator] = None
         
         # Ensure user directories exist
         self._ensure_directories()
@@ -86,6 +62,7 @@ class DocExplainerApp:
     
     def _load_config(self, config_path: str = None) -> UIConfig:
         """Load configuration"""
+        self.logger.info("Loading configuration")
         config = UIConfig()
         
         # Try loading from default location first
@@ -95,9 +72,9 @@ class DocExplainerApp:
                 with open(default_config, 'r') as f:
                     config_dict = json.load(f)
                     config = UIConfig.from_dict(config_dict)
-                logger.info(f"Loaded config from {default_config}")
+                self.logger.info(f"Loaded config from {default_config}")
             except Exception as e:
-                logger.error(f"Error loading config from {default_config}: {e}")
+                self.logger.error(f"Error loading config from {default_config}: {e}")
         
         # Override with provided config file
         if config_path and Path(config_path).exists():
@@ -105,9 +82,9 @@ class DocExplainerApp:
                 with open(config_path, 'r') as f:
                     config_dict = json.load(f)
                     config = UIConfig.from_dict(config_dict)
-                logger.info(f"Loaded config from {config_path}")
+                self.logger.info(f"Loaded config from {config_path}")
             except Exception as e:
-                logger.error(f"Error loading config from {config_path}: {e}")
+                self.logger.error(f"Error loading config from {config_path}: {e}")
         
         return config
     
@@ -119,19 +96,25 @@ class DocExplainerApp:
         QApplication.setApplicationVersion("1.0.0")
         
         # Set application icon (if available)
-        icon_path = Path(__file__).parent / "resources" / "icons" / "app_icon.png"
+        icon_path = Path.home() / '.doc_explainer' / "resources" / "icons" / "app_icon.png"
         if icon_path.exists():
+            self.logger.info(f"Setting application icon from {icon_path}")
             self.app.setWindowIcon(QIcon(str(icon_path)))
+        else:
+            self.logger.warning(f"App icon not found at {icon_path}, using default icon")
     
     def _show_splash_screen(self) -> Optional[QSplashScreen]:
         """Show splash screen on startup"""
-        splash_path = Path(__file__).parent / "resources" / "images" / "splash.png"
+        splash_path =  Path.home() / '.doc_explainer' / "resources" / "images" / "splash.png"
+        self.logger.info("Showing splash screen")
+        self.logger.debug(f"Looking for splash image at {splash_path}")
         if splash_path.exists():
             splash_pix = QPixmap(str(splash_path))
-            splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+            splash = QSplashScreen(splash_pix, Qt.WindowType.WindowStaysOnTopHint)
             splash.show()
             self.app.processEvents()
             return splash
+        self.logger.warning("Splash image not found, skipping splash screen")
         return None
     
     def _init_components(self, splash: Optional[QSplashScreen] = None):
@@ -147,9 +130,9 @@ class DocExplainerApp:
         
         for message, init_func in components:
             if splash:
-                splash.showMessage(message, Qt.AlignBottom | Qt.AlignCenter, Qt.white)
+                splash.showMessage(message, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
                 self.app.processEvents()
-            logger.info(message)
+            self.logger.info(message)
             init_func()
     
     def _init_ui_components(self):
@@ -175,9 +158,9 @@ class DocExplainerApp:
                     with open(theme_file, 'r') as f:
                         theme_data = json.load(f)
                         # This would need proper theme class creation
-                        logger.info(f"Loaded custom theme from {theme_file}")
+                        self.logger.info(f"Loaded custom theme from {theme_file}")
                 except Exception as e:
-                    logger.error(f"Error loading theme {theme_file}: {e}")
+                    self.logger.error(f"Error loading theme {theme_file}: {e}")
         
         # Apply configured theme
         self.theme_manager.set_theme(self.config.theme)
@@ -185,7 +168,11 @@ class DocExplainerApp:
     def _init_shortcuts(self):
         """Initialize shortcut manager"""
         self.shortcut_manager = ShortcutManager()
-    
+
+    def _init_viewers(self):
+        """Initialize viewer factories"""
+        self.view_factory = ViewerFactory()
+
     def _init_orchestrator(self):
         """Initialize orchestrator"""
         orchestrator_config = OrchestratorConfig(
@@ -235,23 +222,23 @@ class DocExplainerApp:
                 
                 for doc_path in recent_docs.get('documents', [])[:5]:
                     if Path(doc_path).exists():
-                        logger.info(f"Loading recent document: {doc_path}")
+                        self.logger.info(f"Loading recent document: {doc_path}")
                         self.window_manager.on_document_registered(doc_path)
             except Exception as e:
-                logger.error(f"Error loading recent documents: {e}")
-    
+                self.logger.error(f"Error loading recent documents: {e}")
+
     def _setup_exception_handling(self):
         """Setup global exception handling"""
         def excepthook(exc_type, exc_value, exc_traceback):
             """Handle uncaught exceptions"""
-            logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+            self.logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
             
             # Show error dialog
             error_dialog = QMessageBox()
-            error_dialog.setIcon(QMessageBox.Critical)
+            error_dialog.setIcon(QMessageBox.Icon.Critical)
             error_dialog.setWindowTitle("Application Error")
             error_dialog.setText("An unexpected error occurred")
-            error_dialog.setDetailedInfo(str(exc_value))
+            error_dialog.setDetailedText(str(exc_value))
             error_dialog.exec()
         
         sys.excepthook = excepthook
@@ -272,6 +259,10 @@ class DocExplainerApp:
             
             # Launch main window
             self.window_manager.launch()
+
+            if document_path:
+                self.logger.info(f"Opening document from command line: {document_path}")
+                self.window_manager.on_document_registered(document_path)
             
             # Close splash screen
             if splash:
@@ -285,27 +276,27 @@ class DocExplainerApp:
             if self.config.check_updates:
                 QTimer.singleShot(2000, self._check_for_updates)
             
-            logger.info("Application started successfully")
+            self.logger.info("Application started successfully")
             
             # Run application
             return self.app.exec()
             
         except Exception as e:
-            logger.exception("Fatal error during application startup")
+            self.logger.exception("Fatal error during application startup")
             
             # Show error dialog
             error_dialog = QMessageBox()
-            error_dialog.setIcon(QMessageBox.Critical)
+            error_dialog.setIcon(QMessageBox.Icon.Critical)
             error_dialog.setWindowTitle("Startup Error")
             error_dialog.setText("Failed to start application")
-            error_dialog.setDetailedInfo(str(e))
+            error_dialog.setDetailedText(str(e))
             error_dialog.exec()
             
             return 1
     
     def cleanup(self):
         """Cleanup application resources"""
-        logger.info("Cleaning up application resources")
+        self.logger.info("Cleaning up application resources")
         
         # Save recent documents
         if self.window_manager:
@@ -315,7 +306,7 @@ class DocExplainerApp:
                 with open(recent_file, 'w') as f:
                     json.dump({'documents': recent_docs}, f, indent=2)
             except Exception as e:
-                logger.error(f"Error saving recent documents: {e}")
+                self.logger.error(f"Error saving recent documents: {e}")
         
         # Save configuration
         config_file = Path.home() / '.doc_explainer' / 'config' / 'ui_config.json'
@@ -323,170 +314,4 @@ class DocExplainerApp:
             with open(config_file, 'w') as f:
                 json.dump(self.config.to_dict(), f, indent=2)
         except Exception as e:
-            logger.error(f"Error saving config: {e}")
-
-
-def create_parser() -> argparse.ArgumentParser:
-    """Create argument parser"""
-    parser = argparse.ArgumentParser(
-        description="Doc Explainer - Intelligent Document Explanation System",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  %(prog)s document.pdf                    # Open PDF document
-  %(prog)s --config custom.json document.pdf  # Use custom config
-  %(prog)s --debug --no-splash document.html  # Debug mode without splash
-  %(prog)s --theme dark document.txt           # Open with dark theme
-        """
-    )
-    
-    parser.add_argument(
-        'document',
-        nargs='?',
-        help='Document to open (PDF, TXT, HTML, etc.)'
-    )
-    
-    parser.add_argument(
-        '--config',
-        '-c',
-        help='Configuration file path'
-    )
-    
-    parser.add_argument(
-        '--theme',
-        '-t',
-        choices=['light', 'dark', 'high_contrast', 'sepia'],
-        help='Theme to use'
-    )
-    
-    parser.add_argument(
-        '--debug',
-        '-d',
-        action='store_true',
-        help='Enable debug mode'
-    )
-    
-    parser.add_argument(
-        '--no-splash',
-        action='store_true',
-        help='Disable splash screen'
-    )
-    
-    parser.add_argument(
-        '--log-level',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        default='INFO',
-        help='Set logging level'
-    )
-    
-    parser.add_argument(
-        '--version',
-        '-v',
-        action='version',
-        version='Doc Explainer 1.0.0'
-    )
-    
-    parser.add_argument(
-        '--profile',
-        action='store_true',
-        help='Enable performance profiling'
-    )
-    
-    parser.add_argument(
-        '--reset-config',
-        action='store_true',
-        help='Reset configuration to defaults'
-    )
-    
-    parser.add_argument(
-        '--clear-cache',
-        action='store_true',
-        help='Clear application cache'
-    )
-    
-    return parser
-
-
-def handle_reset_config():
-    """Reset configuration to defaults"""
-    config_file = Path.home() / '.doc_explainer' / 'config' / 'ui_config.json'
-    if config_file.exists():
-        config_file.unlink()
-        print("Configuration reset to defaults")
-    else:
-        print("No configuration file found")
-
-
-def handle_clear_cache():
-    """Clear application cache"""
-    cache_dir = Path.home() / '.doc_explainer' / 'cache'
-    if cache_dir.exists():
-        import shutil
-        shutil.rmtree(cache_dir)
-        cache_dir.mkdir(parents=True)
-        print("Cache cleared")
-    else:
-        print("No cache directory found")
-
-
-def main():
-    """Main entry point"""
-    parser = create_parser()
-    args = parser.parse_args()
-    
-    # Handle special commands
-    if args.reset_config:
-        handle_reset_config()
-        return 0
-    
-    if args.clear_cache:
-        handle_clear_cache()
-        return 0
-    
-    # Set logging level
-    logging.getLogger().setLevel(getattr(logging, args.log_level))
-    
-    # Override theme from command line
-    if args.theme:
-        # This would override the config theme
-        pass
-    
-    # Create and run application
-    app = DocExplainerApp(
-        config_path=args.config,
-        debug=args.debug
-    )
-    
-    # Handle profiling
-    if args.profile:
-        import cProfile
-        import pstats
-        from io import StringIO
-        
-        profiler = cProfile.Profile()
-        profiler.enable()
-        
-        exit_code = app.run(args.document)
-        
-        profiler.disable()
-        
-        # Save profile stats
-        profiler.dump_stats(Path.home() / '.doc_explainer' / 'profile.stats')
-        
-        # Print top 20 functions
-        s = StringIO()
-        stats = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
-        stats.print_stats(20)
-        print(s.getvalue())
-        
-    else:
-        exit_code = app.run(args.document)
-    
-    # Cleanup
-    app.cleanup()
-    
-    return exit_code
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+            self.logger.error(f"Error saving config: {e}")

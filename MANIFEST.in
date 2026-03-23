@@ -4,7 +4,7 @@ include CHANGELOG.md
 include requirements.txt
 include requirements-dev.txt
 include doc-explainer.desktop
-recursive-include src/resources *
+recursive-include assets *
 recursive-include src/config *
 recursive-include icons *
 global-exclude *.pyc

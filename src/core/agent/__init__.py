@@ -9,9 +9,13 @@ from .prompts.templates import (
     concept_extraction_template, concept_refinement_template,
     text_summarization_template
 )
+from .base.exceptions import AgentError
+from .base.interfaces import LLMInterface
 
 __all__ = [
     'Agent',
+    'LLMInterface',
+    'AgentError',
     'ExplanationDepth',
     'ExplanationStyleEnum',
     'Explanation',

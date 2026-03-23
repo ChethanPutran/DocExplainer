@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Dict, Optional
 from ..base.interfaces import LongTermMemoryInterface
 from ..storage.long_term_memory import LongTermMemory

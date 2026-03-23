@@ -38,6 +38,7 @@ class Explanation(BaseModel):
     known_concepts_used: List[str]
     unknown_concepts_explained: List[str]
     follow_up_questions: List[str]
+    suggested_resources: List[ResourceSuggestion] = Field(description="Resources to fetch")
     metadata: ExplanationMetadata
     resources: List['Resource'] = []  # Forward reference
 

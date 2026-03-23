@@ -6,7 +6,7 @@ from core.knowlege.graph.base import (
     ConceptRelationship,
     GraphDelta,
 )
-from src.core.knowledge.graph.hierarchy import build_document_hierarchy
+from core.document.builder.hierarchy import build_document_hierarchy
 from src.core.knowledge.graph.state_manager import GraphStateManager
 from src.core.knowledge.graph.updater import GraphUpdater
 from core.knowlege.user.knowledge_tracing import BayesianKnowledgeTracer

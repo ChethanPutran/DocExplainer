@@ -1,10 +1,11 @@
 from typing import Optional, Dict, Any
-from src.store.knowledge.concept_repository import ConceptRepository
-from src.store.knowledge.relationship_repository import RelationshipRepository
-from src.store.knowledge.graph_repository import GraphRepository
-from src.store.knowledge.index_repository import InvertedIndexRepository
-from src.store.user.user_repository import UserRepository
-from src.store.document.document_repository import DocumentRepository
+from src.store.knowledge import ( ConceptRepository,
+                                  RelationshipRepository,  
+                                  BaseKnowledgeRepository, 
+                                  KnowledgeRepository,
+                                  InvertedIndexRepository)
+from src.store.user import UserRepository
+from src.store.document import DocumentRepository
 
 
 class RepositoryFactory:
@@ -39,7 +40,7 @@ class RepositoryFactory:
         
         return self._instances['relationship_repo']
     
-    def create_graph_repository(self, **kwargs) -> GraphRepository:
+    def create_graph_repository(self, **kwargs) -> BaseKnowledgeRepository:
         """Create graph repository"""
         storage_path = kwargs.get('storage_path',
                                   self.config.get('graph_storage_path', 'data/knowledge/graphs/'))
@@ -48,7 +49,7 @@ class RepositoryFactory:
         relationship_repo = kwargs.get('relationship_repo', self.create_relationship_repository())
         
         if 'graph_repo' not in self._instances:
-            self._instances['graph_repo'] = GraphRepository(
+            self._instances['graph_repo'] = KnowledgeRepository(
                 storage_path=storage_path,
                 concept_repo=concept_repo,
                 relationship_repo=relationship_repo

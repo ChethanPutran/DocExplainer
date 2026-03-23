@@ -1,8 +1,7 @@
 import speech_recognition as sr
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QLabel
-from PySide6.QtCore import Signal, QThread, QTimer
+from PySide6.QtCore import Signal, QThread, Qt, QTimer
 from PySide6.QtGui import QIcon
-
 from ..base.base_widget import BaseWidget
 
 
@@ -28,7 +27,7 @@ class ListeningThread(QThread):
                 while self.is_listening:
                     try:
                         audio = self.recognizer.listen(source, timeout=1, phrase_time_limit=5)
-                        text = self.recognizer.recognize_google(audio)
+                        text = self.recognizer.recognize_tensorflow(audio)
                         self.text_recognized.emit(text)
                     except sr.WaitTimeoutError:
                         continue
@@ -60,7 +59,7 @@ class VoiceInput(BaseWidget):
         layout = QVBoxLayout()
         
         self.status_label = QLabel("Click to start voice input")
-        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_label.setStyleSheet("color: #666; font-size: 9pt;")
         layout.addWidget(self.status_label)
         

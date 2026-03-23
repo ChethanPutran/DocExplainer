@@ -1,6 +1,11 @@
 from dataclasses import dataclass, field
+import os
 from typing import Dict, Any, Optional
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env variables at the top of the module
+load_dotenv()
 
 
 @dataclass
@@ -48,8 +53,8 @@ class UIConfig:
     llm_timeout: Optional[int] = None
     
     # API Keys (will be stored securely)
-    gemini_api_key: str = ""
-    openai_api_key: str = ""
+    gemini_api_key: str = field(default_factory=lambda: os.getenv("GEMINI_API_KEY", ""))
+    openai_api_key: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
     
     # Knowledge Graph settings
     kg_enabled: bool = True

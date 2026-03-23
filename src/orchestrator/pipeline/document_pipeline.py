@@ -7,6 +7,7 @@ from ..models.requests import RegisterDocumentRequest, GetContextRequest
 from ..models.responses import DocumentResponse, ContextResponse
 from ..services.document_service import DocumentService
 from ..services.context_service import ContextService
+from ..models.requests import BaseRequest
 
 
 class DocumentPipeline(BasePipeline):
@@ -19,7 +20,7 @@ class DocumentPipeline(BasePipeline):
         self.document_service = document_service
         self.context_service = context_service
     
-    def _process(self, request: BaseRequest) -> DocumentResponse:
+    def _process(self, request: BaseRequest) -> DocumentResponse | ContextResponse:
         """Process document request"""
         if isinstance(request, RegisterDocumentRequest):
             return self._process_registration(request)

@@ -1,9 +1,9 @@
 from collections import defaultdict
 from typing import List, Dict, Set
 
-from src.core.user.user_manager import UserManager
-from src.store.knowledge_store import BaseKnowledgeStore
-from src.core.knowledge.graph.state_manager import GraphStateManager
+from src.core.user import UserManager
+from ..repository import BaseKnowledgeStore
+from ..graph.state_manager import GraphStateManager
 
 class PrerequisiteAnalyzer:
     """Analyzes prerequisite relationships between concepts"""

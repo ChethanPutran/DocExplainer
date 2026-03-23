@@ -1,6 +1,10 @@
 from dataclasses import dataclass, field
+import os
 from typing import Dict, Any, Optional
+from dotenv import load_dotenv
 
+# Load .env variables at the top of the module
+load_dotenv()
 
 @dataclass
 class OrchestratorConfig:
@@ -12,6 +16,7 @@ class OrchestratorConfig:
     
     # LLM configuration
     llm_provider: str = "gemini"
+    GEMINI_API_KEY: str = field(default_factory=lambda: os.getenv("GEMINI_API_KEY", ""))
     temperature: float = 1.0
     
     # Storage paths
@@ -42,6 +47,10 @@ class OrchestratorConfig:
                 else:
                     setattr(config, key, value)
         
+        env_key = os.getenv("GEMINI_API_KEY")
+        if env_key:
+            config.GEMINI_API_KEY = env_key
+            
         return config
     
     def to_dict(self) -> Dict[str, Any]:
@@ -58,5 +67,6 @@ class OrchestratorConfig:
             'enable_knowledge_graph': self.enable_knowledge_graph,
             'enable_memory': self.enable_memory,
             'enable_session_tracking': self.enable_session_tracking,
-            'llm_kwargs': self.llm_kwargs
+            'llm_kwargs': self.llm_kwargs,
+            'GEMINI_API_KEY': self.GEMINI_API_KEY
         }

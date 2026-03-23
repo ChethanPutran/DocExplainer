@@ -34,8 +34,6 @@ class ShortcutManager(QObject):
     def register_action(self, name: str, key: str, description: str,
                         callback: Callable, parent: Optional[QWidget] = None) -> QAction:
         """Register an action with shortcut"""
-        parent = parent or self.parent
-        
         action = QAction(description, parent)
         action.setShortcut(QKeySequence(key))
         action.triggered.connect(callback)

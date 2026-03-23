@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict, Optional
 from .knowledge_state import UserKnowledgeState
 from .interaction import UserInteraction
@@ -12,6 +13,7 @@ class User:
         self.user_id = user_id
         self.knowledge_state = knowledge_state if knowledge_state is not None else UserKnowledgeState()
         self.interaction_history = interaction_history if interaction_history is not None else []
+        self.created_at: Optional[datetime] = None  # Can be set when saving to repository
 
     def record_interaction(self, interaction: UserInteraction):
         """Record a user interaction"""

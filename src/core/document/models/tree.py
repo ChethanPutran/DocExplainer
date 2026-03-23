@@ -1,10 +1,17 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 from enum import Enum, auto
 import numpy as np
+
+from src.core.knowledge.models.relationship import ConceptNode
 from .metadata import Metadata
-from src.core.knowledge.models import Concept
-from src.core.knowledge.models.relationship import ConceptRelationship
+
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.core.knowledge import Concept, ConceptRelationship
 
 
 class ChunkType(Enum):
@@ -130,17 +137,9 @@ class DocumentTree:
         """Get total number of chunks"""
         return self.total_chunks
 
-
-def create_empty_tree(title: str) -> DocumentTree:
-    """Create an empty document tree"""
-    from .metadata import SimpleMetadataCreator
+    @staticmethod
+    def from_dict(data: Dict[str, Any]) -> DocumentTree:
+        """Create DocumentTree from dictionary"""
+        # Implement deserialization logic here
+        pass
     
-    metadata_creator = SimpleMetadataCreator()
-    chunk = DocumentChunk(
-        text=title,
-        chunk_type=ChunkType.DOCUMENT,
-        level=ChunkLevel.DOCUMENT,
-        metadata=metadata_creator.create_metadata(length=len(title))
-    )
-    root = DocumentNode("root", chunk)
-    return DocumentTree(title, root)

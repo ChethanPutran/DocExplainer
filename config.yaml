@@ -1,0 +1,78 @@
+# Window settings
+window:
+  width: 1200
+  height: 800
+  title: "Doc Explainer"
+  maximized: false
+
+# Theme settings
+theme:
+  mode: "light"  # options: light, dark, high_contrast, sepia
+  font_size: 10
+  font_family: "Segoe UI"
+
+# Sidebar settings
+sidebar:
+  width: 350
+  visible: true
+  position: "right"  # options: left, right
+
+# Voice settings
+voice:
+  enabled: true
+  input_device: "default"
+  output_enabled: true
+  output_rate: 150
+  output_volume: 0.9
+
+# Document settings
+documents:
+  default_zoom: 1.0
+  max_recent_files: 10
+  auto_save_interval: 5  # minutes
+  default_path: "~/Documents"
+
+# Cache settings
+cache:
+  enabled: true
+  size_mb: 500
+  location: "~/.doc_explainer/cache"
+
+# LLM settings
+llm:
+  provider: "gemini"
+  model: "gemini-1.5-flash"
+  temperature: 1.0
+  max_tokens: null
+  timeout: null
+  gemini_api_key: "" 
+  openai_api_key: ""
+
+# API Keys (Stored as environment variables or encrypted in production)
+api_keys:
+  gemini: ""
+  openai: ""
+
+# Knowledge Graph settings
+knowledge_graph:
+  enabled: true
+  auto_build: true
+
+# Memory settings
+memory:
+  enabled: true
+  session_tracking: true
+
+# Startup settings
+startup:
+  open_last_docs: true
+  check_updates: true
+
+# Debug & Privacy settings
+system:
+  debug_mode: false
+  log_level: "INFO"
+  show_splash: true
+  enable_profiling: false
+  send_usage_stats: false
+  allow_telemetry: false

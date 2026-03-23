@@ -1,0 +1,1180 @@
+{
+  "document_id": "4235495c",
+  "path": "/home/chethan/Desktop/Chethan/aiml_projects/advanced_projects/personal_ai/doc_explainer/data/report.pdf",
+  "title": "State-of-the-Art Generative AI Architectures and Neural Operators (2025)",
+  "text": "",
+  "sections": [
+    {
+      "section_id": "4a202bee",
+      "title": "Overview of Generative AI",
+      "text": "Generative AI creates new content such as text, images, code, and scientific data by learning patterns from large-scale datasets. These models are widely used in creative industries, software development, and scientific research.",
+      "page_start": 1,
+      "paragraphs": [
+        {
+          "paragraph_id": "f2c477da",
+          "text": "Generative AI creates new content such as text, images, code, and scientific data by learning patterns from large-scale datasets. These models are widely used in creative industries, software development, and scientific research.",
+          "sentences": [
+            {
+              "sentence_id": "df95d215",
+              "text": "Generative AI creates new content such as text, images, code, and scientific data by learning patterns from large-scale datasets.",
+              "start": 401,
+              "end": 530,
+              "page": 1,
+              "bbox": [
+                71.99999237060547,
+                323.44427490234375,
+                523.2875366210938,
+                361.451416015625
+              ]
+            },
+            {
+              "sentence_id": "0b10bfd0",
+              "text": "These models are widely used in creative industries, software development, and scientific research.",
+              "start": 531,
+              "end": 630,
+              "page": 1,
+              "bbox": [
+                71.99999237060547,
+                323.44427490234375,
+                523.2875366210938,
+                361.451416015625
+              ]
+            }
+          ],
+          "start": 401,
+          "end": 630,
+          "page": 1,
+          "bbox": [
+            71.99999237060547,
+            323.44427490234375,
+            523.2875366210938,
+            361.451416015625
+          ]
+        }
+      ],
+      "images": [],
+      "tables": [],
+      "equations": [],
+      "subsections": []
+    },
+    {
+      "section_id": "c2b1ed77",
+      "title": "Core Generative Model Families",
+      "text": "",
+      "page_start": 1,
+      "paragraphs": [],
+      "images": [],
+      "tables": [],
+      "equations": [],
+      "subsections": [
+        {
+          "section_id": "c8875197",
+          "title": "Transformer-Based Models",
+          "text": "Transformers dominate text and code generation. They rely on self-attention mechanisms to model long-range dependencies in sequences. Transformers are highly scalable but computa- tionally expensive. Representative models include GPT-5 , Gemini-3 , and Claude-4.5 .",
+          "page_start": 1,
+          "paragraphs": [
+            {
+              "paragraph_id": "723761ce",
+              "text": "Transformers dominate text and code generation. They rely on self-attention mechanisms to model long-range dependencies in sequences. Transformers are highly scalable but computa- tionally expensive. Representative models include GPT-5 , Gemini-3 , and Claude-4.5 .",
+              "sentences": [
+                {
+                  "sentence_id": "d0d5c8b9",
+                  "text": "Transformers dominate text and code generation.",
+                  "start": 689,
+                  "end": 736,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    430.26031494140625,
+                    523.2984619140625,
+                    468.2674560546875
+                  ]
+                },
+                {
+                  "sentence_id": "b886bffa",
+                  "text": "They rely on self-attention mechanisms to model long-range dependencies in sequences.",
+                  "start": 737,
+                  "end": 822,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    430.26031494140625,
+                    523.2984619140625,
+                    468.2674560546875
+                  ]
+                },
+                {
+                  "sentence_id": "add3bfdd",
+                  "text": "Transformers are highly scalable but computa- tionally expensive.",
+                  "start": 823,
+                  "end": 888,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    430.26031494140625,
+                    523.2984619140625,
+                    468.2674560546875
+                  ]
+                },
+                {
+                  "sentence_id": "14634690",
+                  "text": "Representative models include GPT-5 , Gemini-3 , and Claude-4.5 .",
+                  "start": 889,
+                  "end": 954,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    430.26031494140625,
+                    523.2984619140625,
+                    468.2674560546875
+                  ]
+                }
+              ],
+              "start": 689,
+              "end": 954,
+              "page": 1,
+              "bbox": [
+                71.99999237060547,
+                430.26031494140625,
+                523.2984619140625,
+                468.2674560546875
+              ]
+            }
+          ],
+          "images": [],
+          "tables": [],
+          "equations": [],
+          "subsections": []
+        },
+        {
+          "section_id": "4cae0366",
+          "title": "Diffusion Models",
+          "text": "Diffusion models achieve state-of-the-art performance in image and video generation. They gradually denoise random noise into structured data. While producing high-quality outputs, inference can be slow. Examples include Stable Diffusion , Imagen , DALL-E 2 and Mid- journey .",
+          "page_start": 1,
+          "paragraphs": [
+            {
+              "paragraph_id": "4150d820",
+              "text": "Diffusion models achieve state-of-the-art performance in image and video generation. They gradually denoise random noise into structured data. While producing high-quality outputs, inference can be slow. Examples include Stable Diffusion , Imagen , DALL-E 2 and Mid- journey .",
+              "sentences": [
+                {
+                  "sentence_id": "cc6b2b85",
+                  "text": "Diffusion models achieve state-of-the-art performance in image and video generation.",
+                  "start": 972,
+                  "end": 1056,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    507.16632080078125,
+                    523.3857421875,
+                    558.7225341796875
+                  ]
+                },
+                {
+                  "sentence_id": "8266ce05",
+                  "text": "They gradually denoise random noise into structured data.",
+                  "start": 1057,
+                  "end": 1114,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    507.16632080078125,
+                    523.3857421875,
+                    558.7225341796875
+                  ]
+                },
+                {
+                  "sentence_id": "18d38a95",
+                  "text": "While producing high-quality outputs, inference can be slow.",
+                  "start": 1115,
+                  "end": 1175,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    507.16632080078125,
+                    523.3857421875,
+                    558.7225341796875
+                  ]
+                },
+                {
+                  "sentence_id": "719dd178",
+                  "text": "Examples include Stable Diffusion , Imagen , DALL-E 2 and Mid- journey .",
+                  "start": 1176,
+                  "end": 1248,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    507.16632080078125,
+                    523.3857421875,
+                    558.7225341796875
+                  ]
+                }
+              ],
+              "start": 972,
+              "end": 1248,
+              "page": 1,
+              "bbox": [
+                71.99999237060547,
+                507.16632080078125,
+                523.3857421875,
+                558.7225341796875
+              ]
+            }
+          ],
+          "images": [],
+          "tables": [],
+          "equations": [],
+          "subsections": []
+        },
+        {
+          "section_id": "5f070887",
+          "title": "Generative Adversarial Networks",
+          "text": "GANs consist of a generator and discriminator trained adversarially. They are fast and suitable for real-time applications, though they are less stable than diffusion models.",
+          "page_start": 1,
+          "paragraphs": [
+            {
+              "paragraph_id": "2c41cc8b",
+              "text": "GANs consist of a generator and discriminator trained adversarially. They are fast and suitable for real-time applications, though they are less stable than diffusion models.",
+              "sentences": [
+                {
+                  "sentence_id": "7e4f11d1",
+                  "text": "GANs consist of a generator and discriminator trained adversarially.",
+                  "start": 1281,
+                  "end": 1349,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    597.6213989257812,
+                    523.3311767578125,
+                    622.0795288085938
+                  ]
+                },
+                {
+                  "sentence_id": "f9cb6318",
+                  "text": "They are fast and suitable for real-time applications, though they are less stable than diffusion models.",
+                  "start": 1350,
+                  "end": 1455,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    597.6213989257812,
+                    523.3311767578125,
+                    622.0795288085938
+                  ]
+                }
+              ],
+              "start": 1281,
+              "end": 1455,
+              "page": 1,
+              "bbox": [
+                71.99999237060547,
+                597.6213989257812,
+                523.3311767578125,
+                622.0795288085938
+              ]
+            }
+          ],
+          "images": [],
+          "tables": [],
+          "equations": [],
+          "subsections": []
+        },
+        {
+          "section_id": "87b130e9",
+          "title": "Variational Autoencoders",
+          "text": "VAEs encode data into a structured latent space and reconstruct it probabilistically. They are useful for representation learning but often produce blurrier outputs.",
+          "page_start": 1,
+          "paragraphs": [
+            {
+              "paragraph_id": "34fed921",
+              "text": "VAEs encode data into a structured latent space and reconstruct it probabilistically. They are useful for representation learning but often produce blurrier outputs.",
+              "sentences": [
+                {
+                  "sentence_id": "ec24eb18",
+                  "text": "VAEs encode data into a structured latent space and reconstruct it probabilistically.",
+                  "start": 1481,
+                  "end": 1566,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    660.9773559570312,
+                    523.3202514648438,
+                    685.4354858398438
+                  ]
+                },
+                {
+                  "sentence_id": "111a13f3",
+                  "text": "They are useful for representation learning but often produce blurrier outputs.",
+                  "start": 1567,
+                  "end": 1646,
+                  "page": 1,
+                  "bbox": [
+                    71.99999237060547,
+                    660.9773559570312,
+                    523.3202514648438,
+                    685.4354858398438
+                  ]
+                }
+              ],
+              "start": 1481,
+              "end": 1646,
+              "page": 1,
+              "bbox": [
+                71.99999237060547,
+                660.9773559570312,
+                523.3202514648438,
+                685.4354858398438
+              ]
+            }
+          ],
+          "images": [],
+          "tables": [],
+          "equations": [],
+          "subsections": []
+        }
+      ]
+    },
+    {
+      "section_id": "78660b95",
+      "title": "Neural Operators",
+      "text": "Traditional neural networks learn mappings between finite-dimensional vectors. In contrast, many scientific problems require learning mappings between functions, known as operators . Neural operators enable direct learning of these function-to-function mappings.",
+      "page_start": 1,
+      "paragraphs": [
+        {
+          "paragraph_id": "b8279711",
+          "text": "Traditional neural networks learn mappings between finite-dimensional vectors. In contrast, many scientific problems require learning mappings between functions, known as operators . Neural operators enable direct learning of these function-to-function mappings.",
+          "sentences": [
+            {
+              "sentence_id": "f212fe60",
+              "text": "Traditional neural networks learn mappings between finite-dimensional vectors.",
+              "start": 1666,
+              "end": 1744,
+              "page": 1,
+              "bbox": [
+                71.99999237060547,
+                733.2514038085938,
+                523.3203735351562,
+                771.2584838867188
+              ]
+            },
+            {
+              "sentence_id": "0e88095b",
+              "text": "In contrast, many scientific problems require learning mappings between functions, known as operators .",
+              "start": 1745,
+              "end": 1848,
+              "page": 1,
+              "bbox": [
+                71.99999237060547,
+                733.2514038085938,
+                523.3203735351562,
+                771.2584838867188
+              ]
+            },
+            {
+              "sentence_id": "abc96559",
+              "text": "Neural operators enable direct learning of these function-to-function mappings.",
+              "start": 1849,
+              "end": 1928,
+              "page": 1,
+              "bbox": [
+                71.99999237060547,
+                733.2514038085938,
+                523.3203735351562,
+                771.2584838867188
+              ]
+            }
+          ],
+          "start": 1666,
+          "end": 1928,
+          "page": 1,
+          "bbox": [
+            71.99999237060547,
+            733.2514038085938,
+            523.3203735351562,
+            771.2584838867188
+          ]
+        }
+      ],
+      "images": [],
+      "tables": [],
+      "equations": [
+        {
+          "equation_id": "b7753181",
+          "text": "1",
+          "caption": [
+            {
+              "sentence_id": "80d5f1ba",
+              "text": "1",
+              "start": 1929,
+              "end": 1930,
+              "page": 1,
+              "bbox": [
+                294.9109802246094,
+                791.2523803710938,
+                300.36553955078125,
+                802.1614990234375
+              ]
+            }
+          ],
+          "start": 1929,
+          "end": 1930,
+          "page": 1,
+          "bbox": [
+            294.9109802246094,
+            791.2523803710938,
+            300.36553955078125,
+            802.1614990234375
+          ]
+        }
+      ],
+      "subsections": [
+        {
+          "section_id": "e1c2bf1e",
+          "title": "DeepONet (Deep Operator Network)",
+          "text": "DeepONet was the first architecture to theoretically prove that neural networks can approximate any continuous nonlinear operator. It consists of two components:\n\u2022 Branch Network : Encodes the input function (e.g., initial or boundary conditions).\n\u2022 Trunk Network : Encodes the spatial coordinates where the output is evaluated.\nBy combining these representations, DeepONet can approximate solutions to differential equa- tions across different domains.",
+          "page_start": 2,
+          "paragraphs": [
+            {
+              "paragraph_id": "d4287e79",
+              "text": "DeepONet was the first architecture to theoretically prove that neural networks can approximate any continuous nonlinear operator. It consists of two components:",
+              "sentences": [
+                {
+                  "sentence_id": "d5536f57",
+                  "text": "DeepONet was the first architecture to theoretically prove that neural networks can approximate any continuous nonlinear operator.",
+                  "start": 1964,
+                  "end": 2094,
+                  "page": 2,
+                  "bbox": [
+                    72.0,
+                    95.02815246582031,
+                    523.3094482421875,
+                    119.48625946044922
+                  ]
+                },
+                {
+                  "sentence_id": "e4280fd5",
+                  "text": "It consists of two components:",
+                  "start": 2095,
+                  "end": 2125,
+                  "page": 2,
+                  "bbox": [
+                    72.0,
+                    95.02815246582031,
+                    523.3094482421875,
+                    119.48625946044922
+                  ]
+                }
+              ],
+              "start": 1964,
+              "end": 2125,
+              "page": 2,
+              "bbox": [
+                72.0,
+                95.02815246582031,
+                523.3094482421875,
+                119.48625946044922
+              ]
+            },
+            {
+              "paragraph_id": "022f50d3",
+              "text": "\u2022 Branch Network : Encodes the input function (e.g., initial or boundary conditions).",
+              "sentences": [
+                {
+                  "sentence_id": "87784cad",
+                  "text": "\u2022 Branch Network :",
+                  "start": 2126,
+                  "end": 2144,
+                  "page": 2,
+                  "bbox": [
+                    88.39500427246094,
+                    130.8916778564453,
+                    508.297119140625,
+                    142.00225830078125
+                  ]
+                },
+                {
+                  "sentence_id": "4f9866fe",
+                  "text": "Encodes the input function (e.g., initial or boundary conditions).",
+                  "start": 2145,
+                  "end": 2211,
+                  "page": 2,
+                  "bbox": [
+                    88.39500427246094,
+                    130.8916778564453,
+                    508.297119140625,
+                    142.00225830078125
+                  ]
+                }
+              ],
+              "start": 2126,
+              "end": 2211,
+              "page": 2,
+              "bbox": [
+                88.39500427246094,
+                130.8916778564453,
+                508.297119140625,
+                142.00225830078125
+              ]
+            },
+            {
+              "paragraph_id": "a869e6a0",
+              "text": "\u2022 Trunk Network : Encodes the spatial coordinates where the output is evaluated.",
+              "sentences": [
+                {
+                  "sentence_id": "3ae3697d",
+                  "text": "\u2022 Trunk Network :",
+                  "start": 2212,
+                  "end": 2229,
+                  "page": 2,
+                  "bbox": [
+                    88.39500427246094,
+                    153.4066925048828,
+                    491.8026428222656,
+                    164.51727294921875
+                  ]
+                },
+                {
+                  "sentence_id": "a2b13a1f",
+                  "text": "Encodes the spatial coordinates where the output is evaluated.",
+                  "start": 2230,
+                  "end": 2292,
+                  "page": 2,
+                  "bbox": [
+                    88.39500427246094,
+                    153.4066925048828,
+                    491.8026428222656,
+                    164.51727294921875
+                  ]
+                }
+              ],
+              "start": 2212,
+              "end": 2292,
+              "page": 2,
+              "bbox": [
+                88.39500427246094,
+                153.4066925048828,
+                491.8026428222656,
+                164.51727294921875
+              ]
+            },
+            {
+              "paragraph_id": "498130fe",
+              "text": "By combining these representations, DeepONet can approximate solutions to differential equa- tions across different domains.",
+              "sentences": [
+                {
+                  "sentence_id": "84c37cbe",
+                  "text": "By combining these representations, DeepONet can approximate solutions to differential equa- tions across different domains.",
+                  "start": 2293,
+                  "end": 2417,
+                  "page": 2,
+                  "bbox": [
+                    72.0,
+                    176.12416076660156,
+                    523.2984008789062,
+                    200.582275390625
+                  ]
+                }
+              ],
+              "start": 2293,
+              "end": 2417,
+              "page": 2,
+              "bbox": [
+                72.0,
+                176.12416076660156,
+                523.2984008789062,
+                200.582275390625
+              ]
+            }
+          ],
+          "images": [],
+          "tables": [],
+          "equations": [],
+          "subsections": []
+        },
+        {
+          "section_id": "eeef8c1c",
+          "title": "Fourier Neural Operator (FNO)",
+          "text": "The Fourier Neural Operator is designed for efficiency and scalability. It operates in the fre- quency domain using Fourier transforms.\n\u2022 Resolution Invariance : Models trained on coarse grids generalize to finer grids.\n\u2022 Efficiency : Uses Fast Fourier Transforms (FFT), making it significantly faster than DeepONet for PDE problems.",
+          "page_start": 2,
+          "paragraphs": [
+            {
+              "paragraph_id": "8c3c784b",
+              "text": "The Fourier Neural Operator is designed for efficiency and scalability. It operates in the fre- quency domain using Fourier transforms.",
+              "sentences": [
+                {
+                  "sentence_id": "d21505e8",
+                  "text": "The Fourier Neural Operator is designed for efficiency and scalability.",
+                  "start": 2448,
+                  "end": 2519,
+                  "page": 2,
+                  "bbox": [
+                    72.0,
+                    239.4801788330078,
+                    523.3202514648438,
+                    263.93829345703125
+                  ]
+                },
+                {
+                  "sentence_id": "6892c7dc",
+                  "text": "It operates in the fre- quency domain using Fourier transforms.",
+                  "start": 2520,
+                  "end": 2583,
+                  "page": 2,
+                  "bbox": [
+                    72.0,
+                    239.4801788330078,
+                    523.3202514648438,
+                    263.93829345703125
+                  ]
+                }
+              ],
+              "start": 2448,
+              "end": 2583,
+              "page": 2,
+              "bbox": [
+                72.0,
+                239.4801788330078,
+                523.3202514648438,
+                263.93829345703125
+              ]
+            },
+            {
+              "paragraph_id": "f789e5ca",
+              "text": "\u2022 Resolution Invariance : Models trained on coarse grids generalize to finer grids.",
+              "sentences": [
+                {
+                  "sentence_id": "9cc95583",
+                  "text": "\u2022 Resolution Invariance :",
+                  "start": 2584,
+                  "end": 2609,
+                  "page": 2,
+                  "bbox": [
+                    88.39500427246094,
+                    275.34368896484375,
+                    490.907958984375,
+                    286.45428466796875
+                  ]
+                },
+                {
+                  "sentence_id": "b204e36d",
+                  "text": "Models trained on coarse grids generalize to finer grids.",
+                  "start": 2610,
+                  "end": 2667,
+                  "page": 2,
+                  "bbox": [
+                    88.39500427246094,
+                    275.34368896484375,
+                    490.907958984375,
+                    286.45428466796875
+                  ]
+                }
+              ],
+              "start": 2584,
+              "end": 2667,
+              "page": 2,
+              "bbox": [
+                88.39500427246094,
+                275.34368896484375,
+                490.907958984375,
+                286.45428466796875
+              ]
+            },
+            {
+              "paragraph_id": "a6fd46dc",
+              "text": "\u2022 Efficiency : Uses Fast Fourier Transforms (FFT), making it significantly faster than DeepONet for PDE problems.",
+              "sentences": [
+                {
+                  "sentence_id": "216f3279",
+                  "text": "\u2022 Efficiency : Uses Fast Fourier Transforms (FFT), making it significantly faster than DeepONet for PDE problems.",
+                  "start": 2668,
+                  "end": 2781,
+                  "page": 2,
+                  "bbox": [
+                    88.39500427246094,
+                    297.85968017578125,
+                    523.30810546875,
+                    322.519287109375
+                  ]
+                }
+              ],
+              "start": 2668,
+              "end": 2781,
+              "page": 2,
+              "bbox": [
+                88.39500427246094,
+                297.85968017578125,
+                523.30810546875,
+                322.519287109375
+              ]
+            }
+          ],
+          "images": [],
+          "tables": [],
+          "equations": [],
+          "subsections": []
+        }
+      ]
+    },
+    {
+      "section_id": "97a274da",
+      "title": "Key Comparisons",
+      "text": "Feature Transformers Diffusion DeepONet FNO\nBest Use Text / Code Images / Video Physics Theory Fluid Dynamics Speed Medium Slow Medium Very Fast Mathematical Basis Attention Stochastic Universal Approximation Fourier Space Input Type Sequences Pixels Functions Grids / Meshes",
+      "page_start": 2,
+      "paragraphs": [
+        {
+          "paragraph_id": "3f73736a",
+          "text": "Feature Transformers Diffusion DeepONet FNO",
+          "sentences": [
+            {
+              "sentence_id": "0b24adc4",
+              "text": "Feature Transformers Diffusion DeepONet FNO",
+              "start": 2863,
+              "end": 2906,
+              "page": 2,
+              "bbox": [
+                77.97799682617188,
+                405.59619140625,
+                525.9711303710938,
+                416.50531005859375
+              ]
+            }
+          ],
+          "start": 2863,
+          "end": 2906,
+          "page": 2,
+          "bbox": [
+            77.97799682617188,
+            405.59619140625,
+            525.9711303710938,
+            416.50531005859375
+          ]
+        },
+        {
+          "paragraph_id": "d51f03d3",
+          "text": "Best Use Text / Code Images / Video Physics Theory Fluid Dynamics Speed Medium Slow Medium Very Fast Mathematical Basis Attention Stochastic Universal Approximation Fourier Space Input Type Sequences Pixels Functions Grids / Meshes",
+          "sentences": [
+            {
+              "sentence_id": "5cb4d57f",
+              "text": "Best Use Text / Code Images / Video Physics Theory Fluid Dynamics Speed Medium Slow Medium Very Fast Mathematical Basis Attention Stochastic Universal Approximation Fourier Space Input Type Sequences Pixels Functions Grids / Meshes",
+              "start": 2907,
+              "end": 3138,
+              "page": 2,
+              "bbox": [
+                77.97799682617188,
+                424.6221923828125,
+                551.9564208984375,
+                476.1793212890625
+              ]
+            }
+          ],
+          "start": 2907,
+          "end": 3138,
+          "page": 2,
+          "bbox": [
+            77.97799682617188,
+            424.6221923828125,
+            551.9564208984375,
+            476.1793212890625
+          ]
+        }
+      ],
+      "images": [],
+      "tables": [],
+      "equations": [],
+      "subsections": []
+    },
+    {
+      "section_id": "8f1e576f",
+      "title": "Trends and Challenges",
+      "text": "Current research trends include:\n\u2022 Physics-aware and constraint-based generative models\n\u2022 Improved computational efficiency and energy usage\n\u2022 Increased reliability and reduced hallucinations in scientific outputs",
+      "page_start": 2,
+      "paragraphs": [
+        {
+          "paragraph_id": "06216390",
+          "text": "Current research trends include:",
+          "sentences": [
+            {
+              "sentence_id": "f280e15b",
+              "text": "Current research trends include:",
+              "start": 3163,
+              "end": 3195,
+              "page": 2,
+              "bbox": [
+                72.0,
+                539.9761962890625,
+                225.62197875976562,
+                550.8853149414062
+              ]
+            }
+          ],
+          "start": 3163,
+          "end": 3195,
+          "page": 2,
+          "bbox": [
+            72.0,
+            539.9761962890625,
+            225.62197875976562,
+            550.8853149414062
+          ]
+        },
+        {
+          "paragraph_id": "620020ac",
+          "text": "\u2022 Physics-aware and constraint-based generative models",
+          "sentences": [
+            {
+              "sentence_id": "29613007",
+              "text": "\u2022 Physics-aware and constraint-based generative models",
+              "start": 3196,
+              "end": 3250,
+              "page": 2,
+              "bbox": [
+                88.39500427246094,
+                562.2897338867188,
+                357.39154052734375,
+                573.4003295898438
+              ]
+            }
+          ],
+          "start": 3196,
+          "end": 3250,
+          "page": 2,
+          "bbox": [
+            88.39500427246094,
+            562.2897338867188,
+            357.39154052734375,
+            573.4003295898438
+          ]
+        },
+        {
+          "paragraph_id": "3724d269",
+          "text": "\u2022 Improved computational efficiency and energy usage",
+          "sentences": [
+            {
+              "sentence_id": "6e38c508",
+              "text": "\u2022 Improved computational efficiency and energy usage",
+              "start": 3251,
+              "end": 3303,
+              "page": 2,
+              "bbox": [
+                88.39500427246094,
+                584.8057250976562,
+                349.1006774902344,
+                595.9163208007812
+              ]
+            }
+          ],
+          "start": 3251,
+          "end": 3303,
+          "page": 2,
+          "bbox": [
+            88.39500427246094,
+            584.8057250976562,
+            349.1006774902344,
+            595.9163208007812
+          ]
+        },
+        {
+          "paragraph_id": "e148f08c",
+          "text": "\u2022 Increased reliability and reduced hallucinations in scientific outputs",
+          "sentences": [
+            {
+              "sentence_id": "ddc9081a",
+              "text": "\u2022 Increased reliability and reduced hallucinations in scientific outputs",
+              "start": 3304,
+              "end": 3376,
+              "page": 2,
+              "bbox": [
+                88.39500427246094,
+                607.3207397460938,
+                422.08251953125,
+                618.4313354492188
+              ]
+            }
+          ],
+          "start": 3304,
+          "end": 3376,
+          "page": 2,
+          "bbox": [
+            88.39500427246094,
+            607.3207397460938,
+            422.08251953125,
+            618.4313354492188
+          ]
+        }
+      ],
+      "images": [],
+      "tables": [],
+      "equations": [],
+      "subsections": []
+    },
+    {
+      "section_id": "2f38c01f",
+      "title": "Conclusion",
+      "text": "Transformers and diffusion models dominate creative and multimodal AI tasks, while neural operators enable a new paradigm for scientific computing. DeepONet provides strong theoret- ical guarantees for operator learning, and FNO delivers scalability and resolution invariance. Together, they form the foundation of modern scientific machine learning.",
+      "page_start": 2,
+      "paragraphs": [
+        {
+          "paragraph_id": "3ffc2e19",
+          "text": "Transformers and diffusion models dominate creative and multimodal AI tasks, while neural operators enable a new paradigm for scientific computing. DeepONet provides strong theoret- ical guarantees for operator learning, and FNO delivers scalability and resolution invariance. Together, they form the foundation of modern scientific machine learning.",
+          "sentences": [
+            {
+              "sentence_id": "290fa685",
+              "text": "Transformers and diffusion models dominate creative and multimodal AI tasks, while neural operators enable a new paradigm for scientific computing.",
+              "start": 3390,
+              "end": 3537,
+              "page": 2,
+              "bbox": [
+                72.0,
+                666.2472534179688,
+                523.3530883789062,
+                717.8033447265625
+              ]
+            },
+            {
+              "sentence_id": "42a37f77",
+              "text": "DeepONet provides strong theoret- ical guarantees for operator learning, and FNO delivers scalability and resolution invariance.",
+              "start": 3538,
+              "end": 3666,
+              "page": 2,
+              "bbox": [
+                72.0,
+                666.2472534179688,
+                523.3530883789062,
+                717.8033447265625
+              ]
+            },
+            {
+              "sentence_id": "97559706",
+              "text": "Together, they form the foundation of modern scientific machine learning.",
+              "start": 3667,
+              "end": 3740,
+              "page": 2,
+              "bbox": [
+                72.0,
+                666.2472534179688,
+                523.3530883789062,
+                717.8033447265625
+              ]
+            }
+          ],
+          "start": 3390,
+          "end": 3740,
+          "page": 2,
+          "bbox": [
+            72.0,
+            666.2472534179688,
+            523.3530883789062,
+            717.8033447265625
+          ]
+        }
+      ],
+      "images": [],
+      "tables": [],
+      "equations": [
+        {
+          "equation_id": "31938e0d",
+          "text": "2",
+          "caption": [
+            {
+              "sentence_id": "2a7e76d7",
+              "text": "2",
+              "start": 3741,
+              "end": 3742,
+              "page": 2,
+              "bbox": [
+                294.9110107421875,
+                791.252197265625,
+                300.3655700683594,
+                802.1613159179688
+              ]
+            }
+          ],
+          "start": 3741,
+          "end": 3742,
+          "page": 2,
+          "bbox": [
+            294.9110107421875,
+            791.252197265625,
+            300.3655700683594,
+            802.1613159179688
+          ]
+        }
+      ],
+      "subsections": []
+    },
+    {
+      "section_id": "d6c422ab",
+      "title": "References",
+      "text": "[1] Z. Li, N. Kovachki, K. Azizzadenesheli, B. Liu, K. Bhattacharya, A. Stuart, and A. Anandku- mar. Fourier Neural Operator for Parametric Partial Differential Equations. arXiv preprint arXiv:2010.08895 , 2020. Available at: https://arxiv.org/abs/2010.08895\n[2] L. Lu, P. Jin, G. Pang, Z. Zhang, and G. E. Karniadakis. DeepONet: Learning nonlinear operators for identifying differential equations based on the universal approximation theorem of operators. arXiv preprint arXiv:1910.03193 , 2019. Available at: https://arxiv.org/ abs/1910.03193",
+      "page_start": 3,
+      "paragraphs": [
+        {
+          "paragraph_id": "e2e6844b",
+          "text": "[1] Z. Li, N. Kovachki, K. Azizzadenesheli, B. Liu, K. Bhattacharya, A. Stuart, and A. Anandku- mar. Fourier Neural Operator for Parametric Partial Differential Equations. arXiv preprint arXiv:2010.08895 , 2020. Available at: https://arxiv.org/abs/2010.08895",
+          "sentences": [
+            {
+              "sentence_id": "f7fb2814",
+              "text": "[1] Z. Li, N. Kovachki, K. Azizzadenesheli, B. Liu, K. Bhattacharya, A. Stuart, and A. Anandku- mar.",
+              "start": 3754,
+              "end": 3854,
+              "page": 3,
+              "bbox": [
+                72.0,
+                98.78517150878906,
+                523.3638305664062,
+                137.31732177734375
+              ]
+            },
+            {
+              "sentence_id": "0c9f1147",
+              "text": "Fourier Neural Operator for Parametric Partial Differential Equations.",
+              "start": 3855,
+              "end": 3925,
+              "page": 3,
+              "bbox": [
+                72.0,
+                98.78517150878906,
+                523.3638305664062,
+                137.31732177734375
+              ]
+            },
+            {
+              "sentence_id": "7aaf24e1",
+              "text": "arXiv preprint arXiv:2010.08895 , 2020.",
+              "start": 3926,
+              "end": 3965,
+              "page": 3,
+              "bbox": [
+                72.0,
+                98.78517150878906,
+                523.3638305664062,
+                137.31732177734375
+              ]
+            },
+            {
+              "sentence_id": "97561d01",
+              "text": "Available at: https://arxiv.org/abs/2010.08895",
+              "start": 3966,
+              "end": 4012,
+              "page": 3,
+              "bbox": [
+                72.0,
+                98.78517150878906,
+                523.3638305664062,
+                137.31732177734375
+              ]
+            }
+          ],
+          "start": 3754,
+          "end": 4012,
+          "page": 3,
+          "bbox": [
+            72.0,
+            98.78517150878906,
+            523.3638305664062,
+            137.31732177734375
+          ]
+        },
+        {
+          "paragraph_id": "fba16ac1",
+          "text": "[2] L. Lu, P. Jin, G. Pang, Z. Zhang, and G. E. Karniadakis. DeepONet: Learning nonlinear operators for identifying differential equations based on the universal approximation theorem of operators. arXiv preprint arXiv:1910.03193 , 2019. Available at: https://arxiv.org/ abs/1910.03193",
+          "sentences": [
+            {
+              "sentence_id": "ea2d3c19",
+              "text": "[2] L. Lu, P. Jin, G. Pang, Z. Zhang, and G. E. Karniadakis.",
+              "start": 4013,
+              "end": 4073,
+              "page": 3,
+              "bbox": [
+                72.0,
+                148.39918518066406,
+                523.3966064453125,
+                200.4803466796875
+              ]
+            },
+            {
+              "sentence_id": "9cf1622d",
+              "text": "DeepONet: Learning nonlinear operators for identifying differential equations based on the universal approximation theorem of operators.",
+              "start": 4074,
+              "end": 4210,
+              "page": 3,
+              "bbox": [
+                72.0,
+                148.39918518066406,
+                523.3966064453125,
+                200.4803466796875
+              ]
+            },
+            {
+              "sentence_id": "3d1c3869",
+              "text": "arXiv preprint arXiv:1910.03193 , 2019.",
+              "start": 4211,
+              "end": 4250,
+              "page": 3,
+              "bbox": [
+                72.0,
+                148.39918518066406,
+                523.3966064453125,
+                200.4803466796875
+              ]
+            },
+            {
+              "sentence_id": "aa16f31e",
+              "text": "Available at: https://arxiv.org/ abs/1910.03193",
+              "start": 4251,
+              "end": 4298,
+              "page": 3,
+              "bbox": [
+                72.0,
+                148.39918518066406,
+                523.3966064453125,
+                200.4803466796875
+              ]
+            }
+          ],
+          "start": 4013,
+          "end": 4298,
+          "page": 3,
+          "bbox": [
+            72.0,
+            148.39918518066406,
+            523.3966064453125,
+            200.4803466796875
+          ]
+        }
+      ],
+      "images": [],
+      "tables": [],
+      "equations": [
+        {
+          "equation_id": "73209650",
+          "text": "3",
+          "caption": [
+            {
+              "sentence_id": "d5acf538",
+              "text": "3",
+              "start": 4299,
+              "end": 4300,
+              "page": 3,
+              "bbox": [
+                294.9110107421875,
+                791.252197265625,
+                300.3655700683594,
+                802.1613159179688
+              ]
+            }
+          ],
+          "start": 4299,
+          "end": 4300,
+          "page": 3,
+          "bbox": [
+            294.9110107421875,
+            791.252197265625,
+            300.3655700683594,
+            802.1613159179688
+          ]
+        }
+      ],
+      "subsections": []
+    }
+  ]
+}
