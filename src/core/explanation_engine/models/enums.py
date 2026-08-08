@@ -1,22 +1,6 @@
 from enum import Enum
 
 
-class ResourceType(Enum):
-    """Types of learning resources"""
-    VIDEO = "video"
-    ARTICLE = "article"
-    EXERCISE = "exercise"
-    COURSE = "course"
-    DOCUMENTATION = "documentation"
-
-
-class ExplanationLevel(Enum):
-    """Levels of explanation detail"""
-    BEGINNER = "beginner"
-    INTERMEDIATE = "intermediate"
-    ADVANCED = "advanced"
-    EXPERT = "expert"
-
 
 class RecommendationStrategy(str, Enum):
     """Strategies for recommendation"""
@@ -24,3 +8,14 @@ class RecommendationStrategy(str, Enum):
     SEMANTIC_SEARCH = "semantic_search"
     KNOWLEDGE_BASED = "knowledge_based"
     POPULARITY_BASED = "popularity_based"
+
+
+
+class QueryType(Enum):
+    """Type of user query"""
+    EXPLANATION = "explanation"
+    REASONING = "reasoning"
+    EXAMPLE = "example"
+    SIMPLIFICATION = "simplification"
+    REPETITION = "repetition"
+    GENERAL = "general"

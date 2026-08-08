@@ -5,7 +5,7 @@ import numpy as np
 import spacy
 from transformers import pipeline
 import torch 
-from typing import List, Literal, Dict
+from typing import List, Literal, Dict, Union
 from gliner import GLiNER
 
 class EmbeddingModel:
@@ -15,15 +15,20 @@ class EmbeddingModel:
         # self.model = SentenceTransformer(model_name)
         self.model = None
 
-    def encode(self, texts: List[str]) -> np.ndarray:
-        if self.model is not None:
-            return self.model.encode(texts).tolist()
-        
-        text = " ".join(texts)
-
+    def _fallback_vector(self, text: str) -> np.ndarray:
         # Deterministic lightweight fallback vector for local development.
         digest = hashlib.sha256(text.encode("utf-8")).digest()
-        return np.array([b / 255.0 for b in digest[:16]])
+        return np.array([b / 255.0 for b in digest[:16]], dtype=np.float32)
+
+    def encode(self, texts: Union[str, List[str]]) -> np.ndarray:
+        if self.model is not None:
+            return np.asarray(self.model.encode(texts), dtype=np.float32)
+
+        if isinstance(texts, str):
+            return self._fallback_vector(texts)
+
+        return np.vstack([self._fallback_vector(text) for text in texts])
+
 
 class NERLLM:
     def __init__(self, llm_client = None) -> None:
@@ -228,4 +233,3 @@ if __name__ == "__main__":
         print(f"\n=== {backend.upper()} ===")
         for i, c in enumerate(concepts, 1):
             print(f"{i}. {c}")
-

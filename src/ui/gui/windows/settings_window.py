@@ -307,14 +307,22 @@ class SettingsWindow(QDialog):
         provider_layout = QHBoxLayout()
         provider_layout.addWidget(QLabel("Provider:"))
         self.llm_provider = QComboBox()
-        self.llm_provider.addItems(["gemini", "openai"])
+        self.llm_provider.addItems(["gemini", "local", "ollama", "openai"])
         provider_layout.addWidget(self.llm_provider)
         model_layout.addLayout(provider_layout)
         
         model_name_layout = QHBoxLayout()
         model_name_layout.addWidget(QLabel("Model:"))
         self.llm_model = QComboBox()
-        self.llm_model.addItems(["gemini-1.5-flash", "gemini-1.5-pro", "gpt-4", "gpt-3.5-turbo"])
+        self.llm_model.addItems([
+            "gemini-3.5-flash-lite",
+            "gemini-3.5-flash",
+            "gemini-3.6-flash",
+            "local-extractive",
+            "llama3.2:3b",
+            "gpt-4",
+            "gpt-3.5-turbo",
+        ])
         model_name_layout.addWidget(self.llm_model)
         model_layout.addLayout(model_name_layout)
         
@@ -326,6 +334,14 @@ class SettingsWindow(QDialog):
         self.llm_temperature.setValue(1.0)
         temperature_layout.addWidget(self.llm_temperature)
         model_layout.addLayout(temperature_layout)
+
+        rate_layout = QHBoxLayout()
+        rate_layout.addWidget(QLabel("Requests/min:"))
+        self.llm_requests_per_minute = QSpinBox()
+        self.llm_requests_per_minute.setRange(0, 120)
+        self.llm_requests_per_minute.setValue(4)
+        rate_layout.addWidget(self.llm_requests_per_minute)
+        model_layout.addLayout(rate_layout)
         
         model_group.setLayout(model_layout)
         layout.addWidget(model_group)
@@ -436,8 +452,11 @@ class SettingsWindow(QDialog):
         
         # LLM
         self.llm_provider.setCurrentText(self.settings.value("llm_provider", "gemini"))
-        self.llm_model.setCurrentText(self.settings.value("llm_model", "gemini-1.5-flash"))
+        self.llm_model.setCurrentText(self.settings.value("llm_model", "gemini-3.5-flash-lite"))
         self.llm_temperature.setValue(self.settings.value("llm_temperature", 1.0, type=float))
+        self.llm_requests_per_minute.setValue(
+            self.settings.value("llm_requests_per_minute", 4, type=int)
+        )
         self.gemini_key.setText(self.settings.value("gemini_key", ""))
         self.openai_key.setText(self.settings.value("openai_key", ""))
         
@@ -480,6 +499,10 @@ class SettingsWindow(QDialog):
         self.settings.setValue("llm_provider", self.llm_provider.currentText())
         self.settings.setValue("llm_model", self.llm_model.currentText())
         self.settings.setValue("llm_temperature", self.llm_temperature.value())
+        self.settings.setValue(
+            "llm_requests_per_minute",
+            self.llm_requests_per_minute.value()
+        )
         self.settings.setValue("gemini_key", self.gemini_key.text())
         self.settings.setValue("openai_key", self.openai_key.text())
         
@@ -510,6 +533,10 @@ class SettingsWindow(QDialog):
         self.config.default_zoom = self.default_zoom.value()
         self.config.cache_documents = self.cache_enabled.isChecked()
         self.config.cache_size_mb = self.cache_size.value()
+        self.config.llm_provider = self.llm_provider.currentText()
+        self.config.llm_model = self.llm_model.currentText()
+        self.config.llm_temperature = self.llm_temperature.value()
+        self.config.llm_requests_per_minute = self.llm_requests_per_minute.value()
         
         QMessageBox.information(self, "Settings", "Settings applied successfully")
     

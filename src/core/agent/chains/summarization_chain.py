@@ -16,12 +16,22 @@ class SummarizationChain(BaseChain):
     
     def _build_chain(self) -> RunnableSequence:
         """Build summarization chain"""
-        return self.llm.chain
+        chain = self.llm.chain
+        if chain is None:
+            raise ValueError("LLM chain is not initialized")
+        return chain
     
-    def run(self, selected_text: str, context_summary: str,
-            known_concepts: str, complexity: str = "intermediate",
-            structure: str = "bullet points",
-            length: str = "concise") -> Any:
+    def run(
+        self,
+        selected_text: str,
+        *,
+        context_summary: str,
+        known_concepts: str,
+        complexity: str = "intermediate",
+        structure: str = "bullet points",
+        length: str = "concise",
+        **kwargs: Any,
+    ) -> Any:
         """Run summarization chain"""
         return super().run(
             selected_text=selected_text,
@@ -29,5 +39,6 @@ class SummarizationChain(BaseChain):
             known_concepts=known_concepts,
             complexity=complexity,
             structure=structure,
-            length=length
+            length=length,
+            **kwargs,
         )

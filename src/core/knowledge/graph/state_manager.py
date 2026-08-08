@@ -1,6 +1,5 @@
 from __future__ import annotations
-from typing import Dict,TYPE_CHECKING
-from src.core.user import UserManager, UserKnowledgeState
+from typing import Dict, TYPE_CHECKING, Any
 from ..repository import BaseKnowledgeStore, BaseKnowledgeRepository
 from ..models import ConceptGraph, GraphDelta
 from .builder import ConceptGraphBuilder
@@ -15,7 +14,7 @@ class GraphStateManager:
     
     def __init__(
         self, 
-        user_manager: UserManager,
+        user_manager: Any,
         concept_graph_builder: ConceptGraphBuilder,
         document_chain: DocumentChain,
         graph_updater: GraphUpdater,
@@ -30,8 +29,10 @@ class GraphStateManager:
         self.knowledge_store = knowledge_store
         self.document = None
 
-    def _sync_user_state(self) -> UserKnowledgeState:
+    def _sync_user_state(self) -> Any:
         """Convert user knowledge to graph confidence scores"""
+        from src.core.user import UserKnowledgeState
+        
         profile = self.user_manager.get_user().knowledge_state
         state = UserKnowledgeState()
         for concept, s in profile.knowledge_states.items():

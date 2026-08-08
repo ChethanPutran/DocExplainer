@@ -1,5 +1,4 @@
 from .agent import Agent
-from .models.enums import ExplanationDepth, ExplanationStyleEnum
 from .models.schemas import Explanation, ExplanationMetadata, ResourceSuggestion, ExplanationPydantic
 from .models.dataclasses import Resource
 from .llm.factories.llm_factory import LLMFactory
@@ -16,8 +15,6 @@ __all__ = [
     'Agent',
     'LLMInterface',
     'AgentError',
-    'ExplanationDepth',
-    'ExplanationStyleEnum',
     'Explanation',
     'ExplanationMetadata',
     'ResourceSuggestion',

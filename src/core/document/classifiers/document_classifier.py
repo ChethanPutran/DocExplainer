@@ -5,6 +5,8 @@ from xgboost import XGBClassifier
 from sklearn.model_selection import cross_val_score
 from typing import Dict, Any
 import joblib
+import numpy as np
+from ..models.structure import Section
 
 class DocumentSectionClassifier:
     """Classify document sections using ensemble methods"""
@@ -14,13 +16,29 @@ class DocumentSectionClassifier:
         self.svm_classifier = SVC(kernel='rbf', probability=True, random_state=42)
         self.xgb_classifier = XGBClassifier(n_estimators=100, learning_rate=0.1, random_state=42)
         self.gb_classifier = GradientBoostingClassifier(n_estimators=100, random_state=42)
+
+    def _ensemble_vote(self, predictions: Dict[str, np.ndarray]) -> np.ndarray:
+        """Combine probabilities from multiple classifiers by averaging."""
+        probability_arrays = list(predictions.values())
+        if not probability_arrays:
+            return np.array([])
+
+        return np.mean(np.stack(probability_arrays), axis=0)
+
+    def _get_section_type(self, probabilities: np.ndarray) -> str:
+        """Map the highest-probability class index to a section type label."""
+        if probabilities.size == 0:
+            return "unknown"
+
+        predicted_index = int(np.argmax(probabilities))
+        return f"class_{predicted_index}"
         
     def extract_features(self, section: Section) -> np.ndarray:
         """Extract features from section for classification"""
         features = []
         
         # Text-based features
-        features.append(len(section.raw_text))
+        features.append(len(section.text))
         features.append(len(section.paragraphs))
         features.append(len(section.images))
         features.append(len(section.tables))
@@ -30,7 +48,7 @@ class DocumentSectionClassifier:
         features.append(len(section.subsections))
         
         # Content features
-        avg_para_len = np.mean([len(p.raw_text) for p in section.paragraphs]) if section.paragraphs else 0
+        avg_para_len = np.mean([len(p.text) for p in section.paragraphs]) if section.paragraphs else 0
         features.append(avg_para_len)
         
         # Keyword-based features
@@ -39,7 +57,7 @@ class DocumentSectionClassifier:
         
         return np.array(features)
     
-    def classify_section_type(self, section: Section) -> Dict[str, float]:
+    def classify_section_type(self, section: Section) -> Dict[str, Any]:
         """Classify section type with confidence scores"""
         features = self.extract_features(section).reshape(1, -1)
         

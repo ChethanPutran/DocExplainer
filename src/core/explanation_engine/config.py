@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
-from src.core.agent.models.enums import ExplanationStyleEnum
+from src.core.common.dataclasses import ExplanationStyle
 
 
 @dataclass
@@ -8,7 +8,7 @@ class ExplanationEngineConfig:
     """Configuration for explanation engine"""
     
     # Default settings
-    default_level: ExplanationStyleEnum = ExplanationStyleEnum.INTERMEDIATE
+    default_level: ExplanationStyle = field(default_factory=ExplanationStyle.get_default_style)
     
     # Resource recommendation settings
     enable_video_recommendations: bool = True
@@ -33,8 +33,8 @@ class ExplanationEngineConfig:
         
         if 'default_level' in config_dict:
             level_val = config_dict['default_level']
-            if isinstance(level_val, str):
-                config.default_level = ExplanationStyleEnum(level_val)
+            if isinstance(level_val, dict):
+                config.default_level = ExplanationStyle.from_dict(level_val)
         
         if 'enable_video_recommendations' in config_dict:
             config.enable_video_recommendations = config_dict['enable_video_recommendations']
@@ -56,7 +56,7 @@ class ExplanationEngineConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'default_level': self.default_level.value,
+            'default_level': self.default_level.to_dict(),
             'enable_video_recommendations': self.enable_video_recommendations,
             'enable_article_recommendations': self.enable_article_recommendations,
             'enable_exercise_recommendations': self.enable_exercise_recommendations,

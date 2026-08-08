@@ -1,7 +1,7 @@
 from typing import List, Dict
-from pydantic import BaseModel, Field
-from .enums import ExplanationStyleEnum, ResourceType
-
+from pydantic import BaseModel, Field 
+from src.core.common.enums import ResourceType, ExplanationLevel
+from src.core.common.dataclasses import ExplanationStyle
 
 class ExplanationMetadata(BaseModel):
     """Metadata for explanations"""
@@ -15,13 +15,13 @@ class ResourceSuggestion(BaseModel):
     """Suggestion for learning resources"""
     concept: str = Field(description="The specific concept requiring extra resources")
     resource_type: ResourceType = Field(description="Type of resource")
-    difficulty: ExplanationStyleEnum = Field(description="Difficulty level")
+    difficulty: ExplanationLevel = Field(description="Difficulty level")
 
 
 class ExplanationPydantic(BaseModel):
     """LLM output schema for explanations"""
     explanation: str = Field(description="The main text of the response")
-    style: Dict = Field(description="Tone, depth, and structural choices")
+    style: ExplanationStyle = Field(description="Tone, depth, and structural choices")
     context_used: Dict = Field(description="Context bits from document/session used")
     known_concepts_used: List[str] = Field(description="Concepts bridged from user profile")
     unknown_concepts_explained: List[str] = Field(description="New concepts defined")
@@ -33,7 +33,7 @@ class ExplanationPydantic(BaseModel):
 class Explanation(BaseModel):
     """Final unified explanation model"""
     explanation: str
-    style: Dict
+    style: ExplanationStyle
     context_used: Dict
     known_concepts_used: List[str]
     unknown_concepts_explained: List[str]
@@ -42,7 +42,3 @@ class Explanation(BaseModel):
     metadata: ExplanationMetadata
     resources: List['Resource'] = []  # Forward reference
 
-
-# Import for type checking
-from .dataclasses import Resource
-Explanation.update_forward_refs()

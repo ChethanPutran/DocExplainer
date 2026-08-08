@@ -5,6 +5,7 @@ from .base import BaseQuestionStrategy
 from ...models.schemas import Question
 from ...models.enums import QuestionType, DifficultyLevel
 from src.core.agent.base import LLMInterface
+from src.core.agent.prompts.templates import question_generation_template
 
 
 class AdaptiveStrategy(BaseQuestionStrategy):
@@ -13,6 +14,7 @@ class AdaptiveStrategy(BaseQuestionStrategy):
     def __init__(self, generator, llm_wrapper: Optional[LLMInterface] = None):
         super().__init__(generator)
         self.llm_wrapper = llm_wrapper
+        self.question_generation_template = question_generation_template
     
     def get_question_type(self) -> QuestionType:
         return QuestionType.SHORT_ANSWER  # Default, but can generate any type
@@ -23,12 +25,9 @@ class AdaptiveStrategy(BaseQuestionStrategy):
             # Fallback to multiple choice if no LLM
             return self.generator.get_strategy(QuestionType.MULTIPLE_CHOICE).generate(concept, difficulty)
         
-        try:
-            # Prepare prompt for LLM
-            prompt = self._create_question_prompt(concept, difficulty)
-            
+        try: 
             # Set up LLM for JSON output
-            self.llm_wrapper.set_prompt_template(prompt, json_output=True)
+            self.llm_wrapper.set_prompt_template(self.question_generation_template, json_output=True)
             
             # Generate question
             response = self.llm_wrapper.generate({
@@ -49,32 +48,6 @@ class AdaptiveStrategy(BaseQuestionStrategy):
             # Fallback to multiple choice
             return self.generator.get_strategy(QuestionType.MULTIPLE_CHOICE).generate(concept, difficulty)
     
-    def _create_question_prompt(self, concept: str, difficulty: DifficultyLevel) -> str:
-        """Create prompt for LLM question generation"""
-        return f"""
-        Generate a quiz question about the concept: {concept}
-        Difficulty level: {difficulty.value}
-        
-        The question should:
-        - Be clear and unambiguous
-        - Test understanding of the concept
-        - Be appropriate for {difficulty.value} level learners
-        - Include a correct answer
-        - Include a brief explanation
-        
-        Return the response in this JSON format:
-        {{
-            "question_text": "The question text",
-            "question_type": "multiple_choice" or "true_false" or "fill_blank" or "short_answer",
-            "options": [
-                {{"text": "Option A", "is_correct": false}},
-                {{"text": "Option B", "is_correct": true}}
-            ] (only for multiple choice),
-            "correct_answer": "The correct answer",
-            "explanation": "Explanation of the correct answer",
-            "hints": ["Hint 1", "Hint 2"]
-        }}
-        """
     
     def _create_question_from_data(self, data: dict, concept: str, 
                                    difficulty: DifficultyLevel) -> Question:

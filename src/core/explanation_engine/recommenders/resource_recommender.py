@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from ..base.interfaces import RecommendationStrategy
 from ..models.dataclasses import Resource
-from ..models.enums import ResourceType, ExplanationLevel
+from src.core.common.enums import ResourceType, ExplanationLevel
 from .base import BaseResourceRecommender
 from .strategies.video_strategy import VideoRecommendationStrategy
 from .strategies.article_strategy import ArticleRecommendationStrategy
@@ -85,7 +85,7 @@ class ResourceRecommender(BaseResourceRecommender):
             source="Khan Academy"
         )
     
-    def recommend_all(self, concept: str, level: str) -> List[Resource]:
+    def recommend_all(self, concept: str, level: str = "intermediate") -> List[Resource]:
         """Recommend all resource types"""
         resources = [
             self.recommend_videos(concept, level),
@@ -126,7 +126,7 @@ class ResourceRecommender(BaseResourceRecommender):
     # Helper methods
     
     def _build_search_query(self, concept: str, level: str, 
-                           include_terms: List[str] = None) -> str:
+                           include_terms: List[str] = None) -> str: # type: ignore
         """Build a search query string"""
         base_query = f"{concept} tutorial {level}"
         

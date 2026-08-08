@@ -2,15 +2,20 @@
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+
 [project]
 name = "doc-explainer"
 version = "1.0.0"
 description = "Intelligent Document Explanation System with AI-powered features"
 readme = "README.md"
+requires-python = ">=3.10"
+
 authors = [
-    {name = "Doc Explainer Team", email = "team@docexplainer.com"}
+    { name = "Doc Explainer Team", email = "team@docexplainer.com" }
 ]
-license = {text = "MIT"}
+
+license = { text = "MIT" }
+
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Education",
@@ -18,96 +23,230 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Education",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Text Processing",
 ]
-requires-python = ">=3.8"
+
 dependencies = [
+    # GUI
     "PySide6>=6.5.0",
+
+    # LangChain
     "langchain>=0.1.0",
     "langchain-community>=0.0.10",
     "langchain-core>=0.1.0",
     "langchain-google-genai>=0.0.5",
     "langchain-openai>=0.0.2",
+
+    # LLM Providers
     "google-generativeai>=0.3.0",
     "openai>=1.0.0",
+
+    # Document Processing
     "PyMuPDF>=1.23.0",
     "pdfplumber>=0.10.0",
+    "pdf2image>=1.16.0",
     "python-pptx>=0.6.21",
     "python-docx>=0.8.11",
     "markdown>=3.5.0",
     "beautifulsoup4>=4.12.0",
     "lxml>=4.9.0",
+
+    # NLP
     "spacy>=3.7.0",
     "nltk>=3.8.0",
     "transformers>=4.35.0",
     "sentence-transformers>=2.2.0",
+    "torch>=2.0.0",
+
+    # Vector Search
     "chromadb>=0.4.0",
     "faiss-cpu>=1.7.0",
     "scikit-learn>=1.3.0",
+
+    # Knowledge Graph / Visualization
     "networkx>=3.1",
     "graphviz>=0.20.1",
     "plotly>=5.17.0",
-    "speechrecognition>=3.10.0",
+    "matplotlib>=3.7.0",
+
+    # Audio / Speech
+    "SpeechRecognition>=3.10.0",
     "pyttsx3>=2.90",
-    "pyaudio>=0.2.11",
+    "PyAudio>=0.2.11",
     "sounddevice>=0.4.6",
-    "whisper>=1.1.10",
+    "openai-whisper>=20231117",
+
+    # Data Processing
     "numpy>=1.24.0",
     "pandas>=2.0.0",
+
+    # Configuration / Validation
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "python-dotenv>=1.0.0",
-    "pyyaml>=6.0",
-    "tqdm>=4.66.0",
+    "PyYAML>=6.0",
+
+    # Web / HTTP
     "requests>=2.31.0",
     "aiohttp>=3.9.0",
-    "asyncio>=3.4.3",
+
+    # Caching / Messaging
     "redis>=5.0.0",
     "diskcache>=5.6.0",
+
+    # Utilities
+    "orjson>=3.9.0",
+    "jsonlines>=4.0.0",
+    "tqdm>=4.66.0",
     "loguru>=0.7.0",
     "psutil>=5.9.0",
-    "jsonlines>=4.0.0",
-    "orjson>=3.9.0",
-    "pillow>=10.0.0",
+
+    # Computer Vision
     "opencv-python>=4.8.0",
+    "Pillow>=10.0.0",
+
+    # Optimization / Symbolic Mathematics
+    "scikit-optimize>=0.9.0",
+    "sympy>=1.12",
+
+    # Reinforcement Learning
+    "gymnasium>=0.29.0",
+    "stable-baselines3>=2.1.0",
+
+    # TensorBoard
+    "tensorboard>=2.13.0",
 ]
 
+
+[project.optional-dependencies]
+
+# Web API
+web = [
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+]
+
+# Machine Learning
+ml = [
+    "xgboost>=2.0.0",
+    "lightgbm>=4.1.0",
+    "prophet>=1.1.5",
+    "imbalanced-learn>=0.11.0",
+    "feature-engine>=1.6.0",
+    "category-encoders>=2.6.3",
+]
+
+# Development / Testing
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-qt>=4.2.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-xdist>=3.3.0",
+
+    # Code Quality
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+    "pylint>=3.0.0",
+    "pre-commit>=3.5.0",
+
+    # Documentation
+    "sphinx>=7.2.0",
+    "sphinx-rtd-theme>=1.3.0",
+    "sphinx-autodoc-typehints>=1.24.0",
+
+    # Packaging
+    "build>=1.0.0",
+    "twine>=4.0.0",
+    "wheel>=0.41.0",
+
+    # Profiling
+    "memory-profiler>=0.61.0",
+    "line-profiler>=4.1.0",
+]
+
+# Everything needed for development
+all = [
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "xgboost>=2.0.0",
+    "lightgbm>=4.1.0",
+    "prophet>=1.1.5",
+    "imbalanced-learn>=0.11.0",
+    "feature-engine>=1.6.0",
+    "category-encoders>=2.6.3",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-qt>=4.2.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-xdist>=3.3.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.1.0",
+    "mypy>=1.5.0",
+    "pylint>=3.0.0",
+    "pre-commit>=3.5.0",
+    "sphinx>=7.2.0",
+    "sphinx-rtd-theme>=1.3.0",
+    "sphinx-autodoc-typehints>=1.24.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+    "wheel>=0.41.0",
+    "memory-profiler>=0.61.0",
+    "line-profiler>=4.1.0",
+]
+
+
 [project.urls]
-"Homepage" = "https://github.com/yourusername/doc-explainer"
-"Bug Tracker" = "https://github.com/yourusername/doc-explainer/issues"
-"Documentation" = "https://docs.docexplainer.com"
+Homepage = "https://github.com/ChethanPutran/DocExplainer"
+Repository = "https://github.com/ChethanPutran/DocExplainer"
+"Bug Tracker" = "https://github.com/ChethanPutran/DocExplainer/issues"
+
 
 [project.scripts]
-doc-explainer = "src.ui.gui.app:main"
+doc-explainer = "src.cli.main:main"
 doc-explainer-cli = "src.cli.main:main"
+
 
 [project.gui-scripts]
 doc-explainer-gui = "src.ui.gui.app:main"
 
+
+[tool.setuptools]
+include-package-data = true
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+
 [tool.black]
 line-length = 100
-target-version = ['py38', 'py39', 'py310', 'py311']
+target-version = ["py310", "py311", "py312", "py313"]
 include = '\.pyi?$'
 extend-exclude = '''
 /(
     \.eggs
-    | \.git
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | _build
-    | buck-out
-    | build
-    | dist
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
 )/
 '''
+
 
 [tool.isort]
 profile = "black"
@@ -118,8 +257,9 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 
+
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
@@ -134,14 +274,15 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --strict-markers"
-testpaths = [
-    "tests",
-]
+testpaths = ["tests"]
+
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "gui: marks tests as GUI tests",
     "integration: marks tests as integration tests",
 ]
+

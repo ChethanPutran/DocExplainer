@@ -16,6 +16,10 @@ class OrchestratorConfig:
     
     # LLM configuration
     llm_provider: str = "gemini"
+    llm_model: str = "gemini-3.5-flash-lite"
+    llm_requests_per_minute: int = 4
+    llm_min_request_interval_seconds: Optional[float] = None
+    llm_rate_limit_retries: int = 2
     GEMINI_API_KEY: str = field(default_factory=lambda: os.getenv("GEMINI_API_KEY", ""))
     temperature: float = 1.0
     
@@ -59,6 +63,10 @@ class OrchestratorConfig:
             'default_user_id': self.default_user_id,
             'concepts_per_para': self.concepts_per_para,
             'llm_provider': self.llm_provider,
+            'llm_model': self.llm_model,
+            'llm_requests_per_minute': self.llm_requests_per_minute,
+            'llm_min_request_interval_seconds': self.llm_min_request_interval_seconds,
+            'llm_rate_limit_retries': self.llm_rate_limit_retries,
             'temperature': self.temperature,
             'persist_directory': self.persist_directory,
             'knowledge_store_path': self.knowledge_store_path,

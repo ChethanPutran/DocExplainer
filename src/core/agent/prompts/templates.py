@@ -192,3 +192,33 @@ text_summarization_template = PromptTemplate(
     """,
     input_variables=["recent_context", "current_text"],
 )
+
+
+# --- Create prompt for LLM question generation ---
+
+question_generation_template = PromptTemplate(
+    template="""
+    Generate a quiz question about the concept: {concept}
+    Difficulty level: {difficulty}
+
+    The question should:
+        - Be clear and unambiguous
+        - Test understanding of the concept
+        - Be appropriate for {difficulty} level learners
+        - Include a correct answer
+        - Include a brief explanation
+        
+        Return the response in this JSON format:
+        {{
+            "question_text": "The question text",
+            "question_type": "multiple_choice" or "true_false" or "fill_blank" or "short_answer",
+            "options": [
+                {{"text": "Option A", "is_correct": false}},
+                {{"text": "Option B", "is_correct": true}}
+            ] (only for multiple choice),
+            "correct_answer": "The correct answer",
+            "explanation": "Explanation of the correct answer",
+            "hints": ["Hint 1", "Hint 2"]
+        }}
+        """,
+        input_variables=["concept", "difficulty"])

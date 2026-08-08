@@ -97,7 +97,7 @@ class ResponseEvaluator(BaseResponseEvaluator):
         return {
             "results": results,
             "total_score": total_score,
-            "percentage": self.calculate_score(total_score, max_score),
+            "percentage": self.calculate_score(sum(1 for r in results.values() if r.is_correct), max_score),
             "correct_count": sum(1 for r in results.values() if r.is_correct),
             "total_questions": len(questions)
         }

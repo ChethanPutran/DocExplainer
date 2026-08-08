@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from typing import List, Dict, Optional
-from src.core.user import UserManager
+from typing import List, Dict, Optional, Any, TYPE_CHECKING
 
 from ..models.concept import Concept
 from ..repository import BaseKnowledgeStore
+
+if TYPE_CHECKING:
+    from src.core.user import UserManager
 
 class RecommendationService:
     """Provides concept recommendations based on user state"""
     
     def __init__(self, 
                  knowledge_store: BaseKnowledgeStore,
-                 user_manager: UserManager):
+                 user_manager: Any):
         self.knowledge_store = knowledge_store
         self.user_manager = user_manager
 

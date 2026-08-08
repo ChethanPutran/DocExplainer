@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 from ..storage.session_memory import SessionMemory
 from ..chains.session_chain import SessionChain
 from ..models.context import SessionContext
@@ -28,7 +28,7 @@ class SessionManager:
         
         return self.session_memory.update_session_context(**updates)
     
-    def handle_interaction(self, name: str, interaction: Dict) -> bool:
+    def handle_interaction(self, name: str, interaction: Any) -> bool:
         """Handle a user interaction and update session context"""
         # Add to chain
         self.session_chain.add_interaction(name, interaction)

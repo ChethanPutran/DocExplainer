@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
-from .enums import ResourceType, ExplanationLevel
+from src.core.common.enums import ResourceType, ExplanationLevel
 
 
 @dataclass

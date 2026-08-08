@@ -24,6 +24,13 @@ class MLRecommendationSystem:
         user_profiles = self.svd.fit_transform(user_item_matrix)
         
         return user_profiles
+
+
+    def _create_interaction_matrix(self, user_interactions: List[Dict]) -> np.ndarray:
+        """Create a user-item interaction matrix from interactions"""
+        df = pd.DataFrame(user_interactions)
+        user_item_matrix = df.pivot_table(index='user_id', columns='item_id', values='interaction', fill_value=0)
+        return user_item_matrix.values
     
     def cluster_users(self, user_features: np.ndarray) -> Dict[int, List[str]]:
         """Group similar users for collaborative recommendations"""
@@ -56,11 +63,33 @@ class MLRecommendationSystem:
         hybrid_recs = self._hybrid_recommendations(collaborative_recs, content_based_recs)
         
         return hybrid_recs[:top_k]
+
+
+    def _find_similar_users(self, user_id: str, user_embeddings: np.ndarray) -> List[str]:
+        """Find similar users based on embeddings"""
+        distances, indices = self.knn.fit(user_embeddings).kneighbors(user_embeddings[user_id].reshape(1, -1))
+        similar_users = [i for i in indices.flatten() if i != user_id]
+        return similar_users
+    
+    def _hybrid_recommendations(self, collaborative_recs: List[Dict], content_based_recs: List[Dict]) -> List[Dict]:
+        """Combine collaborative and content-based recommendations"""
+        # Simple merging strategy
+        combined = {rec['id']: rec for rec in collaborative_recs}
+        for rec in content_based_recs:
+            if rec['id'] not in combined:
+                combined[rec['id']] = rec
+        
+        return list(combined.values())
     
     def _collaborative_filtering(self, similar_users: List[str]) -> List[Dict]:
         """Collaborative filtering based on similar users"""
-        # Implementation
-        pass
+        # Placeholder for actual collaborative filtering logic
+        recommendations = []
+        for user in similar_users:
+            # Fetch content liked by similar users (mocked)
+            recommendations.append({'id': f'content_{user}', 'title': f'Content liked by user {user}'})
+        
+        return recommendations
     
     def _content_based_filtering(self, user_embeddings, content_embeddings):
         """Content-based filtering using cosine similarity"""

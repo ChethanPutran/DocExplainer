@@ -18,7 +18,7 @@ class ExplanationParser(BaseParser):
     
     def parse_response(self, output: str) -> ExplanationPydantic:
         """Parse text into ExplanationPydantic"""
-        pass 
+        return self.parse(output)
 
 
 # Singleton instance

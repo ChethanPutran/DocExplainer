@@ -1,7 +1,9 @@
-from typing import Optional, Dict, Any
 from ..base import BaseLLM
 from ..wrappers.gemini_wrapper import GeminiWrapper
+from ..wrappers.local_wrapper import LocalWrapper
+from ..wrappers.ollama_wrapper import OllamaWrapper
 from ..wrappers.openai_wrapper import OpenAIWrapper
+from ..wrappers.open_router import OpenRouterWrapper
 
 
 class LLMFactory:
@@ -9,8 +11,10 @@ class LLMFactory:
     
     _providers = {
         'gemini': GeminiWrapper,
+        'local': LocalWrapper,
+        'ollama': OllamaWrapper,
         'openai': OpenAIWrapper,
-        'google': GeminiWrapper,
+        'openrouter': OpenRouterWrapper
     }
     
     @classmethod
@@ -27,7 +31,7 @@ class LLMFactory:
             raise ValueError(f"Unknown provider: {provider}. Available: {list(cls._providers.keys())}")
         
         wrapper_class = cls._providers[provider]
-        return wrapper_class(**kwargs)
+        return wrapper_class(**kwargs) # Create instance of the wrapper class with provided kwargs
     
     @classmethod
     def create_default(cls, **kwargs) -> BaseLLM:

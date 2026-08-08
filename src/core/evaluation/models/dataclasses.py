@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from .enums import DifficultyLevel, ResponseCorrectness
 
 
 @dataclass

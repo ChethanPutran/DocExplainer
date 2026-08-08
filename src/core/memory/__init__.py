@@ -6,6 +6,18 @@ from .managers.memory_manager import MemoryManager
 from .managers.session_manager import SessionManager
 from .chains.session_chain import SessionChain
 from .factories.memory_factory import MemoryFactory
+from .rag import (
+    RAGSystem,
+    MultiDocumentRetriever,
+    HierarchicalRetriever,
+    ConceptGraphRanker,
+    SemanticCache,
+    RetrievalResult,
+    DocumentReference,
+    QueryType,
+    EmbeddingProvider,
+    SentenceTransformerProvider,
+)
 
 __all__ = [
     'LongTermMemory',
@@ -16,5 +28,15 @@ __all__ = [
     'MemoryManager',
     'SessionManager',
     'SessionChain',
-    'MemoryFactory'
+    'MemoryFactory',
+    'RAGSystem',
+    'MultiDocumentRetriever',
+    'HierarchicalRetriever',
+    'ConceptGraphRanker',
+    'SemanticCache',
+    'RetrievalResult',
+    'DocumentReference',
+    'QueryType',
+    'EmbeddingProvider',
+    'SentenceTransformerProvider',
 ]

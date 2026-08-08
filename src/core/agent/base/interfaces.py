@@ -28,7 +28,7 @@ class ParserInterface(ABC):
     pydantic_model = None
 
     @abstractmethod
-    def parse(self, output: str) -> Any:
+    def parse(self, text: str) -> Any:
         """Parse LLM output"""
         pass
     

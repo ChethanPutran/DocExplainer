@@ -38,6 +38,7 @@ class DocExplainerOrchestrator:
             self.document_info: Dict[str, Dict[str, Any]] = {}
         
         except Exception as e:
+            print(f"Error initializing orchestrator: {e}")
             self.logger.error(f"Error initializing orchestrator: {e}")
             raise OrchestratorError
     

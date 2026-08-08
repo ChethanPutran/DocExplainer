@@ -43,7 +43,7 @@ class ConceptExtractor:
 
         # Ensure embedding exists
         if name_normalized not in embedding_cache:
-            embedding_cache[name_normalized] = self.canonicalizer.clusterer.embedder.encode([name_normalized])
+            embedding_cache[name_normalized] = self.canonicalizer.clusterer.embedder.encode(name_normalized)
 
         # Create concept if not exists
         if name_normalized not in self.global_concepts:

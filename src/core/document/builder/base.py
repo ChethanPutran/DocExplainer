@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from ..models.structure import Document
 from ..models.tree import DocumentTree
-
+from typing import Optional, List, Protocol, runtime_checkable
 
 class BaseDocumentEngine(ABC):
     """Base interface for document engine"""
@@ -28,6 +28,20 @@ class BaseDocumentEngine(ABC):
         """Get the built document tree"""
         pass
 
+@runtime_checkable
+class SimilarityResult(Protocol):
+    page_content: str
+
+@runtime_checkable
+class SimilaritySearchDB(Protocol):
+    def similarity_search(
+        self,
+        query: str,
+        k: int = 3,
+        filter: Optional[dict] = None,
+    ) -> List[SimilarityResult]:
+        ...
+
 
 class DocumentBuilder(ABC):
     langchain_embeddings = False  # Flag to indicate if LangChain embeddings are used
@@ -39,13 +53,13 @@ class DocumentBuilder(ABC):
 
     @abstractmethod
     def create_full_vector_db(self, document: Document, collection_name: str = "full_doc",
-                              persist_directory: Optional[str] = None)-> object:
+                              persist_directory: Optional[str] = None)-> SimilaritySearchDB:
         """Create full-document vector database"""
         pass
 
     @abstractmethod
     def create_tree_aware_db(self, tree: DocumentTree, collection_name: str = "hierarchical_db",
-                             persist_directory: Optional[str] = None) -> object:
+                             persist_directory: Optional[str] = None) -> SimilaritySearchDB:
         """Create vector database from tree chunks"""
         pass
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from .enums import ResourceType, ExplanationStyleEnum
+from src.core.common.enums import ResourceType, ExplanationLevel
 
 
 @dataclass
@@ -9,7 +9,7 @@ class Resource:
     url: str
     type: ResourceType
     description: str
-    difficulty: ExplanationStyleEnum
+    difficulty: ExplanationLevel
     
     def to_dict(self) -> dict:
         """Convert to dictionary"""
@@ -18,7 +18,7 @@ class Resource:
             'url': self.url,
             'type': self.type.value,
             'description': self.description,
-            'difficulty': self.difficulty.value
+            'difficulty': self.difficulty
         }
     
     @classmethod
@@ -29,5 +29,5 @@ class Resource:
             url=data['url'],
             type=ResourceType(data['type']),
             description=data['description'],
-            difficulty=ExplanationStyleEnum(data['difficulty'])
+            difficulty=ExplanationLevel(data['difficulty'])
         )

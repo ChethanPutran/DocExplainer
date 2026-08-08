@@ -4,6 +4,7 @@ from sklearn.linear_model import LinearRegression, Ridge
 from xgboost import XGBRegressor
 from sklearn.preprocessing import StandardScaler
 from typing import Dict, Any
+import numpy as np
 
 class DifficultyPredictor:
     """Predict difficulty level of content using regression"""

@@ -13,12 +13,13 @@ class FontInfo:
     
     @property
     def is_bold(self) -> bool:
-        return "Bold" in self.name or (self.flags & 16)
+        return ("Bold" in self.name) or bool(self.flags & 16)
     
 @dataclass
 class Section(Serializable, Identifiable):
     """Represents a section in a document"""
     title: str
+    
     text: str = ""
     page_start: int = 1
     paragraphs: List[Paragraph] = field(default_factory=list)

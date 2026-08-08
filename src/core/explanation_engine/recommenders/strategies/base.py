@@ -3,7 +3,7 @@ from typing import Optional
 
 from ...base.interfaces import RecommendationStrategy
 from ...models.dataclasses import Resource
-from ...models.enums import ResourceType
+from src.core.common.enums import ResourceType
 
 
 class BaseRecommendationStrategy(RecommendationStrategy, ABC):

@@ -1,6 +1,6 @@
 from .base import BaseRecommendationStrategy
 from ...models.dataclasses import Resource
-from ...models.enums import ResourceType
+from src.core.common.enums import ResourceType
 
 
 class VideoRecommendationStrategy(BaseRecommendationStrategy):

@@ -33,7 +33,7 @@ class PipelineFactory:
         self._instances = {}
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def create_documnet_repository(self) -> Any:
+    def create_document_repository(self) -> Any:
         """Create document repository"""
         if 'document_repository' not in self._instances:
             from src.store.document import DocumentRepository
@@ -42,22 +42,24 @@ class PipelineFactory:
     
     def create_document_engine(self) -> Any:
         """Create document engine"""
-        if 'document_engine' not in self._instances:
+        instance_name = 'document_engine'
+        if instance_name not in self._instances:
             from src.core.document import DocumentEngine
             from src.core.document.builder import HierarchicalProcessor
+            llm_wrapper = self.create_llm('summary_generator')
             document_processor = HierarchicalProcessor(
-                self.create_llm(),
+                llm_wrapper,
                 self.create_text_models().get_embedding_model()
             )
-            self._instances['document_engine'] = DocumentEngine(document_processor)
-        return self._instances['document_engine']
+            self._instances[instance_name] = DocumentEngine(document_processor)
+        return self._instances[instance_name]
     
     def create_document_manager(self) -> DocumentManager:
         """Create document manager"""
         if 'document_manager' not in self._instances:
             persist_dir = self.config.get('persist_directory', 'db/vector_dbs')
             self._instances['document_manager'] = DocumentManager(
-                repository=self.create_documnet_repository(),
+                repository=self.create_document_repository(),
                 document_engine=self.create_document_engine(),
             )
         return self._instances['document_manager']
@@ -68,16 +70,43 @@ class PipelineFactory:
             self._instances['text_models'] = TextModels()
         return self._instances['text_models']
     
-    def create_llm(self) -> Any:
+    def create_llm(
+        self,
+        instance_name: str,
+        provider: Optional[str] = None,
+        temperature: Optional[float] = None
+    ) -> Any:
         """Create LLM wrapper"""
-        if 'llm' not in self._instances:
-            provider = self.config.get('llm_provider', 'gemini')
-            temperature = self.config.get('temperature', 1.0)
-            self._instances['llm'] = LLMFactory.create(
-                provider=provider,
-                temperature=temperature
+        if instance_name not in self._instances:
+            llm_kwargs = dict(self.config.get('llm_kwargs', {}))
+            model_name = self.config.get('llm_model') or self.config.get('model')
+            if model_name:
+                llm_kwargs.setdefault('model_name', model_name)
+
+            if 'llm_requests_per_minute' in self.config:
+                llm_kwargs.setdefault(
+                    'requests_per_minute',
+                    self.config['llm_requests_per_minute']
+                )
+
+            if 'llm_min_request_interval_seconds' in self.config:
+                llm_kwargs.setdefault(
+                    'min_request_interval_seconds',
+                    self.config['llm_min_request_interval_seconds']
+                )
+
+            if 'llm_rate_limit_retries' in self.config:
+                llm_kwargs.setdefault(
+                    'rate_limit_retries',
+                    self.config['llm_rate_limit_retries']
+                )
+
+            self._instances[instance_name] = LLMFactory.create(
+                provider=provider or self.config.get('llm_provider', 'gemini'),
+                temperature=temperature if temperature is not None else self.config.get('temperature', 1.0),
+                **llm_kwargs
             )
-        return self._instances['llm']
+        return self._instances[instance_name]
     
     def create_knowledge_store(self) -> KnowledgeStore:
         """Create knowledge store"""
@@ -125,7 +154,7 @@ class PipelineFactory:
             from src.core.knowledge.extraction.canonicalization.llm_canonicalizer import LLMCanonicalizer
             
             knowledge_store = self.create_knowledge_store()
-            llm = self.create_llm()
+            llm = self.create_llm('concept_canonicalizer')
             text_models = self.create_text_models()
             
             normalizer = TextNormalizer()
@@ -149,7 +178,7 @@ class PipelineFactory:
             from src.core.knowledge.extraction.filters.subset_pruner import SubsetPrunerStrategy
             
             text_models = self.create_text_models()
-            llm = self.create_llm()
+            llm = self.create_llm('concept_extractor')
             canonicalizer = self.create_concept_canonicalizer()
             
             # Create scoring strategy
@@ -179,7 +208,7 @@ class PipelineFactory:
             from src.core.knowledge.extraction.strategies.relationship.llm_strategy import LLMRelationshipExtractor
             from src.core.knowledge.extraction.strategies.relationship.statistical_strategy import StatisticalRelationshipExtractor
             
-            llm = self.create_llm()
+            llm = self.create_llm('relationship_extractor')
             
             self._instances['llm_relationship_extractor'] = LLMRelationshipExtractor(llm)
             self._instances['statistical_relationship_extractor'] = StatisticalRelationshipExtractor()
@@ -236,23 +265,43 @@ class PipelineFactory:
     def create_explainer(self) -> AdaptiveExplainer:
         """Create adaptive explainer"""
         if 'explainer' not in self._instances:
-            from src.core.explanation_engine import AdaptiveExplainer
+            from src.core.explanation_engine.factories import ExplanationEngineFactory
             from src.core.agent.agent import Agent
             from src.core.agent.config import AgentConfig
+
+            llm_kwargs = dict(self.config.get('llm_kwargs', {}))
+            model_name = self.config.get('llm_model') or self.config.get('model')
+            if model_name:
+                llm_kwargs.setdefault('model_name', model_name)
+
+            if 'llm_requests_per_minute' in self.config:
+                llm_kwargs.setdefault(
+                    'requests_per_minute',
+                    self.config['llm_requests_per_minute']
+                )
+
+            if 'llm_min_request_interval_seconds' in self.config:
+                llm_kwargs.setdefault(
+                    'min_request_interval_seconds',
+                    self.config['llm_min_request_interval_seconds']
+                )
+
+            if 'llm_rate_limit_retries' in self.config:
+                llm_kwargs.setdefault(
+                    'rate_limit_retries',
+                    self.config['llm_rate_limit_retries']
+                )
             
             agent_config = AgentConfig(
                 llm_provider=self.config.get('llm_provider', 'gemini'),
-                temperature=self.config.get('temperature', 1.0)
+                temperature=self.config.get('temperature', 1.0),
+                llm_model=model_name or 'gemini-3.5-flash-lite',
+                llm_kwargs=llm_kwargs
             )
             
             agent = Agent(config=agent_config)
-            
-            self._instances['explainer'] = AdaptiveExplainer(
-                agent=agent,
-                recommender=self.create_knowledge_pipeline().recommendation_service,
-            )
-            # Set the agent
-            self._instances['explainer'].agent = agent
+            explainer = ExplanationEngineFactory.create_adaptive_explainer(agent)
+            self._instances['explainer'] = explainer
             
         return self._instances['explainer']
     

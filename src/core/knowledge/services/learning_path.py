@@ -1,13 +1,15 @@
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, TYPE_CHECKING, Any
 from ..repository import BaseKnowledgeStore
-from src.core.user import UserManager
+
+if TYPE_CHECKING:
+    from src.core.user import UserManager
 
 class LearningPathGenerator:
     """Generates personalized learning paths"""
     
     def __init__(self, 
                  knowledge_store: BaseKnowledgeStore,
-                 user_manager: UserManager):
+                 user_manager: Any):
         self.knowledge_store = knowledge_store
         self.user_manager = user_manager
 

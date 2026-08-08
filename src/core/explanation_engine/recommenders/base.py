@@ -4,7 +4,7 @@ import logging
 
 from ..base.interfaces import ResourceRecommenderInterface, RecommendationStrategy
 from ..models.dataclasses import Resource
-from ..models.enums import ResourceType, ExplanationLevel
+from src.core.common.enums import ResourceType, ExplanationLevel
 
 logger = logging.getLogger(__name__)
 

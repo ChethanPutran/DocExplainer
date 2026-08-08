@@ -9,10 +9,10 @@ from .parsers.retry_parser import RetryParser
 from .chains.explanation_chain import ExplanationChain
 from .chains.summarization_chain import SummarizationChain
 from .chains.qa_chain import QAChain
-from .models.enums import ExplanationStyleEnum
 from .models.schemas import Explanation, ExplanationMetadata, ExplanationPydantic
-from .models.dataclasses import Resource
 from .config import AgentConfig
+from src.core.common.dataclasses import ExplanationStyle
+
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class Agent:
         self.qa_chain = QAChain(self.llm)
         
         # Default style
-        self.explanation_style = self.config.default_style
+        self.explanation_style = self.config.explanation_style
     
     def summarize(self, text: str, context: Any) -> Explanation:
         """Generate summary for text"""
@@ -108,7 +108,7 @@ class Agent:
             "known_concepts": ", ".join(known) if known else "Fundamental basics",
             "unknown_concepts": ", ".join(unknown) if unknown else "None identified yet",
             "tone": self.config.tone,
-            "complexity": self.explanation_style.value,
+            "complexity": self.explanation_style,
             "math_level": self.config.math_level,
             "format_instructions": explanation_output_parser.get_format_instructions()
         }
@@ -187,7 +187,7 @@ class Agent:
         """Build fallback response when LLM fails"""
         return Explanation(
             explanation=message,
-            style={"mode": self.explanation_style.value, "depth": "fixed"},
+            style=self.explanation_style,
             context_used={"error_state": True},
             known_concepts_used=[],
             unknown_concepts_explained=[],
@@ -215,7 +215,7 @@ class Agent:
             return 0.5
         return 0.8
     
-    def set_explanation_style(self, style: ExplanationStyleEnum):
+    def set_explanation_style(self, style: ExplanationStyle):
         """Set explanation style"""
         self.explanation_style = style
     

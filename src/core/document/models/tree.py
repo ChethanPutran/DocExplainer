@@ -140,6 +140,105 @@ class DocumentTree:
     @staticmethod
     def from_dict(data: Dict[str, Any]) -> DocumentTree:
         """Create DocumentTree from dictionary"""
-        # Implement deserialization logic here
-        pass
+
+        def _parse_chunk_type(value: Any) -> ChunkType:
+            if isinstance(value, ChunkType):
+                return value
+            if isinstance(value, str):
+                normalized = value.upper()
+                if hasattr(ChunkType, normalized):
+                    return ChunkType[normalized]
+            return ChunkType.DOCUMENT
+
+        def _parse_chunk_level(value: Any) -> ChunkLevel:
+            if isinstance(value, ChunkLevel):
+                return value
+            if isinstance(value, str):
+                normalized = value.upper()
+                if hasattr(ChunkLevel, normalized):
+                    return ChunkLevel[normalized]
+            if isinstance(value, int):
+                for level in ChunkLevel:
+                    if level.value == value:
+                        return level
+            return ChunkLevel.DOCUMENT
+
+        def _deserialize_chunk(chunk_data: Any) -> DocumentChunk:
+            if isinstance(chunk_data, DocumentChunk):
+                return chunk_data
+            if not isinstance(chunk_data, dict):
+                return DocumentChunk(text="")
+
+            embedding = chunk_data.get("embedding")
+            if isinstance(embedding, list):
+                embedding = np.array(embedding)
+
+            return DocumentChunk(
+                text=str(chunk_data.get("text", "")),
+                chunk_type=_parse_chunk_type(chunk_data.get("chunk_type", ChunkType.DOCUMENT)),
+                level=_parse_chunk_level(chunk_data.get("level", ChunkLevel.DOCUMENT)),
+                chunk_id=str(chunk_data.get("chunk_id", "")),
+                summary=str(chunk_data.get("summary", "")),
+                parent_id=chunk_data.get("parent_id"),
+                embedding=embedding,
+                metadata=chunk_data.get("metadata"),
+            )
+
+        def _deserialize_node(node_data: Any, parent: Optional[DocumentNode] = None) -> DocumentNode:
+            if isinstance(node_data, DocumentNode):
+                return node_data
+            if not isinstance(node_data, dict):
+                node_data = {}
+
+            node_id = str(node_data.get("id") or node_data.get("node_id") or "root")
+            if not node_id and parent is not None:
+                node_id = parent.id
+
+            chunk_data = node_data.get("chunk") or {}
+            if not isinstance(chunk_data, dict):
+                chunk_data = {}
+
+            chunk = _deserialize_chunk(chunk_data)
+            if not chunk.chunk_id:
+                chunk.chunk_id = node_id
+            if parent is not None and chunk.parent_id is None:
+                chunk.parent_id = parent.id
+
+            node = DocumentNode(node_id, chunk)
+            node.concepts = list(node_data.get("concepts", []))
+            node.concept_relationships = list(node_data.get("concept_relationships", []))
+
+            children_data = node_data.get("children", {})
+            if isinstance(children_data, list):
+                for child_data in children_data:
+                    child = _deserialize_node(child_data, node)
+                    node.add_child(child)
+            elif isinstance(children_data, dict):
+                for child_data in children_data.values():
+                    child = _deserialize_node(child_data, node)
+                    node.add_child(child)
+
+            return node
+
+        if not isinstance(data, dict):
+            data = {}
+
+        title = str(data.get("title", ""))
+        root_data = data.get("root")
+        root_node = _deserialize_node(root_data)
+        tree = DocumentTree(title, root_node)
+
+        hierarchy_data = data.get("hierarchy")
+        if isinstance(hierarchy_data, dict):
+            tree.hierarchy = {
+                "document": [_deserialize_chunk(chunk_data) for chunk_data in hierarchy_data.get("document", [])],
+                "sections": [_deserialize_chunk(chunk_data) for chunk_data in hierarchy_data.get("sections", [])],
+                "paragraphs": [_deserialize_chunk(chunk_data) for chunk_data in hierarchy_data.get("paragraphs", [])],
+                "sentences": [_deserialize_chunk(chunk_data) for chunk_data in hierarchy_data.get("sentences", [])],
+            }
+
+        tree.summaries = list(data.get("summaries", []))
+        tree.total_chunks = int(data.get("total_chunks", tree.total_chunks))
+
+        return tree
     

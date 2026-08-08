@@ -1,6 +1,5 @@
 from abc import abstractmethod
 from typing import Any, Type, Optional
-from langchain_core.output_parsers import BaseOutputParser
 from pydantic import BaseModel
 
 from ..base.interfaces import ParserInterface
@@ -14,7 +13,13 @@ class BaseParser(ParserInterface):
     
     @abstractmethod
     def parse(self, text: str) -> Any:
-        """Parse LLM output"""
+        """Parse LLM output
+
+        Parameters
+        ----------
+        output: str
+            The raw LLM output to parse.
+        """
         pass
 
     def get_format_instructions(self) -> str:

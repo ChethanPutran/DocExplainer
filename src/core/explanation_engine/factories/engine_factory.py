@@ -1,7 +1,6 @@
 from typing import Optional, Dict, Any
 
 from src.core.agent import Agent
-from src.core.agent.models.enums import ExplanationStyleEnum
 
 from ..engines.adaptive_explainer import AdaptiveExplainer
 from ..recommenders.resource_recommender import ResourceRecommender

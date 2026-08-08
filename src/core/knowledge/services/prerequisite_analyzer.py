@@ -1,9 +1,11 @@
 from collections import defaultdict
-from typing import List, Dict, Set
+from typing import List, Dict, Set, Any, TYPE_CHECKING
 
-from src.core.user import UserManager
 from ..repository import BaseKnowledgeStore
 from ..graph.state_manager import GraphStateManager
+
+if TYPE_CHECKING:
+    from src.core.user import UserManager
 
 class PrerequisiteAnalyzer:
     """Analyzes prerequisite relationships between concepts"""
@@ -11,7 +13,7 @@ class PrerequisiteAnalyzer:
     def __init__(self, 
                  graph_state_manager: GraphStateManager,
                  knowledge_store: BaseKnowledgeStore,
-                 user_manager: UserManager):
+                 user_manager: Any):
         self.graph_state_manager = graph_state_manager
         self.knowledge_store = knowledge_store
         self.user_manager = user_manager

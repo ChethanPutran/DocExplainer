@@ -11,6 +11,23 @@ class ConceptClusterer:
         self.embedder = embedder
         self.threshold = threshold
         self.embedding_cache = {}
+
+    def _encode_batch(self, concepts: List[str]) -> np.ndarray:
+        """Encode concepts as a 2D matrix: one row per concept."""
+        embeddings = np.asarray(self.embedder.encode(concepts), dtype=np.float32)
+
+        if embeddings.ndim == 1:
+            if len(concepts) == 1:
+                return embeddings.reshape(1, -1)
+            embeddings = np.asarray(
+                [self.embedder.encode(concept) for concept in concepts],
+                dtype=np.float32,
+            )
+
+        if embeddings.ndim > 2:
+            embeddings = embeddings.reshape(embeddings.shape[0], -1)
+
+        return embeddings
     
     def _get_embeddings(self, concepts: List[str]) -> np.ndarray:
         """Get embeddings for concepts, using cache when possible"""
@@ -24,7 +41,7 @@ class ConceptClusterer:
             indices.append(i)
         
         if to_encode:
-            new_embeddings = self.embedder.encode(to_encode)
+            new_embeddings = self._encode_batch(to_encode)
             for idx, concept, emb in zip(indices, to_encode, new_embeddings):
                 self.embedding_cache[concept] = emb
         
@@ -33,7 +50,7 @@ class ConceptClusterer:
         for concept in concepts:
             embeddings.append(self.embedding_cache[concept])
         
-        return np.array(embeddings)
+        return np.asarray(embeddings, dtype=np.float32).reshape(len(concepts), -1)
     
     def cluster(self, concepts: List[str]) -> Dict[int, List[str]]:
         """Cluster similar concepts together"""

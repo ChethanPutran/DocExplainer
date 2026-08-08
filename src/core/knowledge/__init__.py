@@ -5,7 +5,12 @@ from src.core.knowledge.models import (
     ConceptNodeRelationship,
     ConceptRelationship,
     GraphDelta,
-    ConceptInvertedIndex
+    ConceptInvertedIndex,
+    ConceptMapping,
+    DocumentTransfer,
+    TransferConfig,
+    TransferAnalysisResult,
+    ConceptAlignmentType,
 )
 from src.core.knowledge.graph import (
     ConceptGraphBuilder,
@@ -17,7 +22,11 @@ from src.core.knowledge.graph import (
 from src.core.knowledge.extraction import (
     ConceptExtractor, LLMRelationshipExtractor, StatisticalRelationshipExtractor)
 from src.core.knowledge.graph import GraphStateManager, BaseDocumentChain
-from .services import LearningPathGenerator, PrerequisiteAnalyzer, RecommendationService
+from .services import (
+    LearningPathGenerator,
+    PrerequisiteAnalyzer,
+    RecommendationService,
+)
 from .repository import BaseKnowledgeRepository, BaseKnowledgeStore, ConceptRepositoryBase
 
 __all__ = [
@@ -38,6 +47,11 @@ __all__ = [
     "PrerequisiteAnalyzer",
     "LearningPathGenerator",
     "RecommendationService",
+    "ConceptMapping",
+    "DocumentTransfer",
+    "TransferConfig",
+    "TransferAnalysisResult",
+    "ConceptAlignmentType",
     "BaseKnowledgeRepository",
     "BaseKnowledgeStore",
     "BaseDocumentChain",

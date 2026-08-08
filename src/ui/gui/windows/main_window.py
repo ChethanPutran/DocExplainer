@@ -9,7 +9,7 @@ from PySide6.QtCore import Qt
 from ..factories import WidgetFactory, ViewerFactory
 from ..widgets import BaseDocumentViewer, Sidebar,  VoiceInput, VoiceOutput, MainToolbar
 from ..models.signals import UISignals
-from ..config import UIConfig
+from src.config import UIConfig
 
 if TYPE_CHECKING:
     from ..managers import ShortcutManager, ThemeManager

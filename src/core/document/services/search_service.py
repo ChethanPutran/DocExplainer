@@ -25,6 +25,12 @@ class SearchService:
     
     def _semantic_search(self, query: str, level: str, k: int) -> List[Dict[str, Any]]:
         """Perform semantic search using vector DB"""
+        if not self.vector_db:
+            return []
+
+        if not hasattr(self.vector_db, "similarity_search_with_score"):
+            return []
+
         results = self.vector_db.similarity_search_with_score(
             query,
             k=k,

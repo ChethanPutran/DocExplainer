@@ -17,24 +17,28 @@ class ExplanationChain(BaseChain):
     
     def _build_chain(self) -> RunnableSequence:
         """Build explanation chain"""
-        return self.llm.chain
+        chain = self.llm.chain
+        if chain is None:
+            raise ValueError("LLM chain is not initialized")
+        return chain
     
-    def run(self, selected_text: str, context_summary: str, 
-            known_concepts: str, unknown_concepts: str,
-            tone: str = "encouraging and academic",
-            complexity: str = "intermediate",
-            math_level: str = "descriptive") -> ExplanationPydantic:
+    def run(self, **kwargs) -> ExplanationPydantic:
         """Run explanation chain"""
+        tone = kwargs.pop("tone", "encouraging and academic")
+        complexity = kwargs.pop("complexity", "intermediate")
+        math_level = kwargs.pop("math_level", "descriptive")
+
         result = super().run(
-            selected_text=selected_text,
-            context_summary=context_summary,
-            known_concepts=known_concepts,
-            unknown_concepts=unknown_concepts,
             tone=tone,
             complexity=complexity,
-            math_level=math_level
+            math_level=math_level,
+            **kwargs,
         )
-        
-        if isinstance(result, dict) and self.parser:
+        # Normalize result to ExplanationPydantic
+        if isinstance(result, ExplanationPydantic):
+            return result
+        if isinstance(result, dict):
             return ExplanationPydantic(**result)
-        return result
+
+        # If result is not a dict or the expected pydantic model, raise to satisfy typing
+        raise TypeError(f"Unexpected result type {type(result)!r}, expected dict or ExplanationPydantic")

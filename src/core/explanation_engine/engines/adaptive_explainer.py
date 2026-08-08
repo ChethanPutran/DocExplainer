@@ -3,7 +3,7 @@ import logging
 
 from src.core.agent import Agent
 from src.core.agent.models.schemas import Explanation, ResourceSuggestion
-from src.core.agent.models.enums import ExplanationStyleEnum
+from src.core.common.dataclasses import ExplanationStyle
 from ..base.exceptions import RecommendationError
 from ..recommenders.resource_recommender import ResourceRecommender
 from ..models.dataclasses import Resource
@@ -21,7 +21,7 @@ class AdaptiveExplainer(BaseExplanationEngine):
     def __init__(self, 
                  agent: Agent,
                  recommender: Optional[ResourceRecommender] = None,
-                 default_level: ExplanationStyleEnum = ExplanationStyleEnum.INTERMEDIATE):
+                 default_level: ExplanationStyle=ExplanationStyle.get_default_style()):
         super().__init__(agent, default_level)
         self.recommender = recommender or ResourceRecommender()
     

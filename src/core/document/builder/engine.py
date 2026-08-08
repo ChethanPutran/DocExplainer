@@ -1,6 +1,7 @@
 from typing import Optional, List
 from ..models import Document, DocumentTree
-from .base import BaseDocumentEngine, DocumentBuilder
+from .base import BaseDocumentEngine, DocumentBuilder, SimilaritySearchDB, SimilarityResult
+
 
 
 class DocumentEngine(BaseDocumentEngine):
@@ -11,8 +12,8 @@ class DocumentEngine(BaseDocumentEngine):
                  persist_directory: Optional[str] = None):
         self.persist_directory = persist_directory
         self.processor = processor
-        self.full_db = None
-        self.tree_db = None
+        self.full_db: Optional[SimilaritySearchDB] = None
+        self.tree_db: Optional[SimilaritySearchDB] = None
         self.tree = None
     
     def ingest_and_map(self, document: Document, target_query: Optional[str] = None):
@@ -45,10 +46,42 @@ class DocumentEngine(BaseDocumentEngine):
         
         # Phase 4: Create tree-aware vector DB
         if self.processor.langchain_embeddings:
-            self.tree_db = self.processor.create_tree_aware_db(
+            raw_tree_db: SimilaritySearchDB = self.processor.create_tree_aware_db(
                 self.tree,
                 persist_directory=self.persist_directory
             )
+            # Wrap raw_tree_db to ensure it exposes a consistent similarity_search
+            # that supports an optional filter parameter.
+            class TreeDBAdapter:
+                def __init__(self, db):
+                    self._db = db
+
+                def similarity_search(self, query: str, k: int = 3, filter: Optional[dict] = None):
+                    # Prefer calling underlying method with filter if supported
+                    try:
+                        return self._db.similarity_search(query, k=k, filter=filter)
+                    except TypeError:
+                        # Underlying db doesn't accept filter kwarg: call basic search then apply filter
+                        results = self._db.similarity_search(query, k=k)
+                        if not filter:
+                            return results
+
+                        # Apply simple metadata filtering (supports equality checks)
+                        def matches(item):
+                            meta = getattr(item, 'metadata', {}) or {}
+                            for key, val in filter.items():
+                                if meta.get(key) != val:
+                                    return False
+                            return True
+
+                        filtered = [r for r in results if matches(r)]
+                        return filtered[:k]
+
+                # Provide passthrough for other attributes/methods
+                def __getattr__(self, name):
+                    return getattr(self._db, name)
+
+            self.tree_db = TreeDBAdapter(raw_tree_db)
             print("Tree-aware vector DB created.")
         
         # Phase 5: Visualize
@@ -82,11 +115,11 @@ class DocumentEngine(BaseDocumentEngine):
         
         return all_titles[0] if all_titles else ""
     
-    def query(self, user_query: str, level: str = "paragraph", k: int = 3):
+    def query(self, user_query: str, level: str = "paragraph", k: int = 3) -> List[SimilarityResult]:
         """Search within hierarchical summaries"""
         if not self.tree_db:
-            return "Engine not initialized. Run ingest_and_map first."
-        
+            return []
+
         return self.tree_db.similarity_search(
             user_query,
             k=k,

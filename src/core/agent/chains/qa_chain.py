@@ -16,14 +16,25 @@ class QAChain(BaseChain):
     
     def _build_chain(self) -> RunnableSequence:
         """Build QA chain"""
-        return self.llm.chain
+        chain = self.llm.chain
+        if chain is None:
+            raise RuntimeError("LLM chain is not initialized")
+        return chain
     
-    def run(self, question: str, selected_text: str,
-            context_summary: str, known_concepts: str) -> Any:
+    def run(
+        self,
+        question: str,
+        *,
+        selected_text: str,
+        context_summary: str,
+        known_concepts: str,
+        **kwargs: Any,
+    ) -> Any:
         """Run QA chain"""
         return super().run(
             question=question,
             selected_text=selected_text,
             context_summary=context_summary,
-            known_concepts=known_concepts
+            known_concepts=known_concepts,
+            **kwargs,
         )

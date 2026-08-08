@@ -13,36 +13,39 @@ from typing import Optional, Dict, Any
 from PySide6.QtWidgets import QApplication, QSplashScreen, QMessageBox
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap, QIcon
+import yaml
 
 from ..managers.window_manager import WindowManager
 from ..managers.theme_manager import ThemeManager
 from ..managers.shortcut_manager import ShortcutManager
-from ..config import UIConfig
+from src.config import UIConfig, LLMConfig, BackendConfig
 from ..styles.theme import LightTheme, DarkTheme, HighContrastTheme, SepiaTheme
 from ..utils.file_utils import FileUtils
 from ..utils.signal_utils import SignalInspector
 from ..factories.widget_factory import WidgetFactory
 from src.orchestrator import DocExplainerOrchestrator, OrchestratorConfig
-
+from ..factories.viewer_factory import ViewerFactory
 
 class DocExplainerApp:
     """Main application class"""
-    app: QApplication
-    window_manager: WindowManager
-    theme_manager: ThemeManager 
-    shortcut_manager: ShortcutManager
-    widget_factory: WidgetFactory 
-    signal_inspector: SignalInspector
-    orchestrator: DocExplainerOrchestrator
-    config: UIConfig
-    logger: logging.Logger
+    app: QApplication = None
+    window_manager: WindowManager = None
+    theme_manager: ThemeManager = None
+    shortcut_manager: ShortcutManager = None
+    widget_factory: WidgetFactory = None
+    signal_inspector: SignalInspector = None
+    orchestrator: DocExplainerOrchestrator = None
+    ui_config: UIConfig = None
+    llm_config: LLMConfig = None
+    backend_config: BackendConfig = None
+    logger: logging.Logger = None
 
-    def __init__(self, config_path: str = '', debug: bool = False):
+    def __init__(self, config_paths: Dict[str, str] = None, debug: bool = False):
         # Import orchestrator
         self.debug = debug
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.config_path = config_path
-        self.config = self._load_config(config_path)
+        self.config_paths = config_paths
+        self.ui_config, self.llm_config, self.backend_config = self._load_config()
         
         # Ensure user directories exist
         self._ensure_directories()
@@ -60,33 +63,28 @@ class DocExplainerApp:
         for directory in directories:
             directory.mkdir(parents=True, exist_ok=True)
     
-    def _load_config(self, config_path: str = None) -> UIConfig:
+    def _load_config(self, config_paths: Dict[str, str]) -> tuple[UIConfig, LLMConfig, BackendConfig]:
         """Load configuration"""
         self.logger.info("Loading configuration")
-        config = UIConfig()
-        
+        ui_config = UIConfig()
+        llm_config = LLMConfig()
+        backend_config = BackendConfig()
+
+        if config_paths:
+            ui_config_path = config_paths.get('ui', Path.home() / '.doc_explainer' / 'config' / 'ui_config.yaml')
+            llm_config_path = config_paths.get('llm', Path.home() / '.doc_explainer' / 'config' / 'llm_config.yaml')
+            backend_config_path = config_paths.get('backend', Path.home() / '.doc_explainer' / 'config' / 'backend_config.yaml')
+        else:
+            ui_config_path = Path.home() / '.doc_explainer' / 'config' / 'ui_config.yaml'
+            llm_config_path = Path.home() / '.doc_explainer' / 'config' / 'llm_config.yaml'
+            backend_config_path = Path.home() / '.doc_explainer' / 'config' / 'backend_config.yaml'
+
         # Try loading from default location first
-        default_config = Path.home() / '.doc_explainer' / 'config' / 'ui_config.json'
-        if default_config.exists():
-            try:
-                with open(default_config, 'r') as f:
-                    config_dict = json.load(f)
-                    config = UIConfig.from_dict(config_dict)
-                self.logger.info(f"Loaded config from {default_config}")
-            except Exception as e:
-                self.logger.error(f"Error loading config from {default_config}: {e}")
+        ui_config = UIConfig.load(filepath=str(ui_config_path))
+        llm_config = LLMConfig.load(filepath=str(llm_config_path))
+        backend_config = BackendConfig.load(filepath=str(backend_config_path))
         
-        # Override with provided config file
-        if config_path and Path(config_path).exists():
-            try:
-                with open(config_path, 'r') as f:
-                    config_dict = json.load(f)
-                    config = UIConfig.from_dict(config_dict)
-                self.logger.info(f"Loaded config from {config_path}")
-            except Exception as e:
-                self.logger.error(f"Error loading config from {config_path}: {e}")
-        
-        return config
+        return ui_config, llm_config, backend_config
     
     def _setup_application(self):
         """Setup Qt application"""
@@ -163,7 +161,7 @@ class DocExplainerApp:
                     self.logger.error(f"Error loading theme {theme_file}: {e}")
         
         # Apply configured theme
-        self.theme_manager.set_theme(self.config.theme)
+        self.theme_manager.set_theme(self.ui_config.theme.name)
     
     def _init_shortcuts(self):
         """Initialize shortcut manager"""
@@ -176,15 +174,23 @@ class DocExplainerApp:
     def _init_orchestrator(self):
         """Initialize orchestrator"""
         orchestrator_config = OrchestratorConfig(
-            llm_provider=self.config.llm_provider,
-            temperature=self.config.llm_temperature,
+            llm_provider=self.llm_config.provider,
+            llm_model=self.llm_config.model,
+            llm_requests_per_minute=self.llm_config.requests_per_minute,
+            llm_min_request_interval_seconds=self.llm_config.min_request_interval_seconds,
+            llm_rate_limit_retries=self.llm_config.rate_limit_retries,
+            temperature=self.llm_config.temperature,
             persist_directory=str(Path.home() / '.doc_explainer' / 'cache'),
-            enable_knowledge_graph=self.config.kg_enabled,
-            enable_memory=self.config.memory_enabled,
-            enable_session_tracking=self.config.session_tracking,
+            enable_knowledge_graph=self.backend_config.knowledge_graph.enabled,
+            enable_memory=self.backend_config.memory.enabled,
+            enable_session_tracking=self.backend_config.memory.session_tracking,
             llm_kwargs={
-                "max_tokens": self.config.llm_max_tokens,
-                "timeout": self.config.llm_timeout,
+                "max_tokens": self.llm_config.max_tokens,
+                "timeout": self.llm_config.timeout,
+                "model_name": self.llm_config.model,
+                "requests_per_minute": self.llm_config.requests_per_minute,
+                "min_request_interval_seconds": self.llm_config.min_request_interval_seconds,
+                "rate_limit_retries": self.llm_config.rate_limit_retries,
             }
         )
         
@@ -193,7 +199,7 @@ class DocExplainerApp:
     def _init_window_manager(self):
         """Initialize window manager"""
         self.window_manager = WindowManager(
-            config=self.config,
+            config=self.ui_config,
             theme_manager=self.theme_manager,
             shortcut_manager=self.shortcut_manager,
             orchestrator=self.orchestrator,
@@ -215,7 +221,7 @@ class DocExplainerApp:
     def _load_recent_documents(self):
         """Load recently opened documents"""
         recent_file = Path.home() / '.doc_explainer' / 'recent.json'
-        if recent_file.exists() and self.config.open_last_docs:
+        if recent_file.exists() and self.ui_config.startup.open_last_docs:
             try:
                 with open(recent_file, 'r') as f:
                     recent_docs = json.load(f)
@@ -269,11 +275,11 @@ class DocExplainerApp:
                 splash.finish(self.window_manager.main_window)
             
             # Load recent documents if enabled
-            if self.config.open_last_docs:
+            if self.ui_config.startup.open_last_docs:
                 QTimer.singleShot(100, self._load_recent_documents)
             
             # Check for updates
-            if self.config.check_updates:
+            if self.ui_config.startup.check_updates:
                 QTimer.singleShot(2000, self._check_for_updates)
             
             self.logger.info("Application started successfully")
@@ -309,9 +315,6 @@ class DocExplainerApp:
                 self.logger.error(f"Error saving recent documents: {e}")
         
         # Save configuration
-        config_file = Path.home() / '.doc_explainer' / 'config' / 'ui_config.json'
-        try:
-            with open(config_file, 'w') as f:
-                json.dump(self.config.to_dict(), f, indent=2)
-        except Exception as e:
-            self.logger.error(f"Error saving config: {e}")
+        self.ui_config.save()
+        self.llm_config.save()
+        self.backend_config.save()

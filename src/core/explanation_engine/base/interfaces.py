@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
+from src.core.common.dataclasses import ExplanationStyle
+from src.core.common.enums import ResourceType
 from ..models.dataclasses import Resource
-from ..models.enums import ResourceType, ExplanationLevel
 
 
 class ExplanationEngine(ABC):
@@ -23,7 +24,7 @@ class ExplanationEngine(ABC):
         pass
     
     @abstractmethod
-    def set_explanation_level(self, level: ExplanationLevel):
+    def set_explanation_style(self, style: ExplanationStyle):
         """Set explanation level"""
         pass
 

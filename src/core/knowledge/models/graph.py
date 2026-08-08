@@ -39,3 +39,5 @@ class ConceptGraph:
             self.add_concept_node(concept1)
         if not self.has_concept(v_name):
             self.add_concept_node(concept2)
+        
+        self.graph.add_edge(u_name, v_name, data=relationship)

@@ -1,0 +1,20 @@
+knowledge_graph:
+  enabled: true
+  auto_build: true
+
+memory:
+  enabled: true
+  session_tracking: true
+
+retrieval:
+  enabled: true
+  top_k: 5
+
+embeddings:
+  provider: "..."
+
+orchestration:
+  max_concurrent_tasks: 4
+
+storage:
+  persist_directory: "~/.doc_explainer/cache"

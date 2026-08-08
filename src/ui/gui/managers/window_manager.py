@@ -10,7 +10,7 @@ from src.orchestrator.orchestrator import DocExplainerOrchestrator
 from ..windows.main_window import MainWindow
 from ..windows.about_window import AboutWindow
 from ..windows.settings_window import SettingsWindow
-from ..config import UIConfig
+from src.config import UIConfig
 from ..managers.theme_manager import ThemeManager
 from ..managers.shortcut_manager import ShortcutManager
 from ..factories.widget_factory import WidgetFactory
@@ -76,18 +76,18 @@ class WindowManager:
         self.signals.follow_up_requested.connect(self.on_follow_up)
         
         # Connect voice signals if enabled
-        if self.config.voice_enabled:
+        if self.config.voice.enabled:
             self.signals.voice_input_received.connect(self._on_voice_input)
     
-    def _on_theme_changed(self, theme_name: str):
+    def _on_theme_changed(self,  mode: str):
         """Handle theme change"""
-        self.logger.info(f"Theme changed to: {theme_name}")
-        self.config.theme = theme_name
+        self.logger.info(f"Theme changed to: {mode}")
+        self.config.theme.mode = mode
 
         # Save theme preference
         # Update config only if it's different
-        if self.config.theme != theme_name:
-            self.config.theme = theme_name
+        if self.config.theme.mode != mode:
+            self.config.theme.mode = mode
             self.config.save()
     
     def _on_document_opened(self, doc_id: str, path: str):
@@ -102,7 +102,7 @@ class WindowManager:
         # Add to recent documents
         if path not in self.recent_documents:
             self.recent_documents.insert(0, path)
-            self.recent_documents = self.recent_documents[:self.config.max_recent_files]
+            self.recent_documents = self.recent_documents[:self.config.documents.max_recent_files]
             self._save_recent_documents()
     
     def _on_document_closed(self, doc_id: str):
@@ -256,7 +256,7 @@ class WindowManager:
         self.main_window.show()
         
         # Apply window state from config
-        if self.config.window_maximized:
+        if self.config.window.maximized:
             self.main_window.showMaximized()
     
     def quit(self):

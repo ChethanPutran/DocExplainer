@@ -1,10 +1,12 @@
-from typing import Optional, List
+from typing import Any, Optional, List, cast
+import numpy as np
 from langchain_community.vectorstores import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.embeddings import Embeddings
 from langchain_core.documents import Document as LCDocument
 
 from ..models import Document, DocumentTree
+from .base import SimilaritySearchDB
 from .strategies import SummaryGenerator, HierarchyBuilder
 from .base import DocumentBuilder
 
@@ -14,12 +16,24 @@ class LangChainEmbeddingWrapper(Embeddings):
     
     def __init__(self, model):
         self.model = model
+
+    @staticmethod
+    def _as_embedding_vector(embedding: Any) -> List[float]:
+        """Normalize model output to Chroma's expected flat list of floats."""
+        array = np.asarray(embedding, dtype=np.float32)
+
+        if array.ndim == 0:
+            array = array.reshape(1)
+        elif array.ndim > 1:
+            array = array.reshape(-1)
+
+        return array.astype(float).tolist()
     
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        return [self.model.encode(t).tolist() for t in texts]
+        return [self._as_embedding_vector(self.model.encode(t)) for t in texts]
     
     def embed_query(self, text: str) -> List[float]:
-        return self.model.encode(text).tolist()
+        return self._as_embedding_vector(self.model.encode(text))
 
 
 class HierarchicalProcessor(DocumentBuilder):
@@ -41,7 +55,7 @@ class HierarchicalProcessor(DocumentBuilder):
         return tree
     
     def create_full_vector_db(self, document: Document, collection_name: str = "full_doc",
-                              persist_directory: Optional[str] = None):
+                              persist_directory: Optional[str] = None) -> SimilaritySearchDB:
         """Create full-document vector database"""
         if not self.langchain_embeddings:
             raise ValueError("Embedding model required for vector DB creation")
@@ -55,15 +69,15 @@ class HierarchicalProcessor(DocumentBuilder):
         all_text = "\n".join(list(document.get_text_generator()))
         texts = text_splitter.split_text(all_text)
         
-        return Chroma.from_texts(
+        return cast(SimilaritySearchDB, Chroma.from_texts(
             texts=texts,
             embedding=self.langchain_embeddings,
             collection_name=collection_name,
             persist_directory=persist_directory
-        )
+        ))
     
     def create_tree_aware_db(self, tree: DocumentTree, collection_name: str = "hierarchical_db",
-                            persist_directory: Optional[str] = None):
+                            persist_directory: Optional[str] = None)-> SimilaritySearchDB:
         """Create vector database from tree chunks"""
         if not self.langchain_embeddings:
             raise ValueError("Embedding model required for vector DB creation")
@@ -97,12 +111,12 @@ class HierarchicalProcessor(DocumentBuilder):
                 }
             ))
         
-        return Chroma.from_documents(
+        return cast(SimilaritySearchDB, Chroma.from_documents(
             documents=lc_docs,
             embedding=self.langchain_embeddings,
             collection_name=collection_name,
             persist_directory=persist_directory
-        )
+        ))
     
     def visualize_tree(self, node, indent: str = "", is_last: bool = True):
         """Visualize document tree"""

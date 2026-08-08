@@ -1,14 +1,17 @@
-from src.core.user import UserManager, UserKnowledgeState
+from typing import TYPE_CHECKING, Any
 from ..repository import BaseKnowledgeStore
 from ..models import ConceptGraph, GraphDelta, ConceptNodeRelationship
+
+if TYPE_CHECKING:
+    from src.core.user import UserManager
 
 class GraphUpdater:
     """Updates the knowledge graph with new information"""
     
-    def __init__(self, user_manager: UserManager, knowledge_store: BaseKnowledgeStore):
+    def __init__(self, user_manager: Any, knowledge_store: BaseKnowledgeStore):
         self.user_manager = user_manager
         self.knowledge_store = knowledge_store
-        self.user_state:UserKnowledgeState = None
+        self.user_state: Any = None
 
     def apply_delta(self, delta: GraphDelta, target_graph: ConceptGraph):
         """Apply delta to target graph"""

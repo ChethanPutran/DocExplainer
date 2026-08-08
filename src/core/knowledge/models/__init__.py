@@ -3,14 +3,42 @@ from .relationship import ConceptNode, ConceptNodeRelationship, ConceptRelations
 from .graph import ConceptGraph
 from .index import ConceptInvertedEntry,ConceptInvertedIndex
 from .delta import GraphDelta
+from .transfer_models import (
+    ConceptMapping,
+    DocumentTransfer,
+    TransferConfig,
+    TransferAnalysisResult,
+    ConceptAlignmentType,
+)
+from .manual_graph_models import (
+    ConceptEdit,
+    RelationshipEdit,
+    GraphSnapshot,
+    ValidationError,
+    GraphBackup,
+    RelationshipType,
+    OperationType,
+)
 
 __all__ = [
     "Concept",
     "ConceptRelationship",
-        "ConceptNode",
-        "ConceptNodeRelationship",
+    "ConceptNode",
+    "ConceptNodeRelationship",
     "ConceptGraph",
     "ConceptInvertedEntry",
     "ConceptInvertedIndex",
-    "GraphDelta"
+    "GraphDelta",
+    "ConceptMapping",
+    "DocumentTransfer",
+    "TransferConfig",
+    "TransferAnalysisResult",
+    "ConceptAlignmentType",
+    "ConceptEdit",
+    "RelationshipEdit",
+    "GraphSnapshot",
+    "ValidationError",
+    "GraphBackup",
+    "RelationshipType",
+    "OperationType",
 ]

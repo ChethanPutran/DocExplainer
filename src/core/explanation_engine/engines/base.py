@@ -3,7 +3,7 @@ from typing import Optional, Any
 import logging
 
 from src.core.agent import Agent
-from src.core.agent.models.enums import ExplanationStyleEnum
+from src.core.common.dataclasses import ExplanationStyle
 from src.core.agent.models.schemas import Explanation
 from ..base.interfaces import ExplanationEngine
 from ..base.exceptions import GenerationError, ContextError
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class BaseExplanationEngine(ExplanationEngine, ABC):
     """Base class for explanation engines"""
     
-    def __init__(self, agent: Agent, default_level: ExplanationStyleEnum = ExplanationStyleEnum.INTERMEDIATE):
+    def __init__(self, agent: Agent, default_level: ExplanationStyle = ExplanationStyle.get_default_style()):
         self.agent = agent
         self.default_level = default_level
         self.current_level = default_level
@@ -47,11 +47,11 @@ class BaseExplanationEngine(ExplanationEngine, ABC):
             logger.error(f"Question answering failed: {e}")
             raise GenerationError(f"Failed to answer question: {e}") from e
     
-    def set_explanation_level(self, level: ExplanationStyleEnum):
-        """Set explanation level"""
-        self.current_level = level
-        self.agent.set_explanation_style(level)
-        logger.info(f"Explanation level set to: {level.value}")
+    def set_explanation_style(self, style: ExplanationStyle):
+        """Set explanation style"""
+        self.current_level = style
+        self.agent.set_explanation_style(style)
+        logger.info(f"Explanation style set to: {style.get_style()}")
     
     def _validate_context(self, context: Any):
         """Validate context"""

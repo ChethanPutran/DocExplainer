@@ -1,10 +1,12 @@
 # src/core/ensemble/stacking_ensemble.py
-from sklearn.ensemble import StackingClassifier, VotingClassifier
+from sklearn.ensemble import StackingClassifier, VotingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import cross_val_score
+import numpy as np
+from typing import Dict
 
 class RobustEnsemble:
     """Ensemble methods for robust predictions"""
@@ -42,7 +44,7 @@ class RobustEnsemble:
     
     def predict_with_confidence(self, X_test) -> Dict:
         """Predict with confidence scores"""
-        stacking_proba = self.stacking.predict_proba(X_test)
+        stacking_proba = self.stacking.predict_proba(X_test)[0]
         voting_proba = self.voting.predict_proba(X_test)
         
         # Weighted average

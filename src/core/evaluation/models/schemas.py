@@ -117,3 +117,58 @@ class QuizResult(BaseModel):
         return None
 
 
+class QuizFeedback(BaseModel):
+    """Feedback for a quiz response"""
+    is_correct: bool
+    explanation: str
+    hint: Optional[str] = None
+    related_sections: List[str] = Field(default_factory=list)
+    confidence_score: Optional[float] = None
+    next_step: Optional[str] = None
+
+
+class QuizResponse(BaseModel):
+    """User's response to a quiz question"""
+    question_id: str
+    user_answer: str
+    is_correct: Optional[bool] = None
+    timestamp: datetime = Field(default_factory=datetime.now)
+    response_time_seconds: Optional[float] = None
+    feedback: Optional[QuizFeedback] = None
+
+
+class QuizSession(BaseModel):
+    """Quiz session containing questions and responses"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4())[:8])
+    quiz_id: str
+    user_id: str
+    questions: List[Question]
+    responses: List[QuizResponse] = Field(default_factory=list)
+    started_at: datetime = Field(default_factory=datetime.now)
+    completed_at: Optional[datetime] = None
+    session_stats: Dict[str, Any] = Field(default_factory=dict)
+    mastery_updates: Dict[str, float] = Field(default_factory=dict)
+    
+    @property
+    def is_completed(self) -> bool:
+        """Check if session is completed"""
+        return self.completed_at is not None
+    
+    @property
+    def correctness(self) -> List[bool]:
+        """Get list of correctness for answered questions"""
+        return [r.is_correct for r in self.responses if r.is_correct is not None]
+    
+    @property
+    def score_percentage(self) -> float:
+        """Calculate score as percentage"""
+        if not self.correctness:
+            return 0.0
+        return (sum(self.correctness) / len(self.questions)) * 100
+    
+    def get_remaining_questions(self) -> List[Question]:
+        """Get questions not yet answered"""
+        answered_question_ids = {r.question_id for r in self.responses}
+        return [q for q in self.questions if q.id not in answered_question_ids]
+
+

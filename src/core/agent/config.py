@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
-from .models.enums import ExplanationStyleEnum
-
+from src.core.common.dataclasses import ExplanationStyle
 
 @dataclass
 class AgentConfig:
@@ -9,15 +8,22 @@ class AgentConfig:
     
     # LLM Configuration
     llm_provider: str = "gemini"
+    llm_model: str = "gemini-3.5-flash-lite"
     temperature: float = 1.0
     max_retries: int = 3
     llm_kwargs: Dict[str, Any] = field(default_factory=lambda: {
+        "model_name": "gemini-3.5-flash-lite",
         "max_tokens": None,
-        "timeout": None
+        "timeout": None,
+        "requests_per_minute": 4,
+        "rate_limit_retries": 2
     })
     
     # Default styles
-    default_style: ExplanationStyleEnum = ExplanationStyleEnum.INTERMEDIATE
+    explanation_style: ExplanationStyle = field(
+    default_factory=ExplanationStyle.get_default_style
+    )
+    
     tone: str = "encouraging and academic"
     math_level: str = "descriptive"
     
@@ -32,6 +38,10 @@ class AgentConfig:
         
         if 'llm_provider' in config_dict:
             config.llm_provider = config_dict['llm_provider']
+
+        if 'llm_model' in config_dict:
+            config.llm_model = config_dict['llm_model']
+            config.llm_kwargs['model_name'] = config.llm_model
         
         if 'temperature' in config_dict:
             config.temperature = config_dict['temperature']
@@ -42,11 +52,14 @@ class AgentConfig:
         if 'llm_kwargs' in config_dict:
             config.llm_kwargs.update(config_dict['llm_kwargs'])
         
-        if 'default_style' in config_dict:
-            style_val = config_dict['default_style']
-            if isinstance(style_val, str):
-                config.default_style = ExplanationStyleEnum(style_val)
-        
+        if 'explanation_style' in config_dict:
+            style_val = config_dict['explanation_style']
+            if isinstance(style_val, dict):
+                config.explanation_style = ExplanationStyle.from_dict(style_val)
+            else:
+                config.explanation_style = ExplanationStyle.get_default_style()
+                
+
         if 'tone' in config_dict:
             config.tone = config_dict['tone']
         
@@ -59,10 +72,11 @@ class AgentConfig:
         """Convert to dictionary"""
         return {
             'llm_provider': self.llm_provider,
+            'llm_model': self.llm_model,
             'temperature': self.temperature,
             'max_retries': self.max_retries,
             'llm_kwargs': self.llm_kwargs,
-            'default_style': self.default_style.value,
+            'explanation_style': self.explanation_style,
             'tone': self.tone,
             'math_level': self.math_level
         }
