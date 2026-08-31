@@ -11,10 +11,22 @@ retrieval:
   top_k: 5
 
 embeddings:
-  provider: "..."
+  provider: "default"
+  model: ""
 
 orchestration:
   max_concurrent_tasks: 4
 
 storage:
   persist_directory: "~/.doc_explainer/cache"
+
+logging:
+  level: "DEBUG"
+  log_directory: "~/.doc_explainer/logs"
+  log_file: "app.log"
+
+  console_enabled: true
+  file_enabled: true
+
+  max_file_size_mb: 10
+  backup_count: 5

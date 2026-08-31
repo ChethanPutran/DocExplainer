@@ -3,12 +3,12 @@ llm:
   model: "moonshotai/kimi-k3"
 
   temperature: 1.0
-  max_tokens: null
+  max_tokens: 1000
   timeout: null
 
   requests_per_minute: 4
   min_request_interval_seconds: null
-  rate_limit_retries: 2
+  rate_limit_retries: 1
 
   reasoning: true
 

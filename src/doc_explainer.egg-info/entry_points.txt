@@ -1,6 +1,2 @@
 [console_scripts]
-doc-explainer = src.ui.gui.app:main
-doc-explainer-cli = src.cli.main:main
-
-[gui_scripts]
-doc-explainer-gui = src.ui.gui.app:main
+doc-explainer = doc_explainer.main:main

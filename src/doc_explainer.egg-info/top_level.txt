@@ -1,4 +1,1 @@
-models
-orchestrator
-store
-ui
+doc_explainer

@@ -304,6 +304,9 @@ pytest tests/
 ```bash
 # Basic usage
 doc-explainer
+uv run python -m spacy download en_core_web_sm
+uv run doc-explainer --uiconfig config/ui.yaml --llmconfig config/llm.yaml --backendconfig config/backend.yaml
+
 doc-explainer /path/to/document.pdf
 
 # With theme
