@@ -4,7 +4,8 @@ import networkx as nx
 import plotly.graph_objects as go
 
 if TYPE_CHECKING:
-    from ...document import BaseDocumentCache, DocumentTree
+    from ...document import DocumentTree
+    from ....store.document.repository import BaseDocumentCache
     
 from ..models import Concept, ConceptRelationship, ConceptNode, ConceptNodeRelationship,  ConceptGraph
 from ..extraction import ConceptExtractor, LLMRelationshipExtractor,  StatisticalRelationshipExtractor

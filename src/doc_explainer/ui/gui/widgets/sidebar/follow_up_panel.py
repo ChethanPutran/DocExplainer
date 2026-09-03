@@ -49,8 +49,10 @@ class FollowUpPanel(QWidget):
         self._clear_questions()
         
         if not questions:
-            self.questions_layout.addWidget(self.placeholder)
+            self.placeholder.show()
             return
+
+        self.placeholder.hide()
         
         for question in questions:
             self._add_question(question)
@@ -79,12 +81,14 @@ class FollowUpPanel(QWidget):
     
     def _clear_questions(self):
         """Clear all questions"""
-        while self.questions_layout.count():
-            item = self.questions_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+        for index in range(self.questions_layout.count() - 1, -1, -1):
+            widget = self.questions_layout.itemAt(index).widget()
+            if widget is not self.placeholder:
+                self.questions_layout.takeAt(index)
+                if widget:
+                    widget.deleteLater()
     
     def clear(self):
         """Clear panel"""
         self._clear_questions()
-        self.questions_layout.addWidget(self.placeholder)
+        self.placeholder.show()

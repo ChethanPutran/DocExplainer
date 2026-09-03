@@ -15,6 +15,8 @@ class LLMCanonicalizer:
         """Use LLM to merge similar concepts under canonical names"""
         try:
             response = self.llm.generate({"concepts": concepts})
+            if isinstance(response, dict):
+                return response
             return json.loads(response)
         except Exception as e:
             print(f"LLM canonicalization failed: {e}")

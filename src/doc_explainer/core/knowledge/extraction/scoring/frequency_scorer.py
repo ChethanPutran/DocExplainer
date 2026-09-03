@@ -15,6 +15,8 @@ class FrequencyScoringStrategy(BaseScoringStrategy):
         
         for alias in concept.aliases:
             alias_lower = alias.lower()
+            if not alias_lower:
+                continue
             start = 0
             while True:
                 pos = context_lower.find(alias_lower, start)

@@ -1,6 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import os
 import yaml
@@ -26,62 +26,12 @@ class LLMConfig:
     rate_limit_retries: int = 2
 
     reasoning: bool = True
+    mock: bool = False
 
     base_url: str = "https://openrouter.ai/api/v1"
     ollama_base_url: str = "http://localhost:11434"
 
-    @classmethod
-    def load(cls, filepath: Optional[str] = None) -> "LLMConfig":
-        """Load LLM configuration from YAML."""
-
-        if filepath is None:
-            filepath = str(Path.home() / '.doc_explainer' / 'config' / 'llm_config.yaml')
-
-        path = Path(filepath).expanduser() 
-
-        if not path.exists():
-            raise FileNotFoundError(
-                f"LLM configuration file not found: {path}"
-            )
-
-        with path.open("r", encoding="utf-8") as f:
-            data = yaml.safe_load(f) or {}
-
-        llm_data = data.get("llm", {})
-
-        return cls(
-            provider=llm_data.get("provider", cls.provider),
-            model=llm_data.get("model", cls.model),
-            temperature=llm_data.get(
-                "temperature",
-                cls.temperature,
-            ),
-            max_tokens=llm_data.get("max_tokens"),
-            timeout=llm_data.get("timeout"),
-            requests_per_minute=llm_data.get(
-                "requests_per_minute",
-                cls.requests_per_minute,
-            ),
-            min_request_interval_seconds=llm_data.get(
-                "min_request_interval_seconds"
-            ),
-            rate_limit_retries=llm_data.get(
-                "rate_limit_retries",
-                cls.rate_limit_retries,
-            ),
-            reasoning=llm_data.get(
-                "reasoning",
-                cls.reasoning,
-            ),
-            base_url=llm_data.get(
-                "base_url",
-                cls.base_url,
-            ),
-            ollama_base_url=llm_data.get(
-                "ollama_base_url",
-                cls.ollama_base_url,
-            ),
-        )
+    extra: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def api_key(self) -> Optional[str]:
@@ -145,6 +95,80 @@ class LLMConfig:
                     f"Set the appropriate environment variable."
                 )
 
+
+            """Save configuration to file"""
+            path = Path.home() / '.doc_explainer' / 'config' / 'llm_config.yaml'
+           
+            # Create directory if it doesn't exist
+            path.parent.mkdir(parents=True, exist_ok=True)
+            
+            import yaml
+            with open(path, 'w') as f:
+                yaml.dump(self, f, indent=2)
+                
+    @classmethod
+    def load(cls, filepath: Optional[str] = None) -> "LLMConfig":
+        """Load LLM configuration from YAML."""
+
+        if filepath is None:
+            path = (
+                Path.home()
+                / ".doc_explainer"
+                / "config"
+                / "llm_config.yaml"
+            )
+        else:
+            path = Path(filepath).expanduser()
+
+        if not path.exists():
+            raise FileNotFoundError(
+                f"LLM configuration file not found: {path}"
+            )
+
+        with path.open("r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+
+        llm_data = data.get("llm", {})
+
+        return cls(
+            provider=llm_data.get("provider", cls.provider),
+            model=llm_data.get("model", cls.model),
+            temperature=llm_data.get(
+                "temperature",
+                cls.temperature,
+            ),
+            max_tokens=llm_data.get("max_tokens"),
+            timeout=llm_data.get("timeout"),
+            requests_per_minute=llm_data.get(
+                "requests_per_minute",
+                cls.requests_per_minute,
+            ),
+            min_request_interval_seconds=llm_data.get(
+                "min_request_interval_seconds"
+            ),
+            rate_limit_retries=llm_data.get(
+                "rate_limit_retries",
+                cls.rate_limit_retries,
+            ),
+            reasoning=llm_data.get(
+                "reasoning",
+                cls.reasoning,
+            ),
+            mock=llm_data.get(
+                "mock",
+                cls.mock,
+            ),
+            base_url=llm_data.get(
+                "base_url",
+                cls.base_url,
+            ),
+            ollama_base_url=llm_data.get(
+                "ollama_base_url",
+                cls.ollama_base_url,
+            ),
+        )
+
+
     def to_dict(self) -> dict:
         """Convert configuration to a serializable dictionary."""
 
@@ -155,23 +179,35 @@ class LLMConfig:
             "max_tokens": self.max_tokens,
             "timeout": self.timeout,
             "requests_per_minute": self.requests_per_minute,
-            "min_request_interval_seconds": (
-                self.min_request_interval_seconds
-            ),
+            "min_request_interval_seconds": self.min_request_interval_seconds,
             "rate_limit_retries": self.rate_limit_retries,
             "reasoning": self.reasoning,
+            "mock": self.mock,
             "base_url": self.base_url,
             "ollama_base_url": self.ollama_base_url,
         }
 
-    def save(self, filepath: Optional[str] = None):
-            """Save configuration to file"""
-            if filepath is None:
-                filepath = str(Path.home() / '.doc_explainer' / 'config' / 'llm_config.yaml')
-            
-            # Create directory if it doesn't exist
-            Path(filepath).parent.mkdir(parents=True, exist_ok=True)
-            
-            import yaml
-            with open(filepath, 'w') as f:
-                yaml.dump(self, f, indent=2)
+
+    def save(self, filepath: Optional[str] = None) -> None:
+        """Save configuration to YAML."""
+
+        if filepath is None:
+            path = (
+                Path.home()
+                / ".doc_explainer"
+                / "config"
+                / "llm_config.yaml"
+            )
+        else:
+            path = Path(filepath).expanduser()
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        with path.open("w", encoding="utf-8") as f:
+            yaml.safe_dump(
+                {"llm": self.to_dict()},
+                f,
+                indent=2,
+                sort_keys=False,
+                default_flow_style=False,
+            )

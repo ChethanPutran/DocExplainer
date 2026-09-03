@@ -1,7 +1,13 @@
 {
   "user_id": "user_123",
   "knowledge_state": {
-    "confidence": {},
+    "confidence": {
+      "Generative AI (GenAI) is advancing rapidly, driven by Transformers, Diffusion models,\nand Neural Operators. This report surveys state-of-the-art generative architectures as of\nlate 2025, explaining their working principles, strengths, and applications in scientific and\nengineering domains.": 0.24,
+      "Generative AI (GenAI) is advancing rapidly, driven by Transformers, Diffusion models,\nand Neural Operators. This report surveys state-of-the-art generative architectures as of\nlate 2025, explaining their working principles, strengths, and applications in scientific and": 0.24,
+      "Fourier Neural Operator (FNO)\nThe Fourier Neural Operator is designed for efficiency and scalability. It operates in the fre-\nquency domain using Fourier transforms.\n\u2022 Resolution Invariance: Models trained on coarse grids generalize to finer grids.\n\u2022 Efficiency: Uses Fast Fourier Transforms (FFT), making it significantly faster than\nDeepONet for PDE problems.": 0.26,
+      "Could you try rephrasing the question?": 0.22,
+      "enerative AI (GenAI) is advancing rapidly, driven by Transformers, Diffusion models,\nand Neural Operators. This report surveys state-of-the-art generative architectures as of\nlate 2025, explaining their working principles, strengths, and applications in scientific": 0.24
+    },
     "exposure": {},
     "last_seen": {}
   },

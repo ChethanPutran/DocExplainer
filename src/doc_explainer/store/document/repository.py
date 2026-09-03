@@ -1,8 +1,10 @@
 import os
 import json
+from pathlib import Path
 import pickle
+import shutil
 from typing import Dict, Any, Optional, List
-from ...core.document import Document, DocumentTree, DocumentChunk
+from ...core.document.models import Document, DocumentTree, DocumentChunk
 from .base import BaseDocumentRepository, BaseDocumentCache
 
 from .serializers import DocumentSerializer, TreeSerializer
@@ -40,7 +42,7 @@ class DocumentCache(BaseDocumentCache):
 class DocumentRepository(BaseDocumentRepository):
     """File-based document repository"""
     
-    def __init__(self, storage_path: str = "data/documents/"):
+    def __init__(self, storage_path: Path = Path("data/documents/")):
         self.storage_path = storage_path
         self.cache = DocumentCache()
         self._ensure_directories()
@@ -50,15 +52,20 @@ class DocumentRepository(BaseDocumentRepository):
         os.makedirs(self.storage_path, exist_ok=True)
         os.makedirs(os.path.join(self.storage_path, "documents"), exist_ok=True)
         os.makedirs(os.path.join(self.storage_path, "trees"), exist_ok=True)
+        os.makedirs(os.path.join(self.storage_path, "chunks"), exist_ok=True)
     
-    def _get_document_path(self, doc_id: str) -> str:
+    def _get_document_path(self, doc_id: str) -> Path:
         """Get document file path"""
-        return os.path.join(self.storage_path, "documents", f"{doc_id}.json")
+        return Path(os.path.join(self.storage_path, "documents", f"{doc_id}.json"))
     
-    def _get_tree_path(self, doc_id: str) -> str:
+    def _get_tree_path(self, doc_id: str) -> Path:
         """Get tree file path"""
-        return os.path.join(self.storage_path, "trees", f"{doc_id}.pkl")
+        return Path(os.path.join(self.storage_path, "trees", f"{doc_id}.pkl"))
     
+    def _get_chunk_path(self, chunk_id: str) -> Path:
+        """Get chunk file path"""
+        return Path(os.path.join(self.storage_path, "chunks", f"{chunk_id}.json"))
+
     def save_chunk(self, chunk: DocumentChunk, chunk_id: str) -> str:
         """Save document chunk"""
         filepath = os.path.join(self.storage_path, "chunks", f"{chunk_id}.json")
@@ -72,17 +79,41 @@ class DocumentRepository(BaseDocumentRepository):
         
         return filepath
     
-    def save_document(self, document: Document, doc_id: str) -> bool:
-        """Save document to JSON"""
+
+    def save_document(self, file_path: Path, doc_id: str) -> bool:
+        """Copy document JSON into the document store."""
+        try:
+            destination = self._get_document_path(doc_id)
+
+            destination.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+            shutil.copy2(
+                file_path,
+                destination,
+            )
+
+            return True
+
+        except Exception as e:
+            print(f"Error saving document: {e}")
+            return False
+
+    def save_document_model(self, document: Document, doc_id: str) -> bool:
+        """Save a parsed document model as JSON."""
         try:
             filepath = self._get_document_path(doc_id)
-            with open(filepath, 'w', encoding='utf-8') as f:
+            filepath.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(DocumentSerializer.serialize(document), f, indent=2)
-            
+
             self.cache.set(f"doc_{doc_id}", document)
             return True
         except Exception as e:
-            print(f"Error saving document: {e}")
+            print(f"Error saving document model: {e}")
             return False
     
     def get_document(self, doc_id: str) -> Optional[Document]:
@@ -107,7 +138,7 @@ class DocumentRepository(BaseDocumentRepository):
             print(f"Error loading document: {e}")
             return None
     
-    def save_tree(self, tree: DocumentTree, doc_id: str) -> bool:
+    def save_document_tree(self, tree: DocumentTree, doc_id: str) -> bool:
         """Save document tree"""
         try:
             filepath = self._get_tree_path(doc_id)
@@ -120,7 +151,7 @@ class DocumentRepository(BaseDocumentRepository):
             print(f"Error saving tree: {e}")
             return False
     
-    def get_tree(self, doc_id: str) -> Optional[DocumentTree]:
+    def get_document_tree(self, doc_id: str) -> Optional[DocumentTree]:
         """Get document tree by ID"""
         # Check cache first
         cached = self.cache.get(f"tree_{doc_id}")

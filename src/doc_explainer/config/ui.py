@@ -1,16 +1,8 @@
-from dataclasses import dataclass, field
-from typing import Optional
-import yaml
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from dotenv import load_dotenv
+from typing import Optional
 
-
-
-# Load .env variables at the top of the module
-load_dotenv()
-
-
-from dataclasses import dataclass, field
+import yaml
 
 
 @dataclass
@@ -88,34 +80,97 @@ class UIConfig:
     system: SystemConfig = field(default_factory=SystemConfig)
 
     @classmethod
-    def load(cls, filepath: Optional[str] = None) -> "UIConfig":
-        if filepath is None:
-            filepath = str(Path.home() / '.doc_explainer' / 'config' / 'ui_config.yaml')
-        path = Path(filepath).expanduser()
+    def default_path(cls) -> Path:
+        return (
+            Path.home()
+            / ".doc_explainer"
+            / "config"
+            / "ui_config.yaml"
+        )
+
+    @classmethod
+    def load(
+        cls,
+        filepath: Optional[str] = None,
+    ) -> "UIConfig":
+
+        path = (
+            Path(filepath).expanduser()
+            if filepath is not None
+            else cls.default_path()
+        )
+
+        if not path.exists():
+            return cls()
 
         with path.open("r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
 
+        if not isinstance(data, dict):
+            raise ValueError(
+                f"UI configuration must contain a YAML mapping: {path}"
+            )
+
         return cls(
-            window=WindowConfig(**data.get("window", {})),
-            theme=ThemeConfig(**data.get("theme", {})),
-            sidebar=SidebarConfig(**data.get("sidebar", {})),
-            voice=VoiceConfig(**data.get("voice", {})),
-            documents=DocumentConfig(**data.get("documents", {})),
-            cache=CacheConfig(**data.get("cache", {})),
-            startup=StartupConfig(**data.get("startup", {})),
-            system=SystemConfig(**data.get("system", {})),
+            window=WindowConfig(
+                **data.get("window", {})
+            ),
+
+            theme=ThemeConfig(
+                **data.get("theme", {})
+            ),
+
+            sidebar=SidebarConfig(
+                **data.get("sidebar", {})
+            ),
+
+            voice=VoiceConfig(
+                **data.get("voice", {})
+            ),
+
+            documents=DocumentConfig(
+                **data.get("documents", {})
+            ),
+
+            cache=CacheConfig(
+                **data.get("cache", {})
+            ),
+
+            startup=StartupConfig(
+                **data.get("startup", {})
+            ),
+
+            system=SystemConfig(
+                **data.get("system", {})
+            ),
         )
 
-    
-    def save(self, filepath: Optional[str] = None):
-        """Save configuration to file"""
-        if filepath is None:
-            filepath = str(Path.home() / '.doc_explainer' / 'config' / 'ui_config.yaml')
-        
-        # Create directory if it doesn't exist
-        Path(filepath).parent.mkdir(parents=True, exist_ok=True)
-        
-        import yaml
-        with open(filepath, 'w') as f:
-            yaml.dump(self, f, indent=2)
+    def to_dict(self) -> dict:
+        """Convert configuration to a plain serializable dictionary."""
+
+        return asdict(self)
+
+    def save(
+        self,
+        filepath: Optional[str] = None,
+    ) -> None:
+
+        path = (
+            Path(filepath).expanduser()
+            if filepath is not None
+            else self.default_path()
+        )
+
+        path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        with path.open("w", encoding="utf-8") as f:
+            yaml.safe_dump(
+                self.to_dict(),
+                f,
+                sort_keys=False,
+                indent=2,
+                default_flow_style=False,
+            )

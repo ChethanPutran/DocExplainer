@@ -80,6 +80,8 @@ class ConceptClusterer:
         """Convert clusters to canonical mapping (shortest name as canonical)"""
         canonical_map = {}
         for cluster in clusters.values():
+            if not cluster:
+                continue
             canonical = min(cluster, key=len)
             canonical_map[canonical] = cluster
         return canonical_map

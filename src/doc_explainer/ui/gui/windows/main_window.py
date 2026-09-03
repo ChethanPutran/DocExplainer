@@ -1,32 +1,64 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
 import os
+from typing import TYPE_CHECKING
+
 from PySide6.QtWidgets import (
-    QMainWindow, QDockWidget, QTabWidget, QWidget, QVBoxLayout,  QMessageBox
+    QMainWindow,
+    QDockWidget,
+    QTabWidget,
+    QWidget,
+    QVBoxLayout,
+    QFileDialog,
+    QMessageBox,
+    QProgressBar,
+    QLabel,
 )
+
 from PySide6.QtCore import Qt
 
+from doc_explainer.orchestrator.progress import (
+    ProgressEvent,
+    ProgressStatus,
+)
+
 from ..factories import WidgetFactory, ViewerFactory
-from ..widgets import BaseDocumentViewer, Sidebar,  VoiceInput, VoiceOutput, MainToolbar
+from ..widgets import (
+    BaseDocumentViewer,
+    Sidebar,
+    VoiceInput,
+    VoiceOutput,
+    MainToolbar,
+)
+
 from ..models.signals import UISignals
+
 from ....config import UIConfig
 
 if TYPE_CHECKING:
-    from ..managers import ShortcutManager, ThemeManager
+    from ..managers import (
+        ShortcutManager,
+        ThemeManager,
+    )
 
 
 class MainWindow(QMainWindow):
-    """Main application window"""
+    """Main application window."""
+
     sidebar: Sidebar
     toolbar: MainToolbar
 
-    def __init__(self, window_manager,
-                 theme_manager: ThemeManager,
-                 shortcut_manager: ShortcutManager,
-                 widget_factory: WidgetFactory,
-                 signals: UISignals,
-                 config: UIConfig):
+    def __init__(
+        self,
+        window_manager,
+        theme_manager: ThemeManager,
+        shortcut_manager: ShortcutManager,
+        widget_factory: WidgetFactory,
+        signals: UISignals,
+        config: UIConfig,
+    ):
         super().__init__()
+
         self.window_manager = window_manager
         self.theme_manager = theme_manager
         self.shortcut_manager = shortcut_manager
@@ -34,203 +66,555 @@ class MainWindow(QMainWindow):
         self.signals = signals
         self.config = config
 
-        self.setWindowTitle("Doc Explainer")
-        self.resize(1200, 800)
+        self.setWindowTitle(
+            "Doc Explainer"
+        )
+
+        self.resize(
+            1200,
+            800,
+        )
 
         self._setup_ui()
         self._setup_shortcuts()
         self._connect_signals()
 
+    # ==================================================================
+    # UI
+    # ==================================================================
+
     def _setup_ui(self):
-        """Setup main window UI"""
-        # Tab widget for documents
+        """Setup main window UI."""
+
+        # --------------------------------------------------------------
+        # Document tabs
+        # --------------------------------------------------------------
+
         self.tabs = QTabWidget()
-        self.tabs.setTabsClosable(True)
-        self.setCentralWidget(self.tabs)
-        self.tabs.tabCloseRequested.connect(self._close_tab)
 
+        self.tabs.setTabsClosable(
+            True
+        )
+
+        self.tabs.tabCloseRequested.connect(
+            self._close_tab
+        )
+
+        self.setCentralWidget(
+            self.tabs
+        )
+
+        # --------------------------------------------------------------
         # Sidebar
-        self.sidebar = Sidebar(signals=self.signals)
-        self.dock = QDockWidget("AI Tutor", self)
-        self.dock.setWidget(self.sidebar)
-        self.dock.setFloating(False)
-        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
+        # --------------------------------------------------------------
 
+        self.sidebar = Sidebar(
+            signals=self.signals
+        )
+
+        self.dock = QDockWidget(
+            "AI Tutor",
+            self,
+        )
+
+        self.dock.setWidget(
+            self.sidebar
+        )
+
+        self.dock.setFloating(
+            False
+        )
+
+        self.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea,
+            self.dock,
+        )
+
+        # --------------------------------------------------------------
         # Voice controls
+        # --------------------------------------------------------------
+
         voice_container = QWidget()
+
         voice_layout = QVBoxLayout()
-        voice_layout.setContentsMargins(5, 5, 5, 5)
 
-        self.voice_input = VoiceInput(signals=self.signals)
-        self.voice_output = VoiceOutput(signals=self.signals)
+        voice_layout.setContentsMargins(
+            5,
+            5,
+            5,
+            5,
+        )
 
-        voice_layout.addWidget(self.voice_input)
-        voice_layout.addWidget(self.voice_output)
-        voice_container.setLayout(voice_layout)
+        self.voice_input = VoiceInput(
+            signals=self.signals
+        )
 
-        self.dock.setTitleBarWidget(voice_container)
+        self.voice_output = VoiceOutput(
+            signals=self.signals
+        )
 
+        voice_layout.addWidget(
+            self.voice_input
+        )
+
+        voice_layout.addWidget(
+            self.voice_output
+        )
+
+        voice_container.setLayout(
+            voice_layout
+        )
+
+        self.dock.setTitleBarWidget(
+            voice_container
+        )
+
+        # --------------------------------------------------------------
         # Toolbar
+        # --------------------------------------------------------------
+
         self.toolbar = MainToolbar()
-        self.addToolBar(self.toolbar)
+
+        self.addToolBar(
+            self.toolbar
+        )
+
+        # --------------------------------------------------------------
+        # Registration progress
+        # --------------------------------------------------------------
+
+        self.registration_container = QWidget()
+
+        registration_layout = QVBoxLayout(
+            self.registration_container
+        )
+
+        registration_layout.setContentsMargins(
+            8,
+            4,
+            8,
+            4,
+        )
+
+        self.registration_status = QLabel(
+            "Ready"
+        )
+
+        self.registration_progress = QProgressBar()
+
+        self.registration_progress.setRange(
+            0,
+            100,
+        )
+
+        self.registration_progress.setValue(
+            0
+        )
+
+        registration_layout.addWidget(
+            self.registration_status
+        )
+
+        registration_layout.addWidget(
+            self.registration_progress
+        )
+
+        self.registration_container.hide()
+
+        self.statusBar().addPermanentWidget(
+            self.registration_container
+        )
+
+    # ==================================================================
+    # Shortcuts
+    # ==================================================================
 
     def _setup_shortcuts(self):
-        """Setup keyboard shortcuts"""
-        # Close tab shortcut
+        """Setup keyboard shortcuts."""
+
         self.shortcut_manager.register_action(
             "close_tab",
             "Ctrl+W",
-            "cClose current tab",
-            self._close_tab,
-            parent=self
+            "Close current tab",
+            self._close_current_tab,
+            parent=self,
         )
-        # Open document shortcut
+
         self.shortcut_manager.register_action(
             "open_document",
             "Ctrl+O",
-            "cOpen document",
+            "Open document",
             self._open_document,
-            parent=self
+            parent=self,
         )
 
-        # Toggle sidebar shortcut
         self.shortcut_manager.register_action(
             "toggle_sidebar",
             "Ctrl+B",
-            "cToggle sidebar",
+            "Toggle sidebar",
             self._toggle_sidebar,
-            parent=self
+            parent=self,
         )
 
+    # ==================================================================
+    # Signals
+    # ==================================================================
+
     def _connect_signals(self):
-        """Connect signals"""
-        # Toolbar signals
-        self.toolbar.open_action.triggered.connect(self._open_document)
+        """Connect signals."""
+
+        self.toolbar.open_action.triggered.connect(
+            self._open_document
+        )
+
         self.toolbar.toggle_sidebar_action.triggered.connect(
-            self._toggle_sidebar)
-        self.toolbar.theme_action.triggered.connect(self._toggle_theme)
+            self._toggle_sidebar
+        )
 
-        # Sidebar signals
-        self.sidebar.question_clicked.connect(self._on_follow_up_clicked)
+        self.toolbar.theme_action.triggered.connect(
+            self._toggle_theme
+        )
 
-        # Voice signals
-        self.voice_input.voice_text.connect(self._on_voice_input)
+        self.sidebar.question_clicked.connect(
+            self._on_follow_up_clicked
+        )
 
-        # Document signals
-        self.signals.text_selected.connect(self._on_text_selected)
+        self.voice_input.voice_text.connect(
+            self._on_voice_input
+        )
+
+        self.signals.text_selected.connect(
+            self._on_text_selected
+        )
+
+    # ==================================================================
+    # Open document
+    # ==================================================================
 
     def _open_document(self):
-        """Open document dialog"""
-        from PySide6.QtWidgets import QFileDialog
+        """
+        Ask the user for a document and start asynchronous registration.
+        """
 
         path, _ = QFileDialog.getOpenFileName(
-            self, "Open Document", "",
-            "All Files (*.*);;PDF Files (*.pdf);;Text Files (*.txt);;HTML Files (*.html)"
+            self,
+            "Open Document",
+            "",
+            (
+                "All Files (*.*);;"
+                "PDF Files (*.pdf);;"
+                "Text Files (*.txt);;"
+                "HTML Files (*.html)"
+            ),
         )
 
         if not path:
             return
 
+        # IMPORTANT:
+        #
+        # Do not wait for a document ID here.
+        #
+        # Registration happens in QThread.
+        self.window_manager.on_document_registered(
+            path
+        )
+
+    # ==================================================================
+    # Registration progress
+    # ==================================================================
+
+    def show_registration_progress(
+        self,
+        event: ProgressEvent,
+    ):
+        """Update registration progress UI."""
+
+        self.registration_container.show()
+
+        self.registration_status.setText(
+            event.message
+        )
+
+        self.registration_progress.setValue(
+            int(event.progress * 100)
+        )
+
+        if event.status == ProgressStatus.FAILED:
+            self.registration_progress.setValue(
+                0
+            )
+
+    # ==================================================================
+    # Registration complete
+    # ==================================================================
+
+    def show_registration_complete(
+        self,
+        doc_id: str,
+    ):
+        """Show registration completion."""
+
+        self.registration_status.setText(
+            f"Document registered: {doc_id}"
+        )
+
+        self.registration_progress.setValue(
+            100
+        )
+
+        # Hide after successful completion.
+        self.registration_container.hide()
+
+    # ==================================================================
+    # Registration error
+    # ==================================================================
+
+    def show_registration_error(
+        self,
+        error: str,
+    ):
+        """Show registration error."""
+
+        self.registration_status.setText(
+            "Document registration failed."
+        )
+
+        self.registration_progress.setValue(
+            0
+        )
+
+        self.registration_container.hide()
+
+        QMessageBox.critical(
+            self,
+            "Document Registration Failed",
+            error,
+        )
+
+    # ==================================================================
+    # Open registered document
+    # ==================================================================
+
+    def open_registered_document(
+        self,
+        path: str,
+        doc_id: str,
+    ):
+        """
+        Create and display the document viewer after backend
+        registration has completed successfully.
+        """
+
         try:
-            # Register document with backend
-            doc_id = self.window_manager.on_document_registered(path)
+            viewer = ViewerFactory.create_viewer(
+                path,
+                signals=self.signals,
+            )
 
-            # Create viewer
-            viewer = ViewerFactory.create_viewer(path, signals=self.signals)
+            viewer.set_doc_id(
+                str(doc_id)
+            )
 
-            # Load document
-            if viewer.load(path):
-                viewer.set_doc_id(str(doc_id))
-
-                # Add to tabs
-                name = os.path.basename(path)
-                index = self.tabs.addTab(viewer, name)
-                self.tabs.setCurrentIndex(index)
-
-                # Emit signal to notify document opened
-                self.signals.document_opened.emit(str(doc_id), path)
-            else:
+            if not viewer.load(path):
                 QMessageBox.warning(
-                    self, "Error", f"Failed to load document: {path}")
+                    self,
+                    "Error",
+                    f"Failed to load document: {path}",
+                )
+                return
+
+            name = os.path.basename(
+                path
+            )
+
+            index = self.tabs.addTab(
+                viewer,
+                name,
+            )
+
+            self.tabs.setCurrentIndex(
+                index
+            )
+
+            self.signals.document_opened.emit(
+                str(doc_id),
+                path,
+            )
 
         except Exception as e:
             QMessageBox.critical(
-                self, "Error", f"Failed to open document: {e}")
+                self,
+                "Error",
+                f"Failed to open document: {e}",
+            )
 
-    def _close_tab(self, index: int):
-        """Close tab at given index"""
-        widget = self.tabs.widget(index)
-        if widget:
-            doc_id = getattr(widget, 'doc_id', None)
+    # ==================================================================
+    # Close tab
+    # ==================================================================
 
-            # Clear viewer resources
-            if hasattr(widget, 'clear'):
-                widget.close()  # Close any open resources
-                widget.clear()  # Clear loaded content
+    def _close_current_tab(self):
+        """Close currently active tab."""
 
-            # Remove tab
-            self.tabs.removeTab(index)
+        index = self.tabs.currentIndex()
 
-            # Schedule deletion
-            widget.deleteLater()
+        if index >= 0:
+            self._close_tab(
+                index
+            )
 
-            # Emit signal to notify document closed
-            if doc_id:
-                self.signals.document_closed.emit(doc_id)
+    def _close_tab(
+        self,
+        index: int,
+    ):
+        """Close tab at index."""
+
+        widget = self.tabs.widget(
+            index
+        )
+
+        if not widget:
+            return
+
+        doc_id = getattr(
+            widget,
+            "doc_id",
+            None,
+        )
+
+        try:
+            if hasattr(
+                widget,
+                "clear",
+            ):
+                widget.clear()
+
+        except Exception:
+            pass
+
+        self.tabs.removeTab(
+            index
+        )
+
+        widget.deleteLater()
+
+        if doc_id:
+            self.signals.document_closed.emit(
+                str(doc_id)
+            )
+
+    # ==================================================================
+    # Sidebar
+    # ==================================================================
 
     def _toggle_sidebar(self):
-        """Toggle sidebar visibility"""
+        """Toggle sidebar visibility."""
+
         if self.dock.isVisible():
             self.dock.hide()
-            self.toolbar.toggle_sidebar_action.setChecked(False)
+
+            self.toolbar.toggle_sidebar_action.setChecked(
+                False
+            )
+
         else:
             self.dock.show()
-            self.toolbar.toggle_sidebar_action.setChecked(True)
 
-        self.signals.sidebar_toggled.emit(self.dock.isVisible())
+            self.toolbar.toggle_sidebar_action.setChecked(
+                True
+            )
+
+        self.signals.sidebar_toggled.emit(
+            self.dock.isVisible()
+        )
+
+    # ==================================================================
+    # Theme
+    # ==================================================================
 
     def _toggle_theme(self):
-        """Toggle theme"""
-        # This would change the application stylesheet
+        """Toggle theme."""
+
         self.theme_manager.toggle_theme()
 
-    def _on_text_selected(self, doc_id: str, text: str, page: int, position: int):
-        """Handle text selection from any viewer"""
-        # This would trigger explanation based on the selected text
-        # For now, just log it
-        print(f"Text selected: {text[:50]}...")
+    # ==================================================================
+    # Text selection
+    # ==================================================================
 
-    def _on_follow_up_clicked(self, question: str, section_id: int):
-        """Handle follow-up question click"""
+    def _on_text_selected(
+        self,
+        doc_id: str,
+        text: str,
+        page: int,
+        position: int,
+    ):
+        """Handle text selection."""
+
+        print(
+            f"Text selected: {text[:50]}..."
+        )
+
+    # ==================================================================
+    # Follow-up
+    # ==================================================================
+
+    def _on_follow_up_clicked(
+        self,
+        question: str,
+        section_id: int,
+    ):
+        """Handle follow-up question."""
+
         current = self.tabs.currentWidget()
+
         if not current:
             return
-        if isinstance(current, BaseDocumentViewer):
+
+        if isinstance(
+            current,
+            BaseDocumentViewer,
+        ):
             doc_id = current.doc_id
-            self.window_manager.on_follow_up(doc_id, question, section_id)
-        else:
-            print("No active document to send follow-up question to.")
 
-    def _on_voice_input(self, text: str):
-        """Handle voice input"""
-        print(f"Voice input: {text}")
+            self.window_manager.on_follow_up(
+                doc_id,
+                question,
+                section_id,
+            )
+
+    # ==================================================================
+    # Voice
+    # ==================================================================
+
+    def _on_voice_input(
+        self,
+        text: str,
+    ):
+        """Handle voice input."""
 
         current = self.tabs.currentWidget()
+
         if not current:
             return
-        if isinstance(current, BaseDocumentViewer):
+
+        if isinstance(
+            current,
+            BaseDocumentViewer,
+        ):
             self.window_manager.on_ask(
                 doc_id=int(current.doc_id),
                 text=text,
                 page=current.get_current_page(),
-                position=current.get_current_position()
+                position=current.get_current_position(),
             )
-        else:
-            print("No active document to send voice input to.")
+
+    # ==================================================================
+    # Close application
+    # ==================================================================
 
     def closeEvent(self, event):
-        """Handle window close event"""
-        # Close all tabs
+        """Handle window close."""
+
         while self.tabs.count():
             self._close_tab(0)
 

@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 from langchain_core.prompts import PromptTemplate
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.output_parsers import BaseOutputParser
-from langchain_core.runnables import RunnableSequence
+from langchain_core.runnables import Runnable
 
 from ..base.interfaces import LLMInterface
 
@@ -39,6 +39,11 @@ class BaseLLM(LLMInterface, ABC):
         self.requests_per_minute = requests_per_minute
         self.min_request_interval_seconds = min_request_interval_seconds
         self.rate_limit_retries = rate_limit_retries
+        self.mock = kwargs.get("mock", False)
+        self.mock_response = kwargs.get(
+            "mock_response",
+            "Mock LLM response.",
+        )
         self.max_tokens = kwargs.get("max_tokens", 1000)
 
         self._last_request_at = 0.0
@@ -55,7 +60,11 @@ class BaseLLM(LLMInterface, ABC):
         )
 
         try:
-            self.model = self._create_model(**kwargs)
+            self.model = (
+                None
+                if self.mock
+                else self._create_model(**kwargs)
+            )
 
             self.logger.info(
                 "LLM model created successfully: model=%s",
@@ -71,7 +80,9 @@ class BaseLLM(LLMInterface, ABC):
 
         self.prompt_template: Optional[PromptTemplate] = None
         self.parser: Optional[BaseOutputParser] = None
-        self.chain: Optional[RunnableSequence] = None
+        # LCEL composition may produce RunnableSerializable rather than a
+        # RunnableSequence, depending on the model and output parser types.
+        self.chain: Optional[Runnable[Any, Any]] = None
 
         self.logger.debug(
             "BaseLLM initialization complete: model=%s",
@@ -135,7 +146,7 @@ class BaseLLM(LLMInterface, ABC):
             )
 
             if self.parser:
-                self.chain =  self.prompt_template | self.model  | self.parser
+                self.chain = self.prompt_template | self.model | self.parser
             else:
                 from langchain_core.output_parsers import StrOutputParser
 
@@ -244,6 +255,29 @@ class BaseLLM(LLMInterface, ABC):
 
     def generate(self, inputs: Dict[str, Any]) -> Any:
         """Generate response from LLM."""
+
+        if(self.mock):
+            self.logger.info(
+                "Mock generation requested: model=%s, inputs=%s",
+                self.model_name,
+                inputs,
+            )
+            if "concepts" in inputs:
+                return {
+                    concept: [concept]
+                    for concept in inputs["concepts"]
+                }
+
+            if "concept_names" in inputs:
+                return []
+
+            if "candidates" in inputs:
+                return [
+                    {"name": candidate}
+                    for candidate in inputs["candidates"]
+                ]
+
+            return self.mock_response
 
         if not self.chain:
             self.logger.error(

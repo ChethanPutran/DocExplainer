@@ -12,6 +12,7 @@ class BaseDocumentViewer(BaseWidget):
     
     def __init__(self, parent=None, signals=None):
         super().__init__(parent, signals)
+        self.doc_id = ""
         self.current_path: str = ""
         self.current_page: int = 1
         self.current_position: int = 0

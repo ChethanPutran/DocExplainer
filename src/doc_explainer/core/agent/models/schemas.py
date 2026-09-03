@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Any, List, Dict
 from pydantic import BaseModel, Field 
 from ....core.common.enums import ResourceType, ExplanationLevel
 from ....core.common.dataclasses import ExplanationStyle
@@ -40,5 +40,5 @@ class Explanation(BaseModel):
     follow_up_questions: List[str]
     suggested_resources: List[ResourceSuggestion] = Field(description="Resources to fetch")
     metadata: ExplanationMetadata
-    resources: List['Resource'] = []  # Forward reference
+    resources: List[Any] = Field(default_factory=list)
 

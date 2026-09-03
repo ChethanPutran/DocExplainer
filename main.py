@@ -1,11 +1,4 @@
-from src.ui import launch_gui
-# from src.ui import run_web_app
-# from src.ui.web_app.main import run
-
-def main():
-    launch_gui()
-    # run_web_app()
-    # OR run()
+from doc_explainer.main import main
 
 if __name__ == "__main__":
     main()

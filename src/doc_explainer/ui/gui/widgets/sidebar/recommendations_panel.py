@@ -47,14 +47,38 @@ class RecommendationsPanel(QWidget):
         self._clear_resources()
         
         if not resources:
-            self.resources_layout.addWidget(self.placeholder)
+            self.placeholder.show()
             return
+
+        self.placeholder.hide()
         
         for resource in resources:
             self._add_resource(resource)
     
     def _add_resource(self, resource):
         """Add a single resource"""
+        if hasattr(resource, "model_dump"):
+            resource = resource.model_dump()
+            resource = {
+                "title": resource.get("concept", "Resource"),
+                "description": resource.get("description", ""),
+                "type": resource.get("resource_type", "unknown"),
+                "difficulty": resource.get("difficulty", "intermediate"),
+                "url": resource.get("url", ""),
+            }
+        elif not isinstance(resource, dict):
+            resource = {
+                "title": getattr(resource, "concept", "Resource"),
+                "description": getattr(resource, "description", ""),
+                "type": getattr(resource, "resource_type", "unknown"),
+                "difficulty": getattr(resource, "difficulty", "intermediate"),
+                "url": getattr(resource, "url", ""),
+            }
+
+        for key in ("type", "difficulty"):
+            if hasattr(resource.get(key), "value"):
+                resource[key] = resource[key].value
+
         # Resource container
         container = QFrame()
         container.setFrameShape(QFrame.Shape.StyledPanel)
@@ -102,12 +126,14 @@ class RecommendationsPanel(QWidget):
     
     def _clear_resources(self):
         """Clear all resources"""
-        while self.resources_layout.count():
-            item = self.resources_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+        for index in range(self.resources_layout.count() - 1, -1, -1):
+            widget = self.resources_layout.itemAt(index).widget()
+            if widget is not self.placeholder:
+                self.resources_layout.takeAt(index)
+                if widget:
+                    widget.deleteLater()
     
     def clear(self):
         """Clear panel"""
         self._clear_resources()
-        self.resources_layout.addWidget(self.placeholder)
+        self.placeholder.show()

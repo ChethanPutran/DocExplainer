@@ -62,3 +62,10 @@ class ConceptGraph:
                     "relationship_strength": edge_data.relationship.strength
                 })
         return prerequisites
+
+
+    def get_dependencies(self, concept: ConceptNode) -> List[ConceptNode]:
+        """Get dependencies of a concept node"""
+        if concept.primary_concept.name not in self.graph:
+            return []
+        return [self.graph.nodes[predecessor]['data'] for predecessor in self.graph.predecessors(concept.primary_concept.name)]

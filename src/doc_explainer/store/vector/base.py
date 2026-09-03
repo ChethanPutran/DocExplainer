@@ -1,25 +1,22 @@
 from dataclasses import dataclass
-from typing import Optional, Protocol, Sequence
+from typing import Iterator, Optional, Protocol
 
-from doc_explainer.core.document.builder.base import SimilarityResult
+from doc_explainer.core.document.models.base import SimilarityResult, VectorDocument
 
 
-@dataclass
-class VectorDocument:
-    id: str
-    text: str
-    metadata: dict
-    
 class VectorStore(Protocol):
 
     def add(
         self,
-        documents: Sequence[VectorDocument]
+        namespace: str,
+        documents: Iterator[VectorDocument],
+        batch_size: int = 32
     ) -> None:
         ...
 
     def search(
         self,
+        namespace: str,
         query: str,
         k: int = 5,
         filters: Optional[dict] = None

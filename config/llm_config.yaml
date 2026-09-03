@@ -1,0 +1,11 @@
+llm:
+  provider: "gemini"
+  model: "gemini-3.7-flash"
+  temperature: 1.0
+  max_tokens: 1000
+  timeout: null
+  requests_per_minute: 4
+  min_request_interval_seconds: null
+  rate_limit_retries: 1
+  reasoning: true
+  mock: true

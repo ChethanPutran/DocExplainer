@@ -70,9 +70,13 @@ class ConceptExtractor:
         pattern_concepts = self.ner_regex.extract_concepts(text)
 
         # Merge raw candidates
-        raw_candidates = list(
-            set(noun_phrases + named_entities + ner_concepts + pattern_concepts)
-        )
+        raw_candidates = [
+            candidate.strip()
+            for candidate in set(
+                noun_phrases + named_entities + ner_concepts + pattern_concepts
+            )
+            if isinstance(candidate, str) and candidate.strip()
+        ]
 
         # Canonicalization
         canonical_map = self.canonicalizer.canonicalize_concepts(raw_candidates)
@@ -91,6 +95,8 @@ class ConceptExtractor:
 
                 # Find occurrences
                 alias_lower = alias.lower()
+                if not alias_lower:
+                    continue
                 start = 0
                 while True:
                     pos = context_lower.find(alias_lower, start)
@@ -109,7 +115,7 @@ class ConceptExtractor:
             all_concepts.append(concept)
 
         # Score and filter concepts
-        filtered_concepts = self._filter_concepts(all_concepts, text)
+        filtered_concepts = self._filter_concepts(all_concepts, context)
 
         # Update inverted index
         for concept in filtered_concepts:
@@ -126,7 +132,7 @@ class ConceptExtractor:
 
         return filtered_concepts
 
-    def _filter_concepts(self, concepts: List[Concept], context_text: List[str]) -> List[Concept]:
+    def _filter_concepts(self, concepts: List[Concept], context_text: str) -> List[Concept]:
         """Rank and filter concepts"""
         if not concepts:
             return []

@@ -15,6 +15,8 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap, QIcon
 import yaml
 
+from doc_explainer.config.logger import setup_logging
+
 from ..managers.window_manager import WindowManager
 from ..managers.theme_manager import ThemeManager
 from ..managers.shortcut_manager import ShortcutManager
@@ -25,30 +27,70 @@ from ..utils.signal_utils import SignalInspector
 from ..factories.widget_factory import WidgetFactory
 from ....orchestrator import DocExplainerOrchestrator, OrchestratorConfig
 from ..factories.viewer_factory import ViewerFactory
+import logging 
+
+logger = logging.getLogger(__name__)
 
 class DocExplainerApp:
     """Main application class"""
-    app: QApplication = None
-    window_manager: WindowManager = None
-    theme_manager: ThemeManager = None
-    shortcut_manager: ShortcutManager = None
-    widget_factory: WidgetFactory = None
-    signal_inspector: SignalInspector = None
-    orchestrator: DocExplainerOrchestrator = None
-    ui_config: UIConfig = None
-    llm_config: LLMConfig = None
-    backend_config: BackendConfig = None
-    logger: logging.Logger = None
+    app: Optional[QApplication] = None
+    window_manager: Optional[WindowManager] = None
+    theme_manager: Optional[ThemeManager] = None
+    view_factory: Optional[ViewerFactory] = None
+    shortcut_manager: Optional[ShortcutManager] = None
+    widget_factory: Optional[WidgetFactory] = None
+    signal_inspector: Optional[SignalInspector] = None
+    orchestrator: Optional[DocExplainerOrchestrator] = None
+    ui_config: Optional[UIConfig] = None
+    llm_config: Optional[LLMConfig] = None
+    backend_config: Optional[BackendConfig] = None
+    logger: Optional[logging.Logger] = None
 
-    def __init__(self, config_paths: Dict[str, str] = None, debug: bool = False):
+    def __init__(self, 
+                 config: Optional[Path] = None, 
+                 log_level: str = 'INFO',
+                 reset_config: bool = False,
+                 clear_cache: bool = False):
         # Import orchestrator
-        self.debug = debug
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.config_paths = config_paths
-        self.ui_config, self.llm_config, self.backend_config = self._load_config(config_paths)
+        self.debug = log_level.upper() == 'DEBUG'
+        
+        self.config = config
+        self.ui_config, self.llm_config, self.backend_config = self._load_config(config)
         
         # Ensure user directories exist
         self._ensure_directories()
+
+        # Setup logging
+        setup_logging(self.backend_config.logging)
+
+        if(reset_config):
+            self.handle_reset_config()
+            sys.exit(0)
+
+        if(clear_cache):
+            self.handle_clear_cache()
+            sys.exit(0)
+
+    def handle_reset_config(self):
+        """Reset configuration to defaults"""
+        config_file = Path.home() / '.doc_explainer' / 'config' / 'ui_config.json'
+        if config_file.exists():
+            config_file.unlink()
+            logger.info("Configuration reset to defaults")
+        else:
+            logger.info("No configuration file found")
+
+
+    def handle_clear_cache(self):
+        """Clear application cache"""
+        cache_dir = Path.home() / '.doc_explainer' / 'cache'
+        if cache_dir.exists():
+            import shutil
+            shutil.rmtree(cache_dir)
+            cache_dir.mkdir(parents=True)
+            logger.info("Cache cleared")
+        else:
+            logger.info("No cache directory found")
     
     def _ensure_directories(self):
         """Create necessary directories"""
@@ -63,27 +105,165 @@ class DocExplainerApp:
         for directory in directories:
             directory.mkdir(parents=True, exist_ok=True)
     
-    def _load_config(self, config_paths: Dict[str, str]) -> tuple[UIConfig, LLMConfig, BackendConfig]:
-        """Load configuration"""
-        self.logger.info("Loading configuration")
-        ui_config = UIConfig()
-        llm_config = LLMConfig()
-        backend_config = BackendConfig()
+    def _load_config(
+        self,
+        config: Optional[Path] = None
+    ) -> tuple[UIConfig, LLMConfig, BackendConfig]:
+        """
+        Load configuration with the following priority:
 
-        if config_paths:
-            ui_config_path = config_paths.get('ui', Path.home() / '.doc_explainer' / 'config' / 'ui_config.yaml')
-            llm_config_path = config_paths.get('llm', Path.home() / '.doc_explainer' / 'config' / 'llm_config.yaml')
-            backend_config_path = config_paths.get('backend', Path.home() / '.doc_explainer' / 'config' / 'backend_config.yaml')
-        else:
-            ui_config_path = Path.home() / '.doc_explainer' / 'config' / 'ui_config.yaml'
-            llm_config_path = Path.home() / '.doc_explainer' / 'config' / 'llm_config.yaml'
-            backend_config_path = Path.home() / '.doc_explainer' / 'config' / 'backend_config.yaml'
+        1. Explicitly provided config path
+        2. User config: ~/.doc_explainer/config/
+        3. Project config: <project_root>/config/
+        4. Config class defaults if no file exists
+        """
 
-        # Try loading from default location first
-        ui_config = UIConfig.load(filepath=str(ui_config_path))
-        llm_config = LLMConfig.load(filepath=str(llm_config_path))
-        backend_config = BackendConfig.load(filepath=str(backend_config_path))
-        
+        logger.info("Loading configuration")
+
+        default_config_dir = Path.home() / ".doc_explainer" / "config"
+
+        # Project root:
+        # src/doc_explainer/ui/gui/app/app.py
+        # parents[0] = app
+        # parents[1] = gui
+        # parents[2] = ui
+        # parents[3] = doc_explainer
+        # parents[4] = src
+        # parents[5] = project root
+        project_root = Path(__file__).resolve().parents[5]
+        project_config_dir = project_root / "config"
+
+        logger.debug(
+            "Project config directory: %s",
+            project_config_dir
+        )
+
+        # ---------------------------------------------------------
+        # Resolve individual config paths
+        # ---------------------------------------------------------
+
+        def resolve_config_path(
+            name: str,
+            explicit_path: Optional[Path] = None
+        ) -> Path:
+            """
+            Resolve config path using:
+
+            explicit path
+                ↓
+            ~/.doc_explainer/config
+                ↓
+            project/config
+            """
+
+            # 1. Explicitly provided path
+            if explicit_path is not None:
+                path = Path(explicit_path).expanduser()
+
+                if path.exists():
+                    logger.info(
+                        "Using explicitly provided %s config: %s",
+                        name,
+                        path
+                    )
+                    return path
+
+                logger.warning(
+                    "Explicit %s config does not exist: %s",
+                    name,
+                    path
+                )
+
+                # Important:
+                # If the user explicitly provided a path, don't silently
+                # switch to another configuration.
+                return path
+
+            # 2. User configuration
+            user_path = default_config_dir / f"{name}_config.yaml"
+
+            if user_path.exists():
+                logger.info(
+                    "Using user %s config: %s",
+                    name,
+                    user_path
+                )
+                return user_path
+
+            # 3. Project configuration
+            project_path = project_config_dir / f"{name}_config.yaml"
+
+            if project_path.exists():
+                logger.info(
+                    "Using project default %s config: %s",
+                    name,
+                    project_path
+                )
+                return project_path
+
+            # Nothing exists.
+            # Return the user path because the config class can create
+            # the default config there if desired.
+            logger.info(
+                "No %s config found. Using user config path: %s",
+                name,
+                user_path
+            )
+
+            return user_path
+
+        # ---------------------------------------------------------
+        # Extract explicit paths
+        # ---------------------------------------------------------
+
+        explicit_ui = None
+        explicit_llm = None
+        explicit_backend = None
+
+        if config is not None:
+            explicit_ui = config / "ui_config.yaml"
+            explicit_llm = config / "llm_config.yaml"
+            explicit_backend = config / "backend_config.yaml"
+
+        # ---------------------------------------------------------
+        # Resolve paths
+        # ---------------------------------------------------------
+
+        ui_config_path = resolve_config_path(
+            "ui",
+            explicit_ui
+        )
+
+        llm_config_path = resolve_config_path(
+            "llm",
+            explicit_llm
+        )
+
+        backend_config_path = resolve_config_path(
+            "backend",
+            explicit_backend
+        )
+
+        logger.info("UI config path: %s", ui_config_path)
+        logger.info("LLM config path: %s", llm_config_path)
+        logger.info("Backend config path: %s", backend_config_path)
+
+        # ---------------------------------------------------------
+        # Load configs
+        # ---------------------------------------------------------
+
+        ui_config = UIConfig.load(
+            filepath=str(ui_config_path)
+        )
+
+        llm_config = LLMConfig.load(
+            filepath=str(llm_config_path)
+        )
+
+        backend_config = BackendConfig.load(
+            filepath=str(backend_config_path)
+        )
+
         return ui_config, llm_config, backend_config
     
     def _setup_application(self):
@@ -96,23 +276,23 @@ class DocExplainerApp:
         # Set application icon (if available)
         icon_path = Path.home() / '.doc_explainer' / "resources" / "icons" / "app_icon.png"
         if icon_path.exists():
-            self.logger.info(f"Setting application icon from {icon_path}")
+            logger.info(f"Setting application icon from {icon_path}")
             self.app.setWindowIcon(QIcon(str(icon_path)))
         else:
-            self.logger.warning(f"App icon not found at {icon_path}, using default icon")
+            logger.warning(f"App icon not found at {icon_path}, using default icon")
     
     def _show_splash_screen(self) -> Optional[QSplashScreen]:
         """Show splash screen on startup"""
         splash_path =  Path.home() / '.doc_explainer' / "resources" / "images" / "splash.png"
-        self.logger.info("Showing splash screen")
-        self.logger.debug(f"Looking for splash image at {splash_path}")
+        logger.info("Showing splash screen")
+        logger.debug(f"Looking for splash image at {splash_path}")
         if splash_path.exists():
             splash_pix = QPixmap(str(splash_path))
             splash = QSplashScreen(splash_pix, Qt.WindowType.WindowStaysOnTopHint)
             splash.show()
             self.app.processEvents()
             return splash
-        self.logger.warning("Splash image not found, skipping splash screen")
+        logger.warning("Splash image not found, skipping splash screen")
         return None
     
     def _init_components(self, splash: Optional[QSplashScreen] = None):
@@ -130,7 +310,7 @@ class DocExplainerApp:
             if splash:
                 splash.showMessage(message, Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
                 self.app.processEvents()
-            self.logger.info(message)
+            logger.info(message)
             init_func()
     
     def _init_ui_components(self):
@@ -156,9 +336,9 @@ class DocExplainerApp:
                     with open(theme_file, 'r') as f:
                         theme_data = json.load(f)
                         # This would need proper theme class creation
-                        self.logger.info(f"Loaded custom theme from {theme_file}")
+                        logger.info(f"Loaded custom theme from {theme_file}")
                 except Exception as e:
-                    self.logger.error(f"Error loading theme {theme_file}: {e}")
+                    logger.error(f"Error loading theme {theme_file}: {e}")
         
         # Apply configured theme
         self.theme_manager.set_theme(self.ui_config.theme.name)
@@ -174,28 +354,12 @@ class DocExplainerApp:
     def _init_orchestrator(self):
         """Initialize orchestrator"""
         orchestrator_config = OrchestratorConfig(
-            llm_provider=self.llm_config.provider,
-            llm_model=self.llm_config.model,
-            llm_requests_per_minute=self.llm_config.requests_per_minute,
-            llm_min_request_interval_seconds=self.llm_config.min_request_interval_seconds,
-            llm_rate_limit_retries=self.llm_config.rate_limit_retries,
-            temperature=self.llm_config.temperature,
-            persist_directory=str(Path.home() / '.doc_explainer' / 'cache'),
-            enable_knowledge_graph=self.backend_config.knowledge_graph.enabled,
-            enable_memory=self.backend_config.memory.enabled,
-            enable_session_tracking=self.backend_config.memory.session_tracking,
-            llm_kwargs={
-                "max_tokens": self.llm_config.max_tokens,
-                "timeout": self.llm_config.timeout,
-                "model_name": self.llm_config.model,
-                "requests_per_minute": self.llm_config.requests_per_minute,
-                "min_request_interval_seconds": self.llm_config.min_request_interval_seconds,
-                "rate_limit_retries": self.llm_config.rate_limit_retries,
-            }
+            llm=self.llm_config,
+            backend=self.backend_config,
         )
         
         self.orchestrator = DocExplainerOrchestrator(config=orchestrator_config)
-    
+
     def _init_window_manager(self):
         """Initialize window manager"""
         self.window_manager = WindowManager(
@@ -228,16 +392,16 @@ class DocExplainerApp:
                 
                 for doc_path in recent_docs.get('documents', [])[:5]:
                     if Path(doc_path).exists():
-                        self.logger.info(f"Loading recent document: {doc_path}")
+                        logger.info(f"Loading recent document: {doc_path}")
                         self.window_manager.on_document_registered(doc_path)
             except Exception as e:
-                self.logger.error(f"Error loading recent documents: {e}")
+                logger.error(f"Error loading recent documents: {e}")
 
     def _setup_exception_handling(self):
         """Setup global exception handling"""
         def excepthook(exc_type, exc_value, exc_traceback):
             """Handle uncaught exceptions"""
-            self.logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+            logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
             
             # Show error dialog
             error_dialog = QMessageBox()
@@ -249,7 +413,7 @@ class DocExplainerApp:
         
         sys.excepthook = excepthook
     
-    def run(self, document_path: str = None) -> int:
+    def run(self, document_path: Optional[str] = None) -> int:
         """Run the application"""
         try:
             # Create Qt application
@@ -258,7 +422,10 @@ class DocExplainerApp:
             self._setup_exception_handling()
             
             # Show splash screen
-            splash = self._show_splash_screen()
+            if not self.ui_config.system.show_splash:
+                splash = None
+            else:
+                splash = self._show_splash_screen()
             
             # Initialize components
             self._init_components(splash)
@@ -267,11 +434,11 @@ class DocExplainerApp:
             self.window_manager.launch()
 
             if document_path:
-                self.logger.info(f"Opening document from command line: {document_path}")
+                logger.info(f"Opening document from command line: {document_path}")
                 self.window_manager.on_document_registered(document_path)
             
             # Close splash screen
-            if splash:
+            if splash and self.window_manager.main_window is not None:
                 splash.finish(self.window_manager.main_window)
             
             # Load recent documents if enabled
@@ -282,13 +449,13 @@ class DocExplainerApp:
             if self.ui_config.startup.check_updates:
                 QTimer.singleShot(2000, self._check_for_updates)
             
-            self.logger.info("Application started successfully")
+            logger.info("Application started successfully")
             
             # Run application
             return self.app.exec()
             
         except Exception as e:
-            self.logger.exception("Fatal error during application startup")
+            logger.exception("Fatal error during application startup")
             
             # Show error dialog
             error_dialog = QMessageBox()
@@ -302,17 +469,18 @@ class DocExplainerApp:
     
     def cleanup(self):
         """Cleanup application resources"""
-        self.logger.info("Cleaning up application resources")
+        logger.info("Cleaning up application resources")
         
         # Save recent documents
         if self.window_manager:
+            self.window_manager.shutdown()
             recent_docs = self.window_manager.get_recent_documents()
             recent_file = Path.home() / '.doc_explainer' / 'recent.json'
             try:
                 with open(recent_file, 'w') as f:
                     json.dump({'documents': recent_docs}, f, indent=2)
             except Exception as e:
-                self.logger.error(f"Error saving recent documents: {e}")
+                logger.error(f"Error saving recent documents: {e}")
         
         # Save configuration
         self.ui_config.save()

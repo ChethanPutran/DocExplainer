@@ -33,7 +33,7 @@ class SummarizationChain(BaseChain):
         **kwargs: Any,
     ) -> Any:
         """Run summarization chain"""
-        return super().run(
+        result = super().run(
             selected_text=selected_text,
             context_summary=context_summary,
             known_concepts=known_concepts,
@@ -42,3 +42,4 @@ class SummarizationChain(BaseChain):
             length=length,
             **kwargs,
         )
+        return self.normalize_explanation_result(result)

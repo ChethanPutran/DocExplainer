@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Iterator, Optional
 
-from doc_explainer.core.document.models.base import DocumentInfo
 from ..models.structure import Document, Section
-from ..models.base import DocumentInfo
+from ..models.base import DocumentMetadata
 
 
 class DocumentParser(ABC):
@@ -27,15 +27,15 @@ class DocumentParser(ABC):
     @abstractmethod
     def parse_metadata(
             self,
-            file_path: str
-        ) -> DocumentInfo:
+            file_path: Path
+        ) -> DocumentMetadata:
         """Parse only metadata from document"""
         pass
 
     @abstractmethod
     def iter_sections(
         self,
-        file_path: str
+        file_path: Path
     ) -> Iterator[Section]:
         """Iterate over sections in the document"""
         pass

@@ -7,66 +7,60 @@ import uuid
 @dataclass
 class Sentence(Serializable, Positionable):
     """Represents a sentence in a document"""
+    id: str 
     text: str
-    start: int = 0
-    end: int = 0
-    page: int = 0
-    bbox: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
-    sentence_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    
+    start: int
+    end: int
+    page: int
+    bbox: Tuple[float, float, float, float]
+
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "sentence_id": self.sentence_id,
+            "id": self.id,
             "text": self.text,
             "start": self.start,
             "end": self.end,
             "page": self.page,
-            "bbox": list(self.bbox) if self.bbox else [0, 0, 0, 0],
+            "bbox": list(self.bbox),
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Sentence':
-        if "bbox" in data and isinstance(data["bbox"], list):
-            data["bbox"] = tuple(data["bbox"])
-        return cls(**data)
+        values = dict(data)
+        values["bbox"] = tuple(values.get("bbox", (0, 0, 0, 0)))
+        return cls(**values)
     
-    @property
-    def id(self) -> str:
-        return self.sentence_id
-
 
 @dataclass
 class Paragraph(Serializable, Positionable):
     """Represents a paragraph in a document"""
+    id: str
     text: str
+    start: int
+    end: int
+    page: int
+    bbox: Tuple[float, float, float, float]
     sentences: List[Sentence] = field(default_factory=list)
-    start: int = 0
-    end: int = 0
-    page: int = 0
-    bbox: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
-    paragraph_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    
+    metadata: Optional[Dict[str, Any]] = None
+
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "paragraph_id": self.paragraph_id,
+            "id": self.id,
             "text": self.text,
-            "sentences": [s.to_dict() for s in self.sentences],
             "start": self.start,
             "end": self.end,
             "page": self.page,
-            "bbox": list(self.bbox) if self.bbox else [0, 0, 0, 0],
+            "bbox": list(self.bbox),
+            "sentences": [sentence.to_dict() for sentence in self.sentences],
+            "metadata": self.metadata,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Paragraph':
-        data["sentences"] = [Sentence.from_dict(s) for s in data.get("sentences", [])]
-        if "bbox" in data and isinstance(data["bbox"], list):
-            data["bbox"] = tuple(data["bbox"])
-        return cls(**data)
-    
-    @property
-    def id(self) -> str:
-        return self.paragraph_id
+        values = dict(data)
+        values["bbox"] = tuple(values.get("bbox", (0, 0, 0, 0)))
+        values["sentences"] = [Sentence.from_dict(item) for item in values.get("sentences", [])]
+        return cls(**values)
     
     def add_sentence(self, sentence: Sentence):
         """Add a sentence to the paragraph"""
@@ -84,6 +78,7 @@ class Image(Serializable, Positionable):
     page: int = 0
     bbox: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
     image_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
+    metadata: Optional[Dict[str, Any]] = None
     
     def to_dict(self) -> Dict[str, Any]:
         return {

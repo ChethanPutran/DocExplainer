@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Optional
 from ...core.document.models.structure import Document
 from ...core.document.models.tree import DocumentTree
@@ -8,8 +9,13 @@ class BaseDocumentRepository(ABC):
     """Base interface for document storage"""
 
     @abstractmethod
-    def save_document(self, document: Document, doc_id: str) -> bool:
+    def save_document(self, file_path: Path, doc_id: str) -> bool:
         """Save document"""
+        pass
+
+    @abstractmethod
+    def save_document_model(self, document: Document, doc_id: str) -> bool:
+        """Save a parsed document model."""
         pass
 
     @abstractmethod
@@ -18,12 +24,12 @@ class BaseDocumentRepository(ABC):
         pass
 
     @abstractmethod
-    def save_tree(self, tree: DocumentTree, doc_id: str) -> bool:
+    def save_document_tree(self, tree: DocumentTree, doc_id: str) -> bool:
         """Save document tree"""
         pass
 
     @abstractmethod
-    def get_tree(self, doc_id: str) -> Optional[DocumentTree]:
+    def get_document_tree(self, doc_id: str) -> Optional[DocumentTree]:
         """Get document tree by ID"""
         pass
 

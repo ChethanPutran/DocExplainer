@@ -7,9 +7,9 @@ logging.basicConfig(
 )
 
 from doc_explainer.orchestrator import step, pipeline
-from doc_explainer.orchestrator.artifacts.local import LocalArtifactStore
-from doc_explainer.orchestrator.metadata.models import StepRun
-from doc_explainer.orchestrator.metadata.sqlite import SQLiteMetadataStore
+from doc_explainer.core.common.artifacts.local import LocalArtifactStore
+from doc_explainer.core.common.metadata.models import StepRun
+from doc_explainer.core.common.metadata.sqlite import SQLiteMetadataStore
 
 
 

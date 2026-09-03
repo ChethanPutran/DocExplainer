@@ -1,12 +1,16 @@
 from abc import abstractmethod
 import hashlib
 import re
+from langchain_core.embeddings import Embeddings
 import numpy as np
 import spacy
 from transformers import pipeline
 import torch 
-from typing import List, Literal, Dict, Union
+from typing import Any, List, Literal, Dict, Union
 from gliner import GLiNER
+import logging
+
+logger = logging.getLogger(__name__)
 
 class EmbeddingModel:
     DEFAULT_MODEL_NAME = 'all-MiniLM-L6-v2'
@@ -30,6 +34,30 @@ class EmbeddingModel:
         return np.vstack([self._fallback_vector(text) for text in texts])
 
 
+class LangChainEmbeddingWrapper(Embeddings):
+    """Wraps embedding model for LangChain compatibility"""
+    
+    def __init__(self, model):
+        self.model = model
+
+    @staticmethod
+    def _as_embedding_vector(embedding: Any) -> List[float]:
+        """Normalize model output to Chroma's expected flat list of floats."""
+        array = np.asarray(embedding, dtype=np.float32)
+
+        if array.ndim == 0:
+            array = array.reshape(1)
+        elif array.ndim > 1:
+            array = array.reshape(-1)
+
+        return array.astype(float).tolist()
+    
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        return [self._as_embedding_vector(self.model.encode(t)) for t in texts]
+    
+    def embed_query(self, text: str) -> List[float]:
+        return self._as_embedding_vector(self.model.encode(text))
+    
 class NERLLM:
     def __init__(self, llm_client = None) -> None:
         self.llm = llm_client
@@ -87,9 +115,7 @@ class NERModel:
         self._load_model()
 
     def _load_model(self):
-        print(f"Loading backend: {self.backend}")
-        
-        
+        logger.info(f"Loading backend: {self.backend}")
         if self.backend == "spacy":
             try:
                 self.model = spacy.load("en_core_web_sm")
@@ -121,7 +147,7 @@ class NERModel:
         else:
             raise ValueError("Unsupported backend")
 
-        print("Model loaded.\n")
+        logger.info("Model loaded.\n")
 
     # --------------------------------------------------
     # Public API
@@ -161,6 +187,11 @@ class NERModel:
         return list(set(concepts))
 
     def _transformer_extract(self, text: str) -> List[str]:
+        if self.model is None or not callable(self.model):
+            raise RuntimeError(
+                f"The '{self.backend}' transformer backend is not initialized."
+            )
+
         results = self.model(text)
         return list(set([res["word"].lower() for res in results]))
 

@@ -21,6 +21,8 @@ class StatisticalRelationshipExtractor(BaseRelationshipExtractionStrategy):
             for idx, sent in enumerate(sentences):
                 for alias in concept.aliases:
                     alias_lower = alias.lower()
+                    if not alias_lower:
+                        continue
                     sent_lower = sent.lower()
                     pattern = r"\b" + re.escape(alias_lower) + r"\b"
                     if re.search(pattern, sent_lower):
@@ -33,16 +35,21 @@ class StatisticalRelationshipExtractor(BaseRelationshipExtractionStrategy):
                 continue
 
             for c1, c2 in combinations(concepts_in_sent, 2):
-                pair_key = tuple(sorted([c1, c2], key=lambda x: x.name))
+                pair_key = tuple(sorted([c1.name, c2.name]))
                 pair_map[pair_key].append(idx)
 
         seen = set()
         stat_relations = []
 
-        for (c1, c2), indices in pair_map.items():
-            key = tuple(sorted([c1.name, c2.name]))
+        concepts_by_name = {concept.name: concept for concept in concepts}
+
+        for (c1_name, c2_name), indices in pair_map.items():
+            key = (c1_name, c2_name)
             if key in seen:
                 continue
+
+            c1 = concepts_by_name[c1_name]
+            c2 = concepts_by_name[c2_name]
                 
             co_occurrence_count = len(indices)
             weight = min(1.0, (co_occurrence_count / num_sentences) * 2)

@@ -1,170 +1,19 @@
-from typing import Any, Optional, List, cast
-import numpy as np
-from langchain_chroma import Chroma
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.embeddings import Embeddings
-from langchain_core.documents import Document as LCDocument
+from typing import Iterator, Optional
 
-from doc_explainer.core.document.models.base import ProcessedSection, ProcessingContext
-from doc_explainer.core.document.models.structure import Section
+from ..models.base import ProcessedSection, ProcessingContext, Relationship
+from ..models.structure import Section
+from ....store.vector.base import VectorDocument
 
-
-from ..models import Document, DocumentTree
-from ..builder.base import SimilaritySearchDB
-from .hierarchy_builder import HierarchyBuilder
 from .summary_generator import SummaryGenerator
-from .base import SectionProcessor,DocumentProcessor
+from .base import DocumentProcessor
 
-
-from ..models import DocumentChunk, DocumentNode, DocumentTree
-
-def build_document_hierarchy(document_text: str, title: str = "") -> DocumentTree:
-    """Build document hierarchy from text"""
-    section_texts = document_text.split("\n\n")
-
-    full_doc_chunk = DocumentChunk(text=document_text)
-    root_node = DocumentNode(node_id='0', chunk=full_doc_chunk)
-    doc_tree = DocumentTree(title=title or "Untitled Document", root=root_node)
-
-    hierarchy = {
-        "document": [full_doc_chunk],
-        "sections": [],
-        "paragraphs": [],
-        "sentences": [],
-    }
-
-    for s_idx, s_text in enumerate(section_texts):
-        s_chunk = DocumentChunk(text=s_text)
-        hierarchy["sections"].append(s_chunk)
-        root_node.children[str(s_idx)] = DocumentNode(node_id=str(s_idx), chunk=s_chunk)
-        parent = root_node.children[str(s_idx)]
-
-        paragraphs = s_text.split("\n")
-        for p_idx, p_text in enumerate(paragraphs):
-            if not p_text.strip():
-                continue
-                
-            p_chunk = DocumentChunk(text=p_text)
-            parent.children[str(p_idx)] = DocumentNode(node_id=str(p_idx), chunk=p_chunk)
-            hierarchy["paragraphs"].append(p_chunk)
-            
-            # Split paragraph into sentences (simple split)
-            sentences = [s.strip() for s in p_text.split('.') if s.strip()]
-            for sent_idx, sent_text in enumerate(sentences):
-                sent_chunk = DocumentChunk(text=sent_text + '.')
-                parent.children[str(p_idx)].children[str(sent_idx)] = DocumentNode(node_id=str(sent_idx), chunk=sent_chunk)
-                hierarchy["sentences"].append(sent_chunk)
-
-    doc_tree.hierarchy = hierarchy
-    return doc_tree
-
-class LangChainEmbeddingWrapper(Embeddings):
-    """Wraps embedding model for LangChain compatibility"""
-    
-    def __init__(self, model):
-        self.model = model
-
-    @staticmethod
-    def _as_embedding_vector(embedding: Any) -> List[float]:
-        """Normalize model output to Chroma's expected flat list of floats."""
-        array = np.asarray(embedding, dtype=np.float32)
-
-        if array.ndim == 0:
-            array = array.reshape(1)
-        elif array.ndim > 1:
-            array = array.reshape(-1)
-
-        return array.astype(float).tolist()
-    
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        return [self._as_embedding_vector(self.model.encode(t)) for t in texts]
-    
-    def embed_query(self, text: str) -> List[float]:
-        return self._as_embedding_vector(self.model.encode(text))
-
-        
+      
 class HierarchicalProcessor(DocumentProcessor):
     """Processes documents hierarchically with summaries"""
     
-    def __init__(self, llm_wrapper=None, embedding_model=None):
+    def __init__(self, llm_wrapper=None):
         self.summary_generator = SummaryGenerator(llm_wrapper)
-        self.hierarchy_builder = HierarchyBuilder(self.summary_generator)
-        self.embedding_model = embedding_model
-        
-        # Wrap for LangChain if embedding model provided
-        self.langchain_embeddings = None
-        if embedding_model:
-            self.langchain_embeddings = LangChainEmbeddingWrapper(embedding_model)
-    
-    def build_tree(self, document: Document, target_section: Optional[str] = None) -> DocumentTree:
-        """Build document tree with summaries"""
-        tree = self.hierarchy_builder.build(document, target_section)
-        return tree
-    
-    def create_full_vector_db(self, document: Document, collection_name: str = "full_doc",
-                              persist_directory: Optional[str] = None) -> SimilaritySearchDB:
-        """Create full-document vector database"""
-        if not self.langchain_embeddings:
-            raise ValueError("Embedding model required for vector DB creation")
-        
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=100
-        )
-        
-        # Get all text
-        all_text = "\n".join(list(document.get_text_generator()))
-        texts = text_splitter.split_text(all_text)
-        
-        return cast(SimilaritySearchDB, Chroma.from_texts(
-            texts=texts,
-            embedding=self.langchain_embeddings,
-            collection_name=collection_name,
-            persist_directory=persist_directory
-        ))
-    
-    def create_tree_aware_db(self, tree: DocumentTree, collection_name: str = "hierarchical_db",
-                            persist_directory: Optional[str] = None)-> SimilaritySearchDB:
-        """Create vector database from tree chunks"""
-        if not self.langchain_embeddings:
-            raise ValueError("Embedding model required for vector DB creation")
-        
-        lc_docs = []
-        
-        # Add paragraphs
-        for para_chunk in tree.hierarchy.get('paragraphs', []):
-            metadata = {
-                "chunk_id": para_chunk.chunk_id,
-                "parent_id": para_chunk.parent_id or "",
-                "level": "paragraph",
-                "page": para_chunk.metadata.page if para_chunk.metadata else 0,
-                "type": "summary"
-            }
-            
-            lc_docs.append(LCDocument(
-                page_content=para_chunk.text,
-                metadata=metadata
-            ))
-        
-        # Add sentences for granular search
-        for sent_chunk in tree.hierarchy.get('sentences', []):
-            lc_docs.append(LCDocument(
-                page_content=sent_chunk.text,
-                metadata={
-                    "chunk_id": sent_chunk.chunk_id,
-                    "parent_id": sent_chunk.parent_id or "",
-                    "level": "sentence",
-                    "type": "raw_text"
-                }
-            ))
-        
-        return cast(SimilaritySearchDB, Chroma.from_documents(
-            documents=lc_docs,
-            embedding=self.langchain_embeddings,
-            collection_name=collection_name,
-            persist_directory=persist_directory
-        ))
-    
+
     def visualize_tree(self, node, indent: str = "", is_last: bool = True):
         """Visualize document tree"""
         marker = "└── " if is_last else "├── "
@@ -190,6 +39,219 @@ class HierarchicalProcessor(DocumentProcessor):
         for i, child in enumerate(children):
             self.visualize_tree(child, new_indent, is_last=(i == len(children) - 1))
 
-    def process(self, section: Section, context: ProcessingContext) -> ProcessedSection:
-        """Process the document and return a DocumentTree"""
-        raise NotImplementedError("HierarchicalProcessor does not implement process() directly. Use build_tree() or create_full_vector_db() instead.")
+    def process(
+        self,
+        section: Section,
+        context: Optional[ProcessingContext] = None,
+    ) -> ProcessedSection:
+
+        if context is None:
+            context = ProcessingContext(section.document_id)
+
+        vector_documents: list[VectorDocument] = []
+        relationships: list[Relationship] = []
+
+        # --------------------------------------------------------------
+        # 1. Generate section summary
+        # --------------------------------------------------------------
+
+        section_text = "\n\n".join(
+            paragraph.text
+            for paragraph in section.paragraphs
+        )
+
+        section_summary = self._generate_summary(
+            text=section_text,
+            context=context.previous_section_summary,
+        )
+
+        # ---------------------------------------------------------
+        # IMPORTANT:
+        # We don't generate vectors/relationships here.
+        #
+        # We only create generators that know how to generate them.
+        # ---------------------------------------------------------
+
+        return ProcessedSection(
+            section_id=section.id,
+            document_id=section.document_id,
+            title=section.title,
+            summary=section_summary,
+
+            vector_documents=lambda: self._iter_vector_documents(
+                section,
+                section_summary,
+            ),
+
+            relationships=lambda: self._iter_relationships(
+                section,
+            ),
+
+            metadata={
+                "page": section.page,
+                "level": section.level,
+            },
+        )
+
+    def _iter_vector_documents(
+        self,
+        section: Section,
+        section_summary: str,
+    ) -> Iterator[VectorDocument]:
+
+        # ---------------------------------------------------------
+        # Section summary
+        # ---------------------------------------------------------
+
+        if section_summary.strip():
+
+            yield VectorDocument(
+                id=section.id,
+                text=section_summary,
+                metadata={
+                    "document_id": section.document_id,
+                    "chunk_id": section.id,
+                    "parent_id": section.document_id,
+                    "section_id": section.id,
+                    "level": "section",
+                    "page": section.page,
+                    "type": "summary",
+                },
+            )
+
+        # ---------------------------------------------------------
+        # Paragraphs
+        # ---------------------------------------------------------
+
+        for paragraph in section.paragraphs:
+
+            paragraph_summary = self._generate_summary(
+                text=paragraph.text,
+                context=section_summary,
+            )
+
+            yield VectorDocument(
+                id=paragraph.id,
+                text=paragraph_summary,
+                metadata={
+                    "document_id": section.document_id,
+                    "chunk_id": paragraph.id,
+                    "parent_id": section.id,
+                    "section_id": section.id,
+                    "level": "paragraph",
+                    "page": paragraph.page,
+                    "type": "summary",
+                },
+            )
+
+            # -----------------------------------------------------
+            # Sentences
+            # -----------------------------------------------------
+
+            for sentence in paragraph.sentences:
+
+                yield VectorDocument(
+                    id=sentence.id,
+                    text=sentence.text,
+                    metadata={
+                        "document_id": section.document_id,
+                        "chunk_id": sentence.id,
+                        "parent_id": paragraph.id,
+                        "section_id": section.id,
+                        "level": "sentence",
+                        "page": sentence.page,
+                        "type": "text",
+                    },
+                )
+
+    def _iter_relationships(
+        self,
+        section: Section,
+    ) -> Iterator[Relationship]:
+
+        # ---------------------------------------------------------
+        # DOCUMENT -> SECTION
+        # ---------------------------------------------------------
+
+        yield Relationship(
+            source_id=section.document_id,
+            target_id=section.id,
+            relation="CONTAINS",
+        )
+
+        # ---------------------------------------------------------
+        # SECTION -> PARAGRAPH
+        # ---------------------------------------------------------
+
+        previous_paragraph_id = None
+
+        for paragraph in section.paragraphs:
+
+            yield Relationship(
+                source_id=section.id,
+                target_id=paragraph.id,
+                relation="CONTAINS",
+            )
+
+            # -----------------------------------------------------
+            # Paragraph ordering
+            # -----------------------------------------------------
+
+            if previous_paragraph_id is not None:
+
+                yield Relationship(
+                    source_id=previous_paragraph_id,
+                    target_id=paragraph.id,
+                    relation="NEXT",
+                )
+
+            previous_paragraph_id = paragraph.id
+
+            # -----------------------------------------------------
+            # PARAGRAPH -> SENTENCE
+            # -----------------------------------------------------
+
+            previous_sentence_id = None
+
+            for sentence in paragraph.sentences:
+
+                yield Relationship(
+                    source_id=paragraph.id,
+                    target_id=sentence.id,
+                    relation="CONTAINS",
+                )
+
+                # -------------------------------------------------
+                # Sentence ordering
+                # -------------------------------------------------
+
+                if previous_sentence_id is not None:
+
+                    yield Relationship(
+                        source_id=previous_sentence_id,
+                        target_id=sentence.id,
+                        relation="NEXT",
+                    )
+
+                previous_sentence_id = sentence.id
+
+    # ------------------------------------------------------------------
+    # Summary
+    # ------------------------------------------------------------------
+
+    def _generate_summary(
+        self,
+        text: Optional[str] = "",
+        context: str = "",
+    ) -> str:
+
+        if not text.strip():
+            return ""
+
+        if self.summary_generator is None:
+            return text[:500]
+
+        return self.summary_generator.generate_summary(
+            text=text,
+            context=context,
+        )

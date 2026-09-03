@@ -1,80 +1,15 @@
-from dataclasses import dataclass, field
-import os
-from typing import Dict, Any, Optional
+from dataclasses import dataclass
 from dotenv import load_dotenv
+
+from doc_explainer.config.backend import BackendConfig
+from doc_explainer.config.llm import LLMConfig
 
 # Load .env variables at the top of the module
 load_dotenv()
 
 @dataclass
+@dataclass
 class OrchestratorConfig:
-    """Configuration for orchestrator"""
-    
-    # Pipeline configuration
-    default_user_id: str = "user_123"
-    concepts_per_para: int = 10
-    
-    # LLM configuration
-    llm_provider: str = "gemini"
-    llm_model: str = "gemini-3.5-flash-lite"
-    llm_requests_per_minute: int = 4
-    llm_min_request_interval_seconds: Optional[float] = None
-    llm_rate_limit_retries: int = 2
-    GEMINI_API_KEY: str = field(default_factory=lambda: os.getenv("GEMINI_API_KEY", ""))
-    temperature: float = 1.0
-    
-    # Storage paths
-    persist_directory: str = "db/vector_dbs"
-    knowledge_store_path: str = "db/knowledge_graph.gpickle"
-    memory_path: str = "data/memory/user_memory.json"
-    
-    # Explanation style
-    explanation_style: str = "intermediate"
-    
-    # Feature flags
-    enable_knowledge_graph: bool = True
-    enable_memory: bool = True
-    enable_session_tracking: bool = True
-    
-    # Additional kwargs
-    llm_kwargs: Dict[str, Any] = field(default_factory=dict)
-    
-    @classmethod
-    def from_dict(cls, config_dict: dict) -> 'OrchestratorConfig':
-        """Create config from dictionary"""
-        config = cls()
-        
-        for key, value in config_dict.items():
-            if hasattr(config, key):
-                if key == 'llm_kwargs' and isinstance(value, dict):
-                    config.llm_kwargs.update(value)
-                else:
-                    setattr(config, key, value)
-        
-        env_key = os.getenv("GEMINI_API_KEY")
-        if env_key:
-            config.GEMINI_API_KEY = env_key
-            
-        return config
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary"""
-        return {
-            'default_user_id': self.default_user_id,
-            'concepts_per_para': self.concepts_per_para,
-            'llm_provider': self.llm_provider,
-            'llm_model': self.llm_model,
-            'llm_requests_per_minute': self.llm_requests_per_minute,
-            'llm_min_request_interval_seconds': self.llm_min_request_interval_seconds,
-            'llm_rate_limit_retries': self.llm_rate_limit_retries,
-            'temperature': self.temperature,
-            'persist_directory': self.persist_directory,
-            'knowledge_store_path': self.knowledge_store_path,
-            'memory_path': self.memory_path,
-            'explanation_style': self.explanation_style,
-            'enable_knowledge_graph': self.enable_knowledge_graph,
-            'enable_memory': self.enable_memory,
-            'enable_session_tracking': self.enable_session_tracking,
-            'llm_kwargs': self.llm_kwargs,
-            'GEMINI_API_KEY': self.GEMINI_API_KEY
-        }
+    llm: LLMConfig
+    backend: BackendConfig
+    default_user_id: str = "default_user"

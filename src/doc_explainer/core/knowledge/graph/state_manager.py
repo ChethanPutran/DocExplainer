@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Dict, TYPE_CHECKING, Any
 
 from doc_explainer.core.user.services.user_manager import UserManager
+from doc_explainer.store.document.repository import DocumentRepository
 from ..repository import BaseKnowledgeStore, BaseKnowledgeRepository
 from ..models import ConceptGraph, GraphDelta
 from .builder import ConceptGraphBuilder
@@ -21,9 +22,11 @@ class GraphStateManager:
         document_chain: DocumentChain,
         graph_updater: GraphUpdater,
         repository: BaseKnowledgeRepository,
-        knowledge_store: BaseKnowledgeStore 
+        knowledge_store: BaseKnowledgeStore,
+        document_repository: DocumentRepository, 
     ):
         self.user_manager = user_manager
+        self.document_repository = document_repository
         self.concept_graph_builder = concept_graph_builder
         self.document_chain = document_chain
         self.repository = repository
@@ -101,3 +104,12 @@ class GraphStateManager:
 
         self.full_graph = full_graph
         return full_graph
+
+    def build_graph_from_document(self, document_id: str) -> ConceptGraph:
+        """Build full graph from document"""
+        document = self.document_repository.get_document_tree(document_id)
+        if not document:
+            raise ValueError(f"Document {document_id} not found")
+        
+        self.build_chain(document)
+        return self.get_concept_graph()

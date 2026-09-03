@@ -180,32 +180,43 @@ Selected Text + Document Context + User Knowledge → Prompt Engineering
 - **Git** (for cloning repository)
 - **System dependencies** (see platform-specific instructions)
 
-### Quick Install
+## Quick Install
 
 ```bash
+# Install uv
+sudo snap install astral-uv --classic
+
+# Install system dependencies
+sudo apt update
+sudo apt install -y portaudio19-dev python3.12-dev
+
 # Clone the repository
 git clone https://github.com/yourusername/doc-explainer.git
 cd doc-explainer
 
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install project dependencies and create the virtual environment
+uv sync
 
-# Install package
-pip install -e .
+# Activate the virtual environment (optional)
+source .venv/bin/activate
 ```
 
-### Platform-Specific Installation
+> **Note:** `uv sync` automatically creates the `.venv` virtual environment and installs all dependencies defined in `pyproject.toml`. You do not need to manually create a virtual environment or run `pip install -e .`.
+
+---
+
+## Platform-Specific Installation
 
 <details>
 <summary><b>🐧 Linux (Ubuntu/Debian)</b></summary>
 
+### Install system dependencies
+
 ```bash
-# Install system dependencies
 sudo apt-get update
+
 sudo apt-get install -y \
     python3-dev \
-    python3-pip \
     build-essential \
     libssl-dev \
     libffi-dev \
@@ -218,81 +229,179 @@ sudo apt-get install -y \
     libsqlite3-dev \
     libbz2-dev \
     libreadline-dev
-
-# Install spaCy model
-python -m spacy download en_core_web_sm
-
-# Install with all extras
-pip install -e .[full]
 ```
+
+### Clone and install
+
+```bash
+git clone https://github.com/yourusername/doc-explainer.git
+cd doc-explainer
+
+uv sync
+```
+
+### Install spaCy model
+
+```bash
+uv run python -m spacy download en_core_web_sm
+```
+
+### Run DocExplainer
+
+```bash
+uv run doc-explainer
+```
+
 </details>
 
 <details>
 <summary><b>🍎 macOS</b></summary>
 
-```bash
-# Install Homebrew if not already installed
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+### Install Homebrew
 
-# Install system dependencies
+If Homebrew is not already installed:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+### Install system dependencies
+
+```bash
 brew install \
     poppler \
     tesseract \
     portaudio \
     libxml2 \
     libxslt \
-    python@3.10
-
-# Install spaCy model
-python -m spacy download en_core_web_sm
-
-# Install with MLX support for Apple Silicon
-pip install -e .[mlx,full]
+    python@3.12
 ```
+
+### Clone and install
+
+```bash
+git clone https://github.com/yourusername/doc-explainer.git
+cd doc-explainer
+
+uv sync
+```
+
+### Install spaCy model
+
+```bash
+uv run python -m spacy download en_core_web_sm
+```
+
+### Run DocExplainer
+
+```bash
+uv run doc-explainer
+```
+
+> **Apple Silicon:** If MLX support is configured as an optional dependency in `pyproject.toml`, install the corresponding extra with:
+>
+> ```bash
+> uv sync --extra mlx
+> ```
+
 </details>
 
 <details>
 <summary><b>🪟 Windows</b></summary>
 
+### Install system dependencies
+
+Install the required Microsoft C++ Build Tools if they are not already available:
+
+https://visualstudio.microsoft.com/visual-cpp-build-tools/
+
+### Clone and install
+
 ```powershell
-# Install Visual C++ Build Tools
-# Download from: https://visualstudio.microsoft.com/visual-cpp-build-tools/
+git clone https://github.com/yourusername/doc-explainer.git
+cd doc-explainer
 
-# Install spaCy model
-python -m spacy download en_core_web_sm
-
-# Install with all extras
-pip install -e .[full]
+uv sync
 ```
 
-**Note:** For PyAudio on Windows, you may need to install a pre-compiled wheel:
+### Install spaCy model
+
 ```powershell
-pip install pipwin
-pipwin install pyaudio
+uv run python -m spacy download en_core_web_sm
 ```
+
+### Run DocExplainer
+
+```powershell
+uv run doc-explainer
+```
+
+> **Note:** `uv` automatically manages the project virtual environment and dependencies. You do not need to use `pipwin` or manually install PyAudio wheels unless your platform requires a specific workaround.
+
 </details>
 
-### Docker Installation
+---
+
+## Docker Installation
+
+### Build the Docker image
 
 ```bash
-# Build Docker image
 docker build -t doc-explainer .
-
-# Run container
-docker run -v /path/to/documents:/documents doc-explainer /documents/paper.pdf
 ```
 
-### Development Installation
+### Run DocExplainer
 
 ```bash
-# Install with development dependencies
-pip install -e .[dev]
+docker run -v /path/to/documents:/documents \
+    doc-explainer \
+    /documents/paper.pdf
+```
 
-# Set up pre-commit hooks
-pre-commit install
+> **Note:** Docker manages its own Python environment. The host `uv` environment is not used inside the container.
 
-# Run tests
-pytest tests/
+---
+
+## Development Installation
+
+`uv` also manages development dependencies.
+
+### Install development dependencies
+
+If development dependencies are defined in `pyproject.toml`:
+
+```bash
+uv sync --dev
+```
+
+If development dependencies are defined as an optional dependency group/extra:
+
+```bash
+uv sync --extra dev
+```
+
+### Install pre-commit hooks
+
+```bash
+uv run pre-commit install
+```
+
+### Run tests
+
+```bash
+uv run pytest tests/
+```
+
+### Run linting
+
+```bash
+uv run ruff check .
+```
+
+### Run formatting
+
+```bash
+uv run ruff format .
 ```
 
 ---
@@ -301,32 +410,232 @@ pytest tests/
 
 ### Command Line Interface
 
+After installing the project with `uv sync`, commands can be executed using `uv run`.
+
+### Basic usage
+
 ```bash
-# Basic usage
-doc-explainer
-uv run python -m spacy download en_core_web_sm
-uv run doc-explainer --uiconfig config/ui.yaml --llmconfig config/llm.yaml --backendconfig config/backend.yaml
-
-doc-explainer /path/to/document.pdf
-
-# With theme
-doc-explainer --theme dark document.pdf
-
-# With custom config
-doc-explainer --config ~/.doc_explainer/config.json document.pdf
-
-# Debug mode
-doc-explainer --debug document.pdf
-
-# Disable splash screen
-doc-explainer --no-splash document.pdf
-
-# Set log level
-doc-explainer --log-level DEBUG document.pdf
-
-# Profile performance
-doc-explainer --profile document.pdf
+uv run doc-explainer
 ```
+
+### Download spaCy model
+
+```bash
+uv run python -m spacy download en_core_web_sm
+```
+
+### Run with custom configuration
+
+```bash
+uv run doc-explainer \
+    --uiconfig config/ui.yaml \
+    --llmconfig config/llm.yaml \
+    --backendconfig config/backend.yaml
+```
+
+### Process a document
+
+```bash
+uv run doc-explainer /path/to/document.pdf
+```
+
+### With theme
+
+```bash
+uv run doc-explainer \
+    --theme dark \
+    document.pdf
+```
+
+### With custom configuration
+
+```bash
+uv run doc-explainer \
+    --config ~/.doc_explainer/config.json \
+    document.pdf
+```
+
+### Debug mode
+
+```bash
+uv run doc-explainer \
+    --debug \
+    document.pdf
+```
+
+### Disable splash screen
+
+```bash
+uv run doc-explainer \
+    --no-splash \
+    document.pdf
+```
+
+### Set log level
+
+```bash
+uv run doc-explainer \
+    --log-level DEBUG \
+    document.pdf
+```
+
+### Profile performance
+
+```bash
+uv run doc-explainer \
+    --profile \
+    document.pdf
+```
+
+---
+
+## Dependency Management
+
+Use `uv` instead of `pip` for managing project dependencies.
+
+### Add a dependency
+
+```bash
+uv add <package>
+```
+
+For example:
+
+```bash
+uv add requests
+```
+
+### Add a development dependency
+
+```bash
+uv add --dev pytest
+```
+
+### Remove a dependency
+
+```bash
+uv remove <package>
+```
+
+### Synchronize dependencies
+
+```bash
+uv sync
+```
+
+### Upgrade dependencies
+
+```bash
+uv lock --upgrade
+uv sync
+```
+
+### Run a Python command
+
+```bash
+uv run python script.py
+```
+
+### Run a project command
+
+```bash
+uv run doc-explainer
+```
+
+### Run tests
+
+```bash
+uv run pytest
+```
+
+> **Tip:** You generally don't need to activate `.venv` when using `uv`. Commands such as `uv run python`, `uv run pytest`, and `uv run doc-explainer` automatically use the project's managed environment.
+
+---
+
+## Environment Variables
+
+If your project requires environment variables, create a `.env` file in the project root:
+
+```bash
+cp .env.example .env
+```
+
+Then configure the required values before running DocExplainer.
+
+---
+
+## Updating the Project
+
+To install the exact dependency versions recorded in `uv.lock`:
+
+```bash
+uv sync
+```
+
+When dependencies change, update them with:
+
+```bash
+uv add <package>
+```
+
+and commit both:
+
+```text
+pyproject.toml
+uv.lock
+```
+
+to version control.
+
+---
+
+## Troubleshooting
+
+### PyAudio installation error
+
+If you see:
+
+```text
+fatal error: portaudio.h: No such file or directory
+```
+
+install the PortAudio development package:
+
+```bash
+sudo apt update
+sudo apt install portaudio19-dev
+```
+
+Then run:
+
+```bash
+uv sync
+```
+
+### Verify the environment
+
+```bash
+uv run python --version
+```
+
+### Verify installed packages
+
+```bash
+uv pip list
+```
+
+### Check PyTorch
+
+```bash
+uv run python -c "import torch; print(torch.__version__)"
+```
+
+### Check CUDA availability
+
+```bash
+uv run python -c "import torch; print(torch.cuda.is_available())"
+```
+
 
 ### GUI Application
 

@@ -45,9 +45,16 @@ class DocumentChain(BaseDocumentChain):
     def get_document_context(self, section_id: str) -> Dict:
         """Get document context up to section"""
         context = {"text": "", "embeddings": []}
-        idx = self.ids.get(section_id, '0')
+        if str(section_id) == "-1":
+            idx = len(self.chain)
+        else:
+            idx = self.ids.get(str(section_id), len(self.chain))
         text = ""
         for delta in self.chain[:idx]:
             text += delta.data.text + "\n"
         context["text"] = text
         return context
+
+    def get_all_deltas(self) -> List[GraphDelta]:
+        """Return all stored document deltas in chain order."""
+        return list(self.chain)

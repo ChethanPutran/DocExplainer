@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List, Dict, Optional, TYPE_CHECKING, Any
 from ..repository import BaseKnowledgeStore
 

@@ -61,8 +61,12 @@ class Sidebar(BaseWidget):
         self.follow_up_panel.set_questions(explanation.follow_up_questions)
         
         # Update recommendations panel
-        if hasattr(explanation, 'resources') and explanation.resources:
-            self.recommendations_panel.set_resources(explanation.resources)
+        resources = getattr(explanation, "resources", None) or getattr(
+            explanation,
+            "suggested_resources",
+            [],
+        )
+        self.recommendations_panel.set_resources(resources)
         
         # Switch to explanation tab
         self.tab_widget.setCurrentIndex(0)

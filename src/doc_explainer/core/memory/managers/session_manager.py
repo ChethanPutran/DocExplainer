@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 from typing import Any, Dict, Optional
 from ..storage.session_memory import SessionMemory
 from ..chains.session_chain import SessionChain
@@ -30,6 +31,18 @@ class SessionManager:
     
     def handle_interaction(self, name: str, interaction: Any) -> bool:
         """Handle a user interaction and update session context"""
+        if not isinstance(interaction, dict):
+            interaction = {
+                "text": str(interaction),
+                "timestamp": datetime.now().isoformat(),
+            }
+        else:
+            interaction = dict(interaction)
+            interaction.setdefault(
+                "timestamp",
+                datetime.now().isoformat(),
+            )
+
         # Add to chain
         self.session_chain.add_interaction(name, interaction)
         

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, Any, List, Generator
 from .base import Serializable, Identifiable
 from .content import Paragraph, Image, Table, Equation
@@ -18,51 +19,21 @@ class FontInfo:
 @dataclass
 class Section(Serializable, Identifiable):
     """Represents a section in a document"""
-    title: str
+    section_id: str
+    document_id: str
+    level: int
+    page: int
+    start: int = 0
+    end: int = 0
+    title: str = ""
     text: str = ""
-    section_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    page_start: int = 0
     paragraphs: List[Paragraph] = field(default_factory=list)
     images: List[Image] = field(default_factory=list)
     tables: List[Table] = field(default_factory=list)
     equations: List[Equation] = field(default_factory=list)
     subsections: List['Section'] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    section_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    embeddings: Dict[str, List[float]] = field(default_factory=dict)
 
-    def get_all_paragraphs(self) -> Generator[Paragraph, None, None]:
-        for p in self.paragraphs:
-            yield p
-        for sub in self.subsections:
-            yield from sub.get_all_paragraphs()
-
-    def get_all_text(self) -> str:
-        return "\n".join(p.text for p in self.get_all_paragraphs())
-    
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "section_id": self.section_id,
-            "title": self.title,
-            "text": self.text,
-            "page_start": self.page_start,
-            "paragraphs": [p.to_dict() for p in self.paragraphs],
-            "images": [img.to_dict() for img in self.images],
-            "tables": [t.to_dict() for t in self.tables],
-            "equations": [eq.to_dict() for eq in self.equations],
-            "subsections": [sub.to_dict() for sub in self.subsections],
-            "metadata": self.metadata,
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Section':
-        data["paragraphs"] = [Paragraph.from_dict(p) for p in data.get("paragraphs", [])]
-        data["images"] = [Image.from_dict(i) for i in data.get("images", [])]
-        data["tables"] = [Table.from_dict(t) for t in data.get("tables", [])]
-        data["equations"] = [Equation.from_dict(e) for e in data.get("equations", [])]
-        data["subsections"] = [cls.from_dict(sub) for sub in data.get("subsections", [])]
-        return cls(**data)
-    
     @property
     def id(self) -> str:
         return self.section_id
@@ -76,58 +47,72 @@ class Section(Serializable, Identifiable):
         """Add a subsection"""
         self.subsections.append(section)
 
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "document_id": self.document_id,
+            "level": self.level,
+            "page": self.page,
+            "start": self.start,
+            "end": self.end,
+            "title": self.title,
+            "text": self.text,
+            "paragraphs": [paragraph.to_dict() for paragraph in self.paragraphs],
+            "metadata": self.metadata,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Section':
+        return cls(
+            section_id=data.get("id", ""),
+            document_id=data.get("document_id", ""),
+            level=data.get("level", 0),
+            page=data.get("page", 0),
+            start=data.get("start", 0),
+            end=data.get("end", 0),
+            title=data.get("title", ""),
+            text=data.get("text", ""),
+            metadata=data.get("metadata", {}),
+        )
 
 @dataclass
 class Document(Serializable, Identifiable):
     """Represents a complete document"""
-    path: str
+    path: Path
     title: str
-    sections: List[Section]
-    document_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     text: str = ""
     sections: List[Section] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    embeddings: Dict[str, List[float]] = field(default_factory=dict)
 
     @property
     def id(self) -> str:
-        return self.document_id
-    
-    def get_all_paragraphs(self) -> Generator[Paragraph, None, None]:
-        for sec in self.sections:
-            yield from sec.get_all_paragraphs()
-
-    def get_text_generator(self) -> Generator[str, None, None]:
-        for sec in self.sections:
-            yield sec.get_all_text()
+        return str(self.metadata.get("document_id", self.path))
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "id": self.id,
-            "path": self.path,
+            "document_id": self.id,
+            "path": str(self.path),
             "title": self.title,
-            "sections": [s.__dict__ for s in self.sections],  # simplified
+            "text": self.text,
+            "sections": [section.to_dict() for section in self.sections],
             "metadata": self.metadata,
-            "document_id": self.document_id
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Document':
-        doc = cls(
-            document_id=data["id"],
-            sections=[Section.from_dict(s) for s in data.get("sections", [])],
-            path=data["path"],
-            title=data["title"],
-            metadata=data.get("metadata", {})
+        metadata = dict(data.get("metadata", {}))
+        metadata.setdefault("document_id", data.get("document_id"))
+        return cls(
+            path=Path(data["path"]),
+            title=data.get("title", ""),
+            text=data.get("text", ""),
+            metadata=metadata,
         )
-        # Rebuild sections recursively (simplified)
-        return doc
     
-    def get_all_images(self) -> List[Image]:
-        """Get all images in the document"""
-        images = []
-        for section in self.sections:
-            images.extend(section.images)
-            for subsection in section.subsections:
-                images.extend(subsection.images)
-        return images
+    def get_all_paragraphs(self) -> Generator[Paragraph, None, None]:
+        for sec in self.sections:
+            yield from sec.paragraphs
+
+    def get_text_generator(self) -> Generator[str, None, None]:
+        for sec in self.sections:
+            yield sec.text

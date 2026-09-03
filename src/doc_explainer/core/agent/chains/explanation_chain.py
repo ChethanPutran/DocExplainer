@@ -1,5 +1,5 @@
 from typing import Optional
-from langchain_core.runnables import RunnableSequence
+from langchain_core.runnables import Runnable
 
 from .base import BaseChain
 from ..llm.base import BaseLLM
@@ -15,7 +15,7 @@ class ExplanationChain(BaseChain):
         super().__init__(llm, parser)
         self.llm.set_prompt_template(explain_prompt, json_output=True)
     
-    def _build_chain(self) -> RunnableSequence:
+    def _build_chain(self) -> Runnable:
         """Build explanation chain"""
         chain = self.llm.chain
         if chain is None:
@@ -27,6 +27,7 @@ class ExplanationChain(BaseChain):
         tone = kwargs.pop("tone", "encouraging and academic")
         complexity = kwargs.pop("complexity", "intermediate")
         math_level = kwargs.pop("math_level", "descriptive")
+        kwargs.setdefault("question", kwargs.get("selected_text", ""))
 
         result = super().run(
             tone=tone,
@@ -35,10 +36,4 @@ class ExplanationChain(BaseChain):
             **kwargs,
         )
         # Normalize result to ExplanationPydantic
-        if isinstance(result, ExplanationPydantic):
-            return result
-        if isinstance(result, dict):
-            return ExplanationPydantic(**result)
-
-        # If result is not a dict or the expected pydantic model, raise to satisfy typing
-        raise TypeError(f"Unexpected result type {type(result)!r}, expected dict or ExplanationPydantic")
+        return self.normalize_explanation_result(result)

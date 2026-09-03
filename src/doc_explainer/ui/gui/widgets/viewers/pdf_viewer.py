@@ -1,5 +1,12 @@
 import pymupdf as fitz
-from PySide6.QtWidgets import QVBoxLayout, QScrollArea, QLabel, QWidget
+from PySide6.QtWidgets import (
+    QVBoxLayout,
+    QScrollArea,
+    QLabel,
+    QWidget,
+    QTextEdit,
+    QMenu,
+)
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPixmap, QImage, QPainter, QPen, QColor
 
@@ -15,8 +22,6 @@ class PDFViewer(DocumentViewer):
         self.doc = None
         self.current_page_index = 0
         self.zoom = 1.0
-        
-        self._setup_ui()
     
     def _setup_ui(self):
         """Setup PDF viewer UI"""
@@ -58,14 +63,33 @@ class PDFViewer(DocumentViewer):
             pix = page.get_pixmap(matrix=fitz.Matrix(self.zoom, self.zoom))
             
             # Convert to QImage
-            img = QImage(pix.samples, pix.width, pix.height,
-                        pix.stride, QImage.Format_RGB888)
+            img = QImage(
+                pix.samples,
+                pix.width,
+                pix.height,
+                pix.stride,
+                QImage.Format_RGB888,
+            ).copy()
             pixmap = QPixmap.fromImage(img)
             
             # Create page label
             page_label = QLabel()
             page_label.setPixmap(pixmap)
             page_label.setAlignment(Qt.AlignCenter)
+
+            text_edit = QTextEdit()
+            text_edit.setPlainText(page.get_text("text"))
+            text_edit.setReadOnly(True)
+            text_edit.setMinimumHeight(120)
+            text_edit.setContextMenuPolicy(Qt.CustomContextMenu)
+            text_edit.selectionChanged.connect(
+                lambda editor=text_edit, page_number=page_num + 1:
+                    self._on_selection_changed(editor, page_number)
+            )
+            text_edit.customContextMenuRequested.connect(
+                lambda position, editor=text_edit, page_number=page_num + 1:
+                    self._show_selection_menu(position, editor, page_number)
+            )
             
             # Add page number label
             page_number = QLabel(f"Page {page_num + 1}")
@@ -77,6 +101,7 @@ class PDFViewer(DocumentViewer):
             page_container_layout = QVBoxLayout(page_container)
             page_container_layout.addWidget(page_number)
             page_container_layout.addWidget(page_label)
+            page_container_layout.addWidget(text_edit)
             
             self.pages_layout.addWidget(page_container)
     
@@ -102,8 +127,49 @@ class PDFViewer(DocumentViewer):
     
     def get_selected_text(self) -> str:
         """Get selected text from current page"""
-        # This would need to be implemented with text selection
-        return ""
+        return getattr(self, "_selected_text", "")
+
+    def _on_selection_changed(self, editor: QTextEdit, page: int) -> None:
+        text = editor.textCursor().selectedText().replace("\u2029", "\n")
+        if not text.strip():
+            return
+
+        self.current_page = page
+        self.current_position = editor.textCursor().position()
+        self._selected_text = text
+        self.signals.text_selected.emit(
+            self.doc_id,
+            text,
+            page,
+            self.current_position,
+        )
+
+    def _show_selection_menu(
+        self,
+        position,
+        editor: QTextEdit,
+        page: int,
+    ) -> None:
+        selected_text = editor.textCursor().selectedText().replace("\u2029", "\n")
+        if not selected_text.strip():
+            return
+
+        self.current_page = page
+        self.current_position = editor.textCursor().position()
+        menu = QMenu(self)
+        actions = (
+            ("Explain selection", self.signals.explain_requested),
+            ("Summarize selection", self.signals.summarize_requested),
+            ("Ask about selection", self.signals.ask_requested),
+        )
+        for label, signal in actions:
+            menu.addAction(label).triggered.connect(
+                lambda checked=False, action_signal=signal,
+                       doc_id=self.doc_id, text=selected_text,
+                       page_number=page, position_value=self.current_position:
+                    action_signal.emit(doc_id, text, page_number, position_value)
+            )
+        menu.exec(editor.mapToGlobal(position))
     
     def set_zoom(self, zoom: float):
         """Set zoom level"""

@@ -1,9 +1,21 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional
+from typing import Callable, Dict, Any, Iterator, List, Optional, Protocol
 from dataclasses import dataclass, field
 import uuid
 
+@dataclass
+class SimilarityResult:
+    document_id: str
+    content: str
+    score: float
+    metadata: dict
 
+@dataclass
+class VectorDocument:
+    id: str
+    text: str
+    metadata: dict
+    
 class Serializable(ABC):
     """Base interface for serializable objects"""
     
@@ -19,68 +31,46 @@ class Serializable(ABC):
         pass
 
 
-class Identifiable(ABC):
+class Identifiable(Protocol):
     """Base interface for identifiable objects"""
-    
-    @property
-    @abstractmethod
-    def id(self) -> Any:
-        """Get object ID"""
-        pass
+    id: Any
 
 
-class Positionable(ABC):
+class Positionable(Protocol):
     """Base interface for objects with position"""
-    
-    @property
-    @abstractmethod
-    def start(self) -> int:
-        """Get start position"""
-        pass
-    
-    @property
-    @abstractmethod
-    def end(self) -> int:
-        """Get end position"""
-        pass
-    
-    @property
-    @abstractmethod
-    def page(self) -> int:
-        """Get page number"""
-        pass
-    
-    @property
-    @abstractmethod
-    def bbox(self) -> tuple:
-        """Get bounding box"""
-        pass
+    start: int
+    end: int
+    page: int
+    bbox: tuple
 
+@dataclass(slots=True)
+class Relationship:
+    source_id: str
+    target_id: str
+    relation: str
 
+    
 @dataclass
 class ProcessingContext:
-    document_id: str
-    previous_section_summary: Optional[str] = None
+    namespace: str
+    previous_section_summary: Optional[str] = ''
     section_index: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-
-@dataclass
-class DocumentInfo:
+@dataclass(slots=True)
+class DocumentMetadata:
     document_id: str
-    source_path: str = ""
+    file_path: str
+    filename: str
     title: str = ""
     author: str = ""
-    subject: str = ""
-    keywords: str = ""
-    creator: str = ""
-    producer: str = ""
     creation_date: Optional[str] = None
     modification_date: Optional[str] = None
+    subject: str = ""
+    page_count: int = 0
+    file_size: int = 0
+    metadata: dict = field(default_factory=dict)
 
-    def __post_init__(self):
-        if not self.document_id:
-            self.document_id = str(uuid.uuid4())
 
 @dataclass
 class Section:
@@ -102,14 +92,14 @@ class Section:
 class ProcessedSection:
     section_id: str
     document_id: str
+
     title: str
     summary: str
-    parent_section_id: Optional[str]
-    paragraphs: list["ProcessedParagraph"] = field(
-        default_factory=list
-    )
-    metadata: Dict[str, Any] = field(default_factory=dict)
 
+    vector_documents: Callable[[], Iterator[VectorDocument]]
+    relationships: Callable[[], Iterator[Relationship]]
+    
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class ProcessedParagraph:

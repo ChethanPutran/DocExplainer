@@ -188,7 +188,7 @@ class BayesianKnowledgeTracer:
                 
         if concept is None:
             # Create new concept if not found
-            from src.core.knowledge.models.concept import Concept
+            from ....core.knowledge.models.concept import Concept
             concept = Concept(name=concept_name)
             self.user_states[concept] = KnowledgeState(
                 concept=concept,

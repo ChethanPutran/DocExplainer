@@ -5,6 +5,8 @@ from .knowledge import BaseKnowledgeRepository
 from .knowledge import InvertedIndexRepository
 from .user import UserRepository
 from .factories import RepositoryFactory
+from .graph import GraphStore, Neo4jGraphStore
+from .vector import VectorStore, ChromaVectorStore
 
 __all__ = [
     'ConceptRepository',
@@ -13,5 +15,10 @@ __all__ = [
     'InvertedIndexRepository',
     'UserRepository',
     'DocumentRepository',
-    'RepositoryFactory'
+    'RepositoryFactory',
+    'GraphStore',
+    'VectorStore',
+    'Neo4jGraphStore',
+    'ChromaVectorStore'
+    
 ]

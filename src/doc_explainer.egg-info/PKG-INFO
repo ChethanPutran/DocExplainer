@@ -2,14 +2,11 @@ Metadata-Version: 2.4
 Name: doc-explainer
 Version: 1.0.0
 Summary: Intelligent Document Explanation System with AI-powered features
-Home-page: https://github.com/yourusername/doc-explainer
-Author: Doc Explainer Team
 Author-email: Doc Explainer Team <team@docexplainer.com>
 License: MIT
 Project-URL: Homepage, https://github.com/ChethanPutran/DocExplainer
 Project-URL: Repository, https://github.com/ChethanPutran/DocExplainer
 Project-URL: Bug Tracker, https://github.com/ChethanPutran/DocExplainer/issues
-Platform: any
 Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Education
 Classifier: Intended Audience :: Science/Research
@@ -23,7 +20,7 @@ Classifier: Programming Language :: Python :: 3.13
 Classifier: Topic :: Education
 Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
 Classifier: Topic :: Text Processing
-Requires-Python: >=3.12
+Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 Requires-Dist: PySide6>=6.5.0
 Requires-Dist: langchain>=0.1.0
@@ -83,6 +80,8 @@ Requires-Dist: tensorboard>=2.13.0
 Requires-Dist: langchain-openrouter>=0.2.8
 Requires-Dist: gliner>=0.2.28
 Requires-Dist: langchain-chroma>=1.1.0
+Requires-Dist: neo4j>=6.3.0
+Requires-Dist: prophet>=1.4.0
 Provides-Extra: web
 Requires-Dist: fastapi>=0.104.0; extra == "web"
 Requires-Dist: uvicorn>=0.24.0; extra == "web"
@@ -141,7 +140,3 @@ Requires-Dist: twine>=4.0.0; extra == "all"
 Requires-Dist: wheel>=0.41.0; extra == "all"
 Requires-Dist: memory-profiler>=0.61.0; extra == "all"
 Requires-Dist: line-profiler>=4.1.0; extra == "all"
-Dynamic: author
-Dynamic: home-page
-Dynamic: platform
-Dynamic: requires-python

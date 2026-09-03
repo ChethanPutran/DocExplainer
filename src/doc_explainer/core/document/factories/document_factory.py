@@ -10,7 +10,7 @@ from ..models import (
     DocumentTree, DocumentNode, DocumentChunk, ChunkType, ChunkLevel, 
     Metadata, SimpleMetadataCreator)
 from ..parser import PDFParser
-from ..builder import DocumentEngine
+from ..engine import DocumentEngine
 from ..services import DocumentManager
 from ..visualization import HTMLGenerator, ConsolePrinter
 from ..processor.hierarchy import HierarchicalProcessor
@@ -55,8 +55,7 @@ class DocumentFactory:
             end=end,
             page=page,
             bbox=bbox,
-            sentence_id=sentence_id or str(uuid.uuid4())[:8],
-            embeddings=embeddings or {}
+            sentence_id=sentence_id or str(uuid.uuid4())[:8]
         )
     
     def create_paragraph(self, text: str,
@@ -66,7 +65,7 @@ class DocumentFactory:
                         page: int = 0,
                         bbox: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
                         paragraph_id: Optional[str] = None,
-                        embeddings: Optional[Dict[str, List[float]]] = None) -> Paragraph:
+                        metadata: Optional[Dict[str, Any]] = None) -> Paragraph:
         """Create a paragraph"""
         return Paragraph(
             text=text,
@@ -75,8 +74,7 @@ class DocumentFactory:
             end=end,
             page=page,
             bbox=bbox,
-            paragraph_id=paragraph_id or str(uuid.uuid4())[:8],
-            embeddings=embeddings or {}
+            paragraph_id=paragraph_id or str(uuid.uuid4())[:8]
         )
     
     def create_image(self, image_path: str,
@@ -84,7 +82,7 @@ class DocumentFactory:
                     page: int = 0,
                     bbox: Tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
                     image_id: Optional[str] = None,
-                    clip_embedding: Optional[List[float]] = None) -> Image:
+                    metadata: Optional[Dict[str, Any]] = None) -> Image:
         """Create an image"""
         return Image(
             image_path=image_path,
@@ -92,7 +90,7 @@ class DocumentFactory:
             page=page,
             bbox=bbox,
             image_id=image_id or str(uuid.uuid4())[:8],
-            clip_embedding=clip_embedding or []
+            metadata=metadata
         )
     
     def create_table(self, data: str,
@@ -263,7 +261,7 @@ class DocumentFactory:
     
     def create_document_repository(self, storage_path: str = "data/documents/") -> BaseDocumentRepository:
         """Create a document repository"""
-        from src.store.document import DocumentRepository
+        from ....store.document import DocumentRepository
         return DocumentRepository(storage_path=storage_path)
     
     def create_html_generator(self, template_dir: Optional[str] = None) -> HTMLGenerator:

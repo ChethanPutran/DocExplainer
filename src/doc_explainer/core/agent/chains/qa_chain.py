@@ -31,10 +31,11 @@ class QAChain(BaseChain):
         **kwargs: Any,
     ) -> Any:
         """Run QA chain"""
-        return super().run(
+        result = super().run(
             question=question,
             selected_text=selected_text,
             context_summary=context_summary,
             known_concepts=known_concepts,
             **kwargs,
         )
+        return self.normalize_explanation_result(result)

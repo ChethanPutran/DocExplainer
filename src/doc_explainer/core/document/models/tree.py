@@ -1,11 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
-from enum import Enum, auto
+from typing import Dict, Iterator, List, Optional, Any
+from enum import Enum
 import numpy as np
-
-from ...knowledge.models.relationship import ConceptNode
-from .metadata import Metadata
+import uuid
 
 
 from typing import TYPE_CHECKING
@@ -30,38 +28,104 @@ class ChunkLevel(Enum):
     SENTENCE = 3
 
 
+
+@dataclass
+class GraphReference:
+    """Reference to an entity persisted in the graph store."""
+
+    node_id: str
+    node_type: str
+
+    exists: bool = False
+
+    # Optional database-specific information
+    properties: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class VectorReference:
+    """Reference to an entity persisted in a vector store."""
+
+    vector_id: str
+    namespace: str
+
+    exists: bool = False
+
+    # Distance/score from the most recent retrieval, if applicable.
+    score: Optional[float] = None
+
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+
+
+class PersistenceStatus(Enum):
+    NOT_PERSISTED = "not_persisted"
+    PERSISTED = "persisted"
+    FAILED = "failed"
+
+
+             
+@dataclass
+class StorageState:
+    graph: PersistenceStatus = PersistenceStatus.NOT_PERSISTED
+    vector: PersistenceStatus = PersistenceStatus.NOT_PERSISTED
+
+    graph_error: Optional[str] = None
+    vector_error: Optional[str] = None
+
+
+
 @dataclass
 class DocumentChunk:
-    """A chunk of document content"""
-    text: str
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+    text: str = ""
     summary: str = ""
+
     chunk_type: ChunkType = ChunkType.DOCUMENT
     level: ChunkLevel = ChunkLevel.DOCUMENT
-    chunk_id: str = ""
+
     parent_id: Optional[str] = None
+
     embedding: Optional[np.ndarray] = None
-    metadata: Optional[Metadata] = None
-    
-    def __post_init__(self):
-        if not self.chunk_id:
-            import uuid
-            self.chunk_id = str(uuid.uuid4())[:8]
+    metadata: Optional[Dict[str, Any]] = None
+
+    graph_ref: Optional[GraphReference] = None
+    vector_ref: Optional[VectorReference] = None
+
+    storage: StorageState = field(
+        default_factory=StorageState
+    )
+
+
 
 
 class DocumentNode:
-    """Node in document tree hierarchy"""
-    
-    def __init__(self, node_id: str, chunk: DocumentChunk):
+    """Node in the processed document tree."""
+
+    def __init__(
+        self,
+        node_id: str,
+        chunk: DocumentChunk,
+    ):
         self.id = node_id
         self.chunk = chunk
-        self.children: Dict[str, 'DocumentNode'] = {}
-        self.concepts: List[Concept] = []
-        self.concept_relationships: List[ConceptRelationship] = []
+
+        # Document hierarchy
+        self.children: Dict[str, "DocumentNode"] = {}
+
+        # Extracted semantic information
+        self.concepts: List["Concept"] = []
+        self.concept_relationships: List["ConceptRelationship"] = []
+
+        # Persistence state
+        self.graph_ref = chunk.graph_ref
+        self.vector_ref = chunk.vector_ref
     
-    def add_child(self, child: 'DocumentNode'):
-        """Add a child node"""
+    def add_child(self, child: "DocumentNode"):
+        child.chunk.parent_id = self.id
         self.children[child.id] = child
-    
+        
     def get_child(self, child_id: str) -> Optional['DocumentNode']:
         """Get child by ID"""
         return self.children.get(child_id)
@@ -94,6 +158,24 @@ class DocumentTree:
             "sentences": sentence_chunks,
         }
         self.total_chunks = 1 + len(section_chunks) + len(paragraph_chunks) + len(sentence_chunks)
+
+    def iter_sections(self) -> Iterator[DocumentNode]:
+        """Iterate over all section nodes"""
+        for section in self.root.children.values():
+            yield section
+
+    def iter_paragraphs(self) -> Iterator[DocumentNode]:
+        """Iterate over all paragraph nodes"""
+        for section in self.root.children.values():
+            for paragraph in section.children.values():
+                yield paragraph
+
+    def iter_sentences(self) -> Iterator[DocumentNode]:
+        """Iterate over all sentence nodes"""
+        for section in self.root.children.values():
+            for paragraph in section.children.values():
+                for sentence in paragraph.children.values():
+                    yield sentence
 
     def get_hierarchy(self) -> Dict[str, List[DocumentChunk]]:
         """Get hierarchy dictionary"""
@@ -173,7 +255,7 @@ class DocumentTree:
                 text=str(chunk_data.get("text", "")),
                 chunk_type=_parse_chunk_type(chunk_data.get("chunk_type", ChunkType.DOCUMENT)),
                 level=_parse_chunk_level(chunk_data.get("level", ChunkLevel.DOCUMENT)),
-                chunk_id=str(chunk_data.get("chunk_id", "")),
+                id=str(chunk_data.get("id", "")),
                 summary=str(chunk_data.get("summary", "")),
                 parent_id=chunk_data.get("parent_id"),
                 embedding=embedding,
@@ -195,8 +277,8 @@ class DocumentTree:
                 chunk_data = {}
 
             chunk = _deserialize_chunk(chunk_data)
-            if not chunk.chunk_id:
-                chunk.chunk_id = node_id
+            if not chunk.id:
+                chunk.id = node_id
             if parent is not None and chunk.parent_id is None:
                 chunk.parent_id = parent.id
 

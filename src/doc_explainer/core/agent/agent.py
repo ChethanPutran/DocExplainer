@@ -50,6 +50,7 @@ class Agent:
         """Generate summary for text"""
         inputs = self._prepare_common_inputs(context)
         inputs["selected_text"] = text
+        inputs["question"] = text
         inputs["structure"] = "Bullet points"
         inputs["length"] = "Concise summary"
         
@@ -69,6 +70,7 @@ class Agent:
         """Generate explanation for text"""
         inputs = self._prepare_common_inputs(context)
         inputs["selected_text"] = text
+        inputs["question"] = text
         
         start_time = datetime.now()
         

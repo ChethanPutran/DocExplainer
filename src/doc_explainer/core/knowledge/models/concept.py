@@ -2,9 +2,13 @@ from time import time
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 
-@dataclass
+from doc_explainer.core.document.models.tree import GraphReference, VectorReference
+
+@dataclass(eq=False)
 class Concept:
     """Represents a knowledge concept"""
+    __hash__ = object.__hash__
+
     name: str
     aliases: List[str] = field(default_factory=list)
     definitions: List[str] = field(default_factory=list)
@@ -42,3 +46,11 @@ class Concept:
             "attributes": self.attributes,
             "occurrences": self.occurrences
         }
+
+@dataclass
+class ConceptReference:
+    concept_id: str
+    canonical_name: str
+
+    graph_ref: Optional[GraphReference] = None
+    vector_ref: Optional[VectorReference] = None

@@ -37,7 +37,7 @@ class AnswerResponse(BaseResponse):
 @dataclass
 class DocumentResponse(BaseResponse):
     """Response for document operations"""
-    doc_id: Optional[str] = None
+    document_id: Optional[str] = None
     document: Optional[Document] = None
     title: str = ""
 

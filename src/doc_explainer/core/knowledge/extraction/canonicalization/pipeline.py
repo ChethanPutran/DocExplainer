@@ -27,7 +27,8 @@ class ConceptCanonicalizer:
         normalized_map = defaultdict(list)
         for raw in raw_concepts:
             norm = self.normalizer.normalize(raw)
-            normalized_map[norm].append(raw)
+            if norm:
+                normalized_map[norm].append(raw)
 
         unique_normalized = list(normalized_map.keys())
 
