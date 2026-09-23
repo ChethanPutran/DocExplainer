@@ -1090,19 +1090,3 @@ TO BE FILLED: Add license summary and attribution.
 - All open-source contributors
 
 ---
-
-## 📞 Contact & Support
-
-- 📧 **Email**: support@docexplainer.com
-- 📚 **Documentation**: [https://docs.docexplainer.com](https://docs.docexplainer.com)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/yourusername/doc-explainer/issues)
-
----
-
-## ⭐ Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/doc-explainer&type=Date)](https://star-history.com/#yourusername/doc-explainer&Date)
-
----
-
-**Built with ❤️ for lifelong learners everywhere**
