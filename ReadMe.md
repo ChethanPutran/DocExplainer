@@ -1076,8 +1076,6 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-TO BE FILLED: Add license summary and attribution.
-
 ---
 
 ## 🙏 Acknowledgments
