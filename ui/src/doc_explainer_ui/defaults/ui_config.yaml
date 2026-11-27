@@ -1,0 +1,76 @@
+# THE defaults for the UI. Do not copy this file: put only what you change in
+# ~/.doc_explainer/config/ui_config.yaml, or set DOC_EXPLAINER_UI_<SECTION>_<KEY> (e.g. DOC_EXPLAINER_UI_SERVER_URL).
+# The language model and the knowledge graph are the SERVER's settings (llm_config.yaml / backend_config.yaml).
+# Window settings
+window:
+  width: 1200
+  height: 800
+  title: "Doc Explainer"
+  maximized: false
+
+# Theme settings
+theme:
+  name: "light"  # the theme applied at start-up: light, dark
+  mode: "light"  # options: light, dark, high_contrast, sepia
+  font_size: 10
+  font_family: "Segoe UI"
+
+# Sidebar settings
+sidebar:
+  width: 350
+  visible: true
+  position: "right"  # options: left, right
+
+# Voice settings
+voice:
+  enabled: true
+  input_device: "default"
+  whisper_model: "base"        # speech-to-text model (tiny / base / small / medium)
+  model_idle_unload_s: 600     # keep the model in memory; free it after this many idle seconds (0 = never)
+  preload_model: false         # true = load it at start-up (uses ~150 MB and some CPU right away)
+  output_enabled: true
+  output_rate: 150
+  output_volume: 0.9
+  output_engine: auto          # auto = the Piper neural voice if installed, else the system voice; or: piper, system
+  piper_voice: en_US-lessac-medium   # a Piper voice name; its .onnx file lives in piper_voices_dir
+  piper_voices_dir: "~/.doc_explainer/voices"
+
+# Document settings
+documents:
+  default_zoom: 1.0
+  max_recent_files: 10
+  auto_save_interval: 5  # minutes
+  default_path: "~/Documents"
+
+# Cache settings
+cache:
+  enabled: true
+  size_mb: 500
+  location: "~/.doc_explainer/cache"
+
+
+# Backend service this UI talks to. The UI never starts or configures the backend.
+# (The API key is NOT stored here: set DOC_EXPLAINER_API_KEY or pass --api-key.)
+server:
+  url: "http://127.0.0.1:8000"
+  protocol: "rest"      # options: rest, rpc
+  timeout_s: 120        # LLM calls are slow
+  user_id: ""           # empty = the server's default user
+
+# Startup settings
+# Knowledge graph = adaptive explanations, quizzes and tracking of what you know. Building it takes minutes per document.
+knowledge:
+  build_graph: always          # always | ask (asked for each new file) | never. A file can also be built later from the Library.
+
+startup:
+  open_last_docs: true
+  check_updates: true
+
+# Debug & Privacy settings
+system:
+  debug_mode: false
+  log_level: "INFO"
+  show_splash: true
+  enable_profiling: false
+  send_usage_stats: false
+  allow_telemetry: false

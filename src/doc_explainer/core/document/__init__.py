@@ -1,33 +1,18 @@
-from .models.content import Sentence, Paragraph, Image, Table, Equation
-from .models.structure import Section, Document
-from .models.tree import DocumentNode, DocumentTree, ChunkType, ChunkLevel, DocumentChunk
-from .models.metadata import Metadata, MetadataCreator, SimpleMetadataCreator
-from .parser.pdf import PDFParser
-from .engine import DocumentEngine
-from .manager import DocumentManager
-from .factories.document_factory import DocumentFactory
-from .visualization.html_generator import HTMLGenerator
-from .visualization.console_printer import ConsolePrinter
+"""Parse any supported document into the unified structure."""
+from pathlib import Path
+from typing import Optional, Union
+
+from ..common.structure import DocumentStructure
+from .builder import StructureBuilder
+from .parsers import ParseError, ParserRegistry, UnsupportedFormat, default_registry
 
 
-__all__ = [
-    'Sentence',
-    'Paragraph',
-    'Image',
-    'Table',
-    'Equation',
-    'Section',
-    'Document',
-    'DocumentNode',
-    'DocumentTree',
-    'ChunkType',
-    'ChunkLevel',
-    'PDFParser',
-    'DocumentEngine',
-    'DocumentManager',
-    'DocumentFactory',
-    'HTMLGenerator',
-    'ConsolePrinter',
-    'DocumentChunk'
+def parse_document(path: Union[str, Path], doc_id: str, registry: Optional[ParserRegistry] = None,
+                   builder: Optional[StructureBuilder] = None) -> DocumentStructure:
+    """File -> parser chosen by extension -> blocks -> unified ``DocumentStructure``."""
+    registry = registry or default_registry()
+    builder = builder or StructureBuilder()
+    return builder.build(registry.parse(path), doc_id)
 
-]
+
+__all__ = ["parse_document", "StructureBuilder", "default_registry", "ParserRegistry", "UnsupportedFormat", "ParseError"]

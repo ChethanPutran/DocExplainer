@@ -49,3 +49,8 @@ def setup_logging(config: BackendConfig) -> None:
         handlers=handlers,
         force=True,
     )
+
+    # Hide the chatter of libraries that log every request / progress step (configured in backend_config.yaml).
+    quiet = getattr(logging, str(log_config.quiet_level).upper(), logging.WARNING)
+    for name in log_config.quiet:
+        logging.getLogger(name).setLevel(quiet)

@@ -1,0 +1,34 @@
+# THE defaults for the backend service. Put only what you change in ~/.doc_explainer/config/backend_config.yaml,
+# or set DOC_EXPLAINER_<SECTION>_<KEY> (e.g. DOC_EXPLAINER_LOGGING_LEVEL=DEBUG).
+knowledge_graph:
+  enabled: true                       # build the temporal knowledge graph while ingesting
+
+embeddings:
+  model: all-MiniLM-L6-v2             # sentence-transformers model
+  # false = use the copy already on this computer without asking HuggingFace anything (faster start, no network noise);
+  # it is downloaded only when it is not there yet. true = check for a newer version on every start.
+  check_for_updates: false
+
+logging:
+  level: INFO
+  log_directory: "~/.doc_explainer/logs"
+  log_file: app.log
+  http_log_file: http_logs.log        # every HTTP request the server handles (method, path, status, time)
+  # Libraries that log every network call or progress step at INFO. Their messages are hidden below this level.
+  quiet_level: WARNING
+  quiet:
+    - httpx
+    - httpcore
+    - huggingface_hub
+    - sentence_transformers
+    - transformers
+    - urllib3
+    - chromadb
+    - openai
+    - langchain
+    - langchain_core
+    - langchain_openai
+  console_enabled: true
+  file_enabled: true
+  max_file_size_mb: 10
+  backup_count: 5

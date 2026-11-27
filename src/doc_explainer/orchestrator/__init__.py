@@ -1,45 +1,5 @@
-from .orchestrator import DocExplainerOrchestrator
-from .base.node import Node
-from .base.pipeline import Pipeline,pipeline
-from .base.step import Step, step
-from .base.context import PipelineContext
-from .base.dag import DAG
-from .pipeline.document_pipeline import DocumentPipeline
-from .pipeline.explanation_pipeline import ExplanationPipeline
-from .pipeline.knowledge_pipeline import KnowledgePipeline
-from .models.requests import (
-    SummarizeRequest, ExplainRequest, AnswerRequest,
-    RegisterDocumentRequest, GetContextRequest
-)
-from .models.responses import (
-    SummarizeResponse, ExplainResponse, AnswerResponse,
-    DocumentResponse, ContextResponse
-)
-from .config import OrchestratorConfig
-from .factories.pipeline_factory import PipelineFactory
+"""The composition root: wires the core packages together. Nothing else may."""
+from .ingestion import EmptyDocumentError, IngestReport, IngestionPipeline
+from .system import System, SystemConfig, build_system
 
-__all__ = [
-    'DocExplainerOrchestrator',
-    'DocumentPipeline',
-    'ExplanationPipeline',
-    'KnowledgePipeline',
-    'SummarizeRequest',
-    'ExplainRequest',
-    'AnswerRequest',
-    'RegisterDocumentRequest',
-    'GetContextRequest',
-    'SummarizeResponse',
-    'ExplainResponse',
-    'AnswerResponse',
-    'DocumentResponse',
-    'ContextResponse',
-    'OrchestratorConfig',
-    'PipelineFactory',
-    'Node',
-    'Pipeline',
-    'Step',
-    'PipelineContext',
-    'DAG',
-    'step',
-    'pipeline'
-]
+__all__ = ["System", "SystemConfig", "build_system", "IngestionPipeline", "IngestReport", "EmptyDocumentError"]

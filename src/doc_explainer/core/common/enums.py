@@ -8,6 +8,7 @@ class ResourceType(Enum):
     EXERCISE = "exercise"
     COURSE = "course"
     DOCUMENTATION = "documentation"
+    SECTION = "section"            # a section of the document itself
 
 
 class ExplanationLevel(Enum):

@@ -1,2 +1,2 @@
 [console_scripts]
-doc-explainer = doc_explainer.main:main
+doc-explainer-server = doc_explainer.api.cli:main

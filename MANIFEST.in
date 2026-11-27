@@ -1,12 +1,6 @@
-include README.md
+include ReadMe.md
 include LICENSE
-include CHANGELOG.md
-include requirements.txt
-include requirements-dev.txt
-include doc-explainer.desktop
-recursive-include assets *
-recursive-include src/config *
-recursive-include icons *
+recursive-include src/doc_explainer *.yaml *.json
 global-exclude *.pyc
 global-exclude __pycache__
 global-exclude .git

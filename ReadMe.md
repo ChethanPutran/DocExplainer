@@ -1,3 +1,8 @@
+> **Current layout.** Three packages: backend (`src/doc_explainer`, a service), `sdk/` and `ui/`. See
+> [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Run: `doc-explainer-server` (REST `/v1`, JSON-RPC `/rpc`), then the UI.
+> Default config files are created in `~/.doc_explainer/config` on first run; the default LLM provider is `airouter`
+> (`AIROUTER_API_KEY`). **Sections below were written for the earlier monolith and may be out of date.**
+
 # 📘 Doc Explainer
 
 ## A Context-Aware, Knowledge-Adaptive Document Tutor Using Large Language Models
@@ -297,6 +302,71 @@ pytest tests/
 
 ---
 
+## 🧩 Running it: service, SDK and UI
+
+Three independent Python packages. The backend is a **service**; the UI only talks to it through the **SDK**.
+
+| Package | Path | Import | Needs |
+|---|---|---|---|
+| Backend service | `./` | `doc_explainer` | models, LLM keys |
+| SDK | `./sdk` | `doc_explainer_sdk` | only `httpx`, `pydantic` |
+| Desktop UI | `./ui` | `doc_explainer_ui` | SDK, PySide6 (never the backend) |
+
+```bash
+# 1. Backend service (one-time: the spaCy model it needs)
+uv run python -m spacy download en_core_web_sm
+export AIROUTER_API_KEY=...              # the default provider; OPENROUTER_API_KEY etc. if you switch in llm_config.yaml
+uv run doc-explainer-server              # http://127.0.0.1:8000  (REST /v1, JSON-RPC /rpc, docs at /docs)
+
+# 2. UI, in another terminal (does not start or configure the backend)
+uv pip install -e ./sdk -e ./ui
+doc-explainer --server-url http://127.0.0.1:8000 --protocol rest      # or --protocol rpc
+```
+
+**Config files are created automatically** on first start from defaults shipped inside each package
+(`~/.doc_explainer/config/{llm_config,backend_config}.yaml` by the server, `ui_config.yaml` by the UI).
+Existing files are never overwritten. A package install cannot write to your home directory, so this
+happens at first run; `doc-explainer-server --init-config` / `doc-explainer --init-config` do it on demand.
+If a config file was written by an old version (Python-object tags), the app tells you to move it aside.
+
+**Server settings** (flags or `DOC_EXPLAINER_*` env vars): `--host/--port`, `--api-key`
+(`DOC_EXPLAINER_API_KEY`; required to listen on a non-loopback address), `--data-dir`,
+`--no-rest` / `--no-rpc` to serve only one protocol, `--llmconfig`, `--backendconfig`.
+Users are separated by the `X-User-Id` header; the server plain-HTTP, put TLS in front of it.
+
+**SDK**
+
+```python
+from doc_explainer_sdk import DocExplainerClient          # AsyncDocExplainerClient is the awaitable twin
+
+client = DocExplainerClient("http://127.0.0.1:8000", protocol="rest")   # or "rpc"; same API either way
+doc = client.register_document("paper.pdf")               # uploads the bytes (the server can be remote) and waits
+print(client.ask(doc.doc_id, "What is the main finding?").text)
+
+# Registration is slow (a model call per section), so it is a background job on the server.
+job = client.start_registration("paper.pdf")              # returns at once: job.state is "queued" / "running"
+job = client.wait_for_job(job.job_id, on_update=lambda j: print(j.state, j.queue_position))
+print(job.document.doc_id)                                # raises ProcessingError etc. if it failed
+```
+
+**Background registration.** `POST /v1/documents` (RPC: `document.register`) validates the upload and returns `202`
+with a job; poll `GET /v1/jobs/{id}` (RPC: `job.get`). One worker processes jobs in order; the queue is bounded per
+user and per server (`queue_full`, retry later). Jobs survive restarts: anything still running when the server
+stopped is reported `failed` ("restarted ... upload it again"). Uploading the same bytes again is instant: the
+already-registered document is returned (`job.reused`), and an identical upload that is still processing returns
+the running job instead of queuing a second one. A job cannot be cancelled once it is running.
+
+While a document is processing it owns the model pipeline, so other calls that need it wait
+`DOC_EXPLAINER_LOCK_TIMEOUT_S` (default 5 s) and then fail with the retryable `busy` error (`ServerBusyError` in
+the SDK). Listing documents/jobs and checking health stay responsive. Allowing questions to run during an ingest
+needs a thread-safety audit of the orchestrator first.
+
+Supported upload types are whatever the backend can parse (`GET /v1/health` -> `supported_types`; PDF today).
+Tests: `pytest tests/test_api.py tests/test_sdk_contract.py tests/test_core_independence.py`,
+`(cd sdk && pytest tests)`, `(cd ui && pytest tests)`.
+
+---
+
 ## 🚀 Usage Guide
 
 ### Command Line Interface
@@ -305,7 +375,7 @@ pytest tests/
 # Basic usage
 doc-explainer
 uv run python -m spacy download en_core_web_sm
-uv run doc-explainer --uiconfig config/ui.yaml --llmconfig config/llm.yaml --backendconfig config/backend.yaml
+uv run doc-explainer-server    # start the service first; then run the UI as shown above
 
 doc-explainer /path/to/document.pdf
 

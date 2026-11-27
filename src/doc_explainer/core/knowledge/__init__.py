@@ -1,59 +1,11 @@
-from .models import (
-    Concept,
-    ConceptGraph,
-    ConceptNode,
-    ConceptNodeRelationship,
-    ConceptRelationship,
-    GraphDelta,
-    ConceptInvertedIndex,
-    ConceptMapping,
-    DocumentTransfer,
-    TransferConfig,
-    TransferAnalysisResult,
-    ConceptAlignmentType,
-)
-from .graph import (
-    ConceptGraphBuilder,
-    DocumentChain,
-    GraphStateManager,
-    GraphUpdater
-)
+"""A document's knowledge graph, built along its reading order, from empty."""
+from .builder import BuildReport, KnowledgeBuildError, TemporalKnowledgeBuilder
+from .canonical import Canonicalizer, normalize_name
+from .extractor import ConceptExtractor, Extraction
+from .steps import Step, plan_steps
+from .store import SqliteKnowledgeStore
+from .views import (GraphSnapshot, GrowthPoint, KnowledgeView, PrerequisiteItem, SectionDependency, SectionKnowledge)
 
-from .extraction import (
-    ConceptExtractor, LLMRelationshipExtractor, StatisticalRelationshipExtractor)
-from .graph import GraphStateManager, BaseDocumentChain
-from .services import (
-    LearningPathGenerator,
-    PrerequisiteAnalyzer,
-    RecommendationService,
-)
-from .repository import BaseKnowledgeRepository, BaseKnowledgeStore, ConceptRepositoryBase
-
-__all__ = [
-    "Concept",
-    "ConceptGraphBuilder",
-    "ConceptGraph",
-    "ConceptNode",
-    "ConceptNodeRelationship",
-    "ConceptRelationship",
-    "ConceptInvertedIndex",
-    "DocumentChain",
-    "GraphDelta",
-    "GraphStateManager",
-    "GraphUpdater",
-    "ConceptExtractor",
-    "LLMRelationshipExtractor",
-    "StatisticalRelationshipExtractor",
-    "PrerequisiteAnalyzer",
-    "LearningPathGenerator",
-    "RecommendationService",
-    "ConceptMapping",
-    "DocumentTransfer",
-    "TransferConfig",
-    "TransferAnalysisResult",
-    "ConceptAlignmentType",
-    "BaseKnowledgeRepository",
-    "BaseKnowledgeStore",
-    "BaseDocumentChain",
-    'ConceptRepositoryBase'
-]
+__all__ = ["TemporalKnowledgeBuilder", "BuildReport", "KnowledgeBuildError", "Canonicalizer", "normalize_name",
+           "ConceptExtractor", "Extraction", "Step", "plan_steps", "SqliteKnowledgeStore", "KnowledgeView",
+           "GraphSnapshot", "GrowthPoint", "PrerequisiteItem", "SectionDependency", "SectionKnowledge"]
