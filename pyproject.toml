@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 name = "doc-explainer"
 version = "1.0.0"
 description = "Doc Explainer backend: document parsing, retrieval, knowledge graph and explanation engine (no GUI)"
-readme = "README.md"
+readme = "ReadMe.md"
 requires-python = ">=3.10"
 
 authors = [
@@ -36,148 +36,38 @@ dependencies = [
     # API service
     "fastapi>=0.110.0",
     "uvicorn>=0.24.0",
-    "python-multipart>=0.0.9",
-    # LangChain
-    "langchain>=0.1.0",
-    "langchain-community>=0.0.10",
-    "langchain-core>=0.1.0",
-    "langchain-google-genai>=0.0.5",
-    "langchain-openai>=0.0.2",
-    # LLM Providers
-    "google-generativeai>=0.3.0",
-    "openai>=1.0.0",
-    # Document Processing
-    "PyMuPDF>=1.23.0",
-    "pdfplumber>=0.10.0",
-    "pdf2image>=1.16.0",
-    "python-pptx>=0.6.21",
-    "python-docx>=0.8.11",
-    "rapidocr-onnxruntime>=1.3.0",   # OCR for scanned PDF pages (optional at run time: without it they stay empty)
-    "markdown>=3.5.0",
-    "beautifulsoup4>=4.12.0",
-    "lxml>=4.9.0",
-    # NLP
-    "spacy>=3.7.0",
-    "nltk>=3.8.0",
-    "transformers>=4.35.0",
-    "sentence-transformers>=2.2.0",
-    "torch>=2.0.0",
-    # Vector Search
-    "chromadb>=0.4.0",
-    "faiss-cpu>=1.7.0",
-    "scikit-learn>=1.3.0",
-    # Knowledge Graph / Visualization
-    "networkx>=3.1",
-    "graphviz>=0.20.1",
-    "plotly>=5.17.0",
-    "matplotlib>=3.7.0",
-    # Data Processing
-    "numpy>=1.24.0",
-    "pandas>=2.0.0",
-    # Configuration / Validation
+    "python-multipart>=0.0.9",        # FastAPI needs it for file uploads
     "pydantic>=2.0.0",
-    "pydantic-settings>=2.0.0",
-    "python-dotenv>=1.0.0",
-    "PyYAML>=6.0",
-    # Web / HTTP
-    "requests>=2.31.0",
-    "aiohttp>=3.9.0",
-    # Caching / Messaging
-    "redis>=5.0.0",
-    "diskcache>=5.6.0",
-    # Utilities
-    "orjson>=3.9.0",
-    "jsonlines>=4.0.0",
-    "tqdm>=4.66.0",
-    "loguru>=0.7.0",
-    "psutil>=5.9.0",
-    # Computer Vision
-    "opencv-python>=4.8.0",
-    "Pillow>=10.0.0",
-    # Optimization / Symbolic Mathematics
-    "scikit-optimize>=0.9.0",
-    "sympy>=1.12",
-    # Reinforcement Learning
-    "gymnasium>=0.29.0",
-    "stable-baselines3>=2.1.0",
-    # TensorBoard
-    "tensorboard>=2.13.0",
+    # Language model providers (each wrapper in core/llm/wrappers; ollama uses requests)
+    "langchain-core>=0.1.0",
+    "langchain-openai>=0.0.2",        # openai and airouter
+    "langchain-google-genai>=0.0.5",  # gemini
     "langchain-openrouter>=0.2.8",
-    "gliner>=0.2.28",
-    "langchain-chroma>=1.1.0",
+    "requests>=2.31.0",
+    # Document parsing
+    "PyMuPDF>=1.24.3",                # pdf (imported as pymupdf)
+    "python-docx>=0.8.11",
+    "python-pptx>=0.6.21",
+    "beautifulsoup4>=4.12.0",         # html (with the lxml parser)
+    "lxml>=4.9.0",
+    "rapidocr-onnxruntime>=1.3.0",    # OCR for scanned PDF pages (optional at run time: without it they stay empty)
+    # Embeddings and vector index
+    "sentence-transformers>=2.2.0",
+    "transformers>=4.35.0",
+    "torch>=2.0.0",
+    "chromadb>=0.4.0",
+    # Configuration
+    "PyYAML>=6.0",
+    "python-dotenv>=1.0.0",
 ]
 
 
 [project.optional-dependencies]
-
-# Machine Learning
-ml = [
-    "xgboost>=2.0.0",
-    "lightgbm>=4.1.0",
-    "prophet>=1.1.5",
-    "imbalanced-learn>=0.11.0",
-    "feature-engine>=1.6.0",
-    "category-encoders>=2.6.3",
-]
-
-# Development / Testing
+# What the test suites need
 dev = [
     "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
     "pytest-asyncio>=0.21.0",
-    "pytest-xdist>=3.3.0",
-
-    # Code Quality
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "flake8>=6.1.0",
-    "mypy>=1.5.0",
-    "pylint>=3.0.0",
-    "pre-commit>=3.5.0",
-
-    # Documentation
-    "sphinx>=7.2.0",
-    "sphinx-rtd-theme>=1.3.0",
-    "sphinx-autodoc-typehints>=1.24.0",
-
-    # Packaging
-    "build>=1.0.0",
-    "twine>=4.0.0",
-    "wheel>=0.41.0",
-
-    # Profiling
-    "memory-profiler>=0.61.0",
-    "line-profiler>=4.1.0",
-]
-
-# Everything needed for development
-all = [
-    "fastapi>=0.104.0",
-    "uvicorn>=0.24.0",
-    "xgboost>=2.0.0",
-    "lightgbm>=4.1.0",
-    "prophet>=1.1.5",
-    "imbalanced-learn>=0.11.0",
-    "feature-engine>=1.6.0",
-    "category-encoders>=2.6.3",
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-xdist>=3.3.0",
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "flake8>=6.1.0",
-    "mypy>=1.5.0",
-    "pylint>=3.0.0",
-    "pre-commit>=3.5.0",
-    "sphinx>=7.2.0",
-    "sphinx-rtd-theme>=1.3.0",
-    "sphinx-autodoc-typehints>=1.24.0",
-    "build>=1.0.0",
-    "twine>=4.0.0",
-    "wheel>=0.41.0",
-    "memory-profiler>=0.61.0",
-    "line-profiler>=4.1.0",
+    "httpx>=0.27",                    # FastAPI's TestClient
 ]
 
 
@@ -197,53 +87,6 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "doc_explainer.config" = ["defaults/*.yaml"]
-
-
-[tool.black]
-line-length = 100
-target-version = ["py310", "py311", "py312", "py313"]
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-    \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
-
-
-[tool.isort]
-profile = "black"
-line_length = 100
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
-
-
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-ignore_missing_imports = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
 
 
 [tool.pytest.ini_options]

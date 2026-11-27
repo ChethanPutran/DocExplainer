@@ -12,7 +12,11 @@ dependencies = [
     # The SDK is the only way this UI talks to the backend service
     "doc-explainer-sdk",
     "PySide6>=6.5.0",
-    "PyMuPDF>=1.23.0",
+    "httpx>=0.27",                    # the UI's request log
+    "PyMuPDF>=1.24.3",                # pdf viewer
+    "python-docx>=0.8.11",            # Word viewer
+    "python-pptx>=0.6.21",            # PowerPoint viewer
+    "numpy>=1.24.0",
     "PyYAML>=6.0",
     "python-dotenv>=1.0.0",
     # Voice input / output
@@ -22,10 +26,11 @@ dependencies = [
     "PyAudio>=0.2.11",
     "sounddevice>=0.4.6",
     "openai-whisper>=20231117",
+    "torch>=2.0.0",                   # speech model device choice (whisper needs it too)
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4.0", "pytest-qt>=4.2.0"]
+dev = ["pytest>=7.4.0"]
 
 [project.scripts]
 doc-explainer = "doc_explainer_ui.main:main"
