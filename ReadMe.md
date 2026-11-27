@@ -1,1183 +1,308 @@
-> **Current layout.** Three packages: backend (`src/doc_explainer`, a service), `sdk/` and `ui/`. See
-> [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Run: `doc-explainer-server` (REST `/v1`, JSON-RPC `/rpc`), then the UI.
-> Default config files are created in `~/.doc_explainer/config` on first run; the default LLM provider is `airouter`
-> (`AIROUTER_API_KEY`). **Sections below were written for the earlier monolith and may be out of date.**
-
 # 📘 Doc Explainer
 
-## A Context-Aware, Knowledge-Adaptive Document Tutor Using Large Language Models
+**A personal document tutor.** Open a document, read it in a desktop app, and ask questions in a chat. Answers are pitched
+to what *you* already know: the app builds a map of the concepts in the document, tracks what you have learned, and
+explains accordingly. It can also read answers aloud, quiz you, and remind you what you are likely to forget.
 
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/yourusername/doc-explainer)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/yourusername/doc-explainer/pulls)
+```
+Desktop UI (PySide6)  ──►  SDK  ──REST /v1  or  JSON-RPC /rpc──►  Backend service (FastAPI)
+  ui/  doc_explainer_ui      sdk/  doc_explainer_sdk              src/doc_explainer
+```
+
+The UI talks to the backend **only through the SDK**, and the backend runs on its own as a service, so you can also use
+the SDK from scripts or put another front end on the same API.
 
 ---
 
-## 📋 Table of Contents
-
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [System Architecture](#-system-architecture)
-- [How It Works](#-how-it-works)
-- [Installation](#-installation)
-- [Usage Guide](#-usage-guide)
-- [Configuration](#-configuration)
-- [API Reference](#-api-reference)
-- [Development](#-development)
-- [Contributing](#-contributing)
-- [License](#-license)
+## Contents
+- [What it does](#what-it-does)
+- [Quick start](#quick-start)
+- [Using the app](#using-the-app)
+- [Configuration](#configuration)
+- [The SDK and the API](#the-sdk-and-the-api)
+- [How it works](#how-it-works)
+- [Project layout](#project-layout)
+- [Development and tests](#development-and-tests)
+- [Troubleshooting](#troubleshooting)
+- [Known limits](#known-limits)
 
 ---
 
-## 🎯 Overview
+## What it does
 
-**Doc Explainer** is an AI-augmented, document-centric intelligent tutoring system designed to deliver personalized, dependency-aware explanations of technical and educational content. Unlike generic AI assistants, Doc Explainer:
+**Reading**
+- Open **PDF, Word (.docx), PowerPoint (.pptx), HTML, Markdown and text** files. The document is readable immediately,
+  while the server processes it in the background.
+- **Zoom** with the toolbar, `Ctrl +` / `Ctrl -` / `Ctrl 0`, or **Ctrl + mouse wheel**.
+- **Find** in the document with `Ctrl+F` (`F3` / `Shift+F3` for next / previous); PDF matches are highlighted on the page.
+- **Drag and drop** files onto the window. A **Recent** menu lists what you opened lately.
+- Right-click: copy, **Explain**, **Summarize**, **Ask**, **Save to notes**, **Bookmark this place**, **Highlight**.
 
-- 📚 **Understands your documents** hierarchically (chapters → sections → paragraphs → sentences)
-- 🧠 **Learns your knowledge state** and adapts explanations accordingly
-- 🔗 **Maps concept dependencies** to ensure you understand prerequisites
-- 🎯 **Generates context-aware explanations** grounded in the actual document
-- 🗣️ **Supports voice interaction** for hands-free learning
+**Learning**
+- **Chat tutor**: streamed answers in a conversation with sessions, notes and summaries. Answers use plain, spoken-style
+  language and name the section and page they come from.
+- **Adapts to you**: a knowledge graph of the document's concepts plus a model of what you know decides what to explain
+  and how deeply. Nothing later than your reading position can leak into an answer.
+- **Quizzes**: a diagnostic to place your level, and practice questions per section.
+- **Progress dashboard**: your level, mastery per concept, a progress-over-time chart, and a **review list**
+  (spaced repetition: concepts you are likely forgetting).
+- **Resources**: related passages from the document and from the web.
 
-The system combines scalable document retrieval, structured concept modeling, and multimodal interaction to create a truly personalized tutoring experience.
+**Library and control**
+- **Library**: every processed document, with search; open it, delete it, build or remove its knowledge graph.
+- **Knowledge graph is optional**: Settings → Learning → *Always / Ask for each file / Never*. Without it you can still read
+  and ask questions; with it you get adaptive explanations, quizzes and knowledge tracking. You can build or remove it
+  per document later from the Library.
+- **Export** a conversation and its notes as Markdown or PDF.
 
----
+**Voice**
+- **Speak your questions** (Whisper, runs locally) and **hear the answers** read aloud. Output uses the free offline
+  **Piper** neural voice when installed, falling back to the system voice. Markdown symbols are never read out.
 
-## ✨ Key Features
-
-### 📖 Document Understanding
-| Feature | Description |
-|---------|-------------|
-| **Hierarchical Parsing** | Processes documents into chapters, sections, paragraphs, and sentences |
-| **Multi-format Support** | PDF, TXT, HTML, Markdown, DOCX, PPTX |
-| **Concept Extraction** | Automatically identifies and extracts key concepts using LLM + NER |
-| **Knowledge Graph** | Builds a dependency graph of concepts within the document |
-| **Semantic Search** | Vector-based retrieval of relevant sections |
-
-### 🧠 Personalized Learning
-| Feature | Description |
-|---------|-------------|
-| **User Knowledge Model** | Tracks which concepts the user knows and confidence levels |
-| **Bayesian Knowledge Tracing** | Updates knowledge state based on interactions |
-| **Adaptive Explanations** | Adjusts depth and complexity based on user expertise |
-| **Prerequisite Detection** | Identifies and recommends prerequisite concepts |
-| **Learning Path Generation** | Creates personalized curriculum based on knowledge gaps |
-
-### 🎙️ Interaction Modes
-| Mode | Description |
-|------|-------------|
-| **Text Selection** | Select any text to get instant explanation |
-| **Question Answering** | Ask questions about the document |
-| **Voice Input** | Speak your questions naturally |
-| **Voice Output** | Listen to explanations hands-free |
-| **Follow-up Questions** | Suggested questions based on context |
-
-### 📊 Visualization
-- Interactive knowledge graphs
-- Document structure visualization
-- User knowledge heatmaps
-- Learning progress tracking
+**Other**
+- Scanned PDFs are read with **OCR** (RapidOCR, offline).
+- Light, dark and high-contrast themes.
+- Private per user (`X-User-Id`); your questions are stored only in chat sessions you create.
 
 ---
 
-## 🏗️ System Architecture
+## Quick start
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        UI Layer                              │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │   Main UI   │  │    Voice    │  │   Document Viewer   │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────┐
-│                    Orchestrator Layer                        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │   Pipeline  │  │   Context   │  │      Services       │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────┐
-│                      Core Modules                            │
-├─────────────┬─────────────┬─────────────┬───────────────────┤
-│  Document   │   Memory    │  Knowledge  │   Explanation    │
-│  Processor  │   Manager   │   Graph     │     Engine       │
-├─────────────┼─────────────┼─────────────┼───────────────────┤
-│  Parser     │ Long-term   │ Concept     │ Adaptive         │
-│  Builder    │ Session     │ Extraction  │ Explainer        │
-│  Cacher     │ Context     │ Relations   │ Recommender      │
-└─────────────┴─────────────┴─────────────┴───────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────┐
-│                      Storage Layer                           │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │  Document   │  │   User      │  │   Knowledge Graph   │ │
-│  │  Store      │  │   Store     │  │      Store          │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
+**Requirements:** Python 3.10+ (3.12 recommended), Linux/macOS/Windows, an API key for a language model provider.
+
+```bash
+git clone https://github.com/ChethanPutran/DocExplainer.git
+cd DocExplainer
+
+# Linux only: system libraries for the microphone
+sudo apt install -y portaudio19-dev python3-dev
+
+# One virtual environment for all three packages
+python -m venv .venv
+.venv/bin/python -m pip install -e ./sdk -e . -e ./ui
 ```
 
-### Module Details
+Give the backend a model key (the default provider is **airouter**; others are listed in `llm_config.yaml`):
 
-| Module | Responsibility | Key Classes |
-|--------|---------------|-------------|
-| **Document** | Document processing and management | `DocumentParser`, `DocumentTree`, `DocumentEngine` |
-| **Memory** | User and session memory management | `LongTermMemory`, `SessionManager`, `Context` |
-| **Knowledge** | Concept extraction and graph management | `ConceptExtractor`, `KnowledgeGraph`, `PrerequisiteAnalyzer` |
-| **Explanation** | Adaptive explanation generation | `AdaptiveExplainer`, `ResourceRecommender` |
-| **Agent** | LLM interaction and prompt management | `LLMWrapper`, `PromptTemplates`, `OutputParsers` |
-| **Orchestrator** | Pipeline coordination | `DocExplainerOrchestrator`, `Pipelines` |
-| **UI** | Graphical user interface | `MainWindow`, `Sidebar`, `Viewers` |
+```bash
+echo 'AIROUTER_API_KEY=your-key' >> .env          # or export it in your shell
+```
+
+Run the two parts (separate terminals):
+
+```bash
+.venv/bin/doc-explainer-server        # backend: http://127.0.0.1:8000  (REST /v1, JSON-RPC /rpc, docs at /docs)
+.venv/bin/doc-explainer               # desktop app
+.venv/bin/doc-explainer path/to/file.pdf      # …or open a file directly
+```
+
+**Optional: a natural voice (Piper)**
+
+```bash
+.venv/bin/python -m pip install piper-tts
+mkdir -p ~/.doc_explainer/voices
+.venv/bin/python -m piper.download_voices en_US-lessac-medium --download-dir ~/.doc_explainer/voices
+```
+
+Without it the app uses the system voice (`pyttsx3`). Other voices: `en_US-amy-medium`, `en_GB-alba-medium`, …
+(set `voice.piper_voice` in the UI config).
+
+**Docker:** the `Dockerfile` uses `uv`; run `uv lock` first so `uv.lock` matches `pyproject.toml`.
 
 ---
 
-## 🔄 How It Works
+## Using the app
 
-### 1. Document Processing Pipeline
+| Toolbar | What it does |
+|---|---|
+| 📂 **Open** / 🕘 **Recent** | Open a file, or reopen a recent one |
+| 📚 **Library** | All processed documents: open, delete, build / remove the knowledge graph |
+| 🔍 **Zoom** | Zoom in / out (also `Ctrl` + wheel) |
+| 🧠 **Quiz me** | Diagnostic and practice quizzes |
+| 📈 **Progress** | Mastery, history and what to review |
+| ⬇ **Export chat** | Save the conversation as `.md` or `.pdf` |
+| 📋 **Job status** | Processing progress; pause, resume or cancel |
+| 🌓 **Theme** | Switch theme |
 
-```
-Raw Document → Parser → Document Tree → Chunking → Embeddings → Vector Store
-                        ↓
-                  Knowledge Graph ← Concept Extraction
-```
+The sidebar has three tabs: **Explanation** (chat, sessions, notes, microphone 🎤 and speaker 🔊), **Resources** and
+**Learn & Quiz**. The tutor becomes available once the server has finished processing the document (a progress marker
+shows on the tab); until then the document is fully readable.
 
-### 2. User Interaction Flow
-
-```
-User Selects Text → Context Resolution → Section ID → Document Context
-                                          ↓
-                                 User Knowledge State
-                                          ↓
-                            Adaptive Explanation Generation
-                                          ↓
-                         Follow-up Questions + Resource Recommendations
-```
-
-### 3. Knowledge Tracing
-
-```
-Initial State → Interaction → Bayesian Update → New Knowledge State
-                  ↑                ↓
-              User Feedback   Confidence Score
-```
-
-### 4. Explanation Generation
-
-```
-Selected Text + Document Context + User Knowledge → Prompt Engineering
-                                                   ↓
-                                            LLM Generation
-                                                   ↓
-                                     Explanation + Follow-up Questions
-                                                   ↓
-                                      Resource Enrichment (Videos/Articles)
-```
+**Voice tips:** press 🎤 and speak; the words land in the input box. Press 🔊 to have answers read aloud, with the text
+appearing as it is spoken. If the microphone seems deaf, lower the input gain in your system sound settings: with the
+boost at maximum the background noise can exceed your speech and nothing is picked up (the app warns about this).
 
 ---
 
-## 📦 Installation
+## Configuration
 
-### Prerequisites
+One source for every default: packaged YAML. **Order: packaged defaults → your file (only the keys you change) → environment.**
 
-- **Python 3.8 or higher**
-- **pip** package manager
-- **Git** (for cloning repository)
-- **System dependencies** (see platform-specific instructions)
+| Config | Your overrides (`~/.doc_explainer/config/`) | Environment |
+|---|---|---|
+| Language model | `llm_config.yaml` | `DOC_EXPLAINER_LLM_<KEY>` |
+| Backend | `backend_config.yaml` | `DOC_EXPLAINER_<SECTION>_<KEY>` |
+| UI | `ui_config.yaml` | `DOC_EXPLAINER_UI_<SECTION>_<KEY>` |
+| Server process | flags | `DOC_EXPLAINER_HOST / PORT / API_KEY / DATA_DIR …` |
 
-## Quick Install
+Create the commented override files with `doc-explainer-server --init-config` (and `doc-explainer --init-config` for the UI).
+Secrets come only from the environment or `.env` (`AIROUTER_API_KEY`, `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`…).
 
-```bash
-# Install uv
-sudo snap install astral-uv --classic
+Useful settings:
 
-# Install system dependencies
-sudo apt update
-sudo apt install -y portaudio19-dev python3.12-dev
-
-# Clone the repository
-git clone https://github.com/yourusername/doc-explainer.git
-cd doc-explainer
-
-# Install project dependencies and create the virtual environment
-uv sync
-
-# Activate the virtual environment (optional)
-source .venv/bin/activate
+```yaml
+# ui_config.yaml
+knowledge:
+  build_graph: always        # always | ask | never
+voice:
+  output_engine: auto        # auto (Piper if installed) | piper | system
+  piper_voice: en_US-lessac-medium
+  output_rate: 150
+documents:
+  default_zoom: 1.0
+  max_recent_files: 10
 ```
 
-> **Note:** `uv sync` automatically creates the `.venv` virtual environment and installs all dependencies defined in `pyproject.toml`. You do not need to manually create a virtual environment or run `pip install -e .`.
+```yaml
+# llm_config.yaml
+llm:
+  provider: airouter         # or openrouter, openai, gemini, ollama
+  requests_per_minute: 10
+```
+
+```yaml
+# backend_config.yaml
+knowledge_graph:
+  enabled: true              # server-wide switch for building graphs
+```
+
+**Where things are stored:** `~/.doc_explainer/` — `server/` (uploads, documents, jobs and the `system/` databases: structure,
+vectors, knowledge graph, learner, quizzes, chats), `logs/` (`app.log`, `http_logs.log`), `config/`, `voices/`, `recent.json`.
 
 ---
 
-## Platform-Specific Installation
-
-<details>
-<summary><b>🐧 Linux (Ubuntu/Debian)</b></summary>
-
-### Install system dependencies
-
-```bash
-sudo apt-get update
-
-sudo apt-get install -y \
-    python3-dev \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    libxml2-dev \
-    libxslt1-dev \
-    poppler-utils \
-    tesseract-ocr \
-    portaudio19-dev \
-    libportaudio2 \
-    libsqlite3-dev \
-    libbz2-dev \
-    libreadline-dev
-```
-
-### Clone and install
-
-```bash
-git clone https://github.com/yourusername/doc-explainer.git
-cd doc-explainer
-
-uv sync
-```
-
-### Install spaCy model
-
-```bash
-uv run python -m spacy download en_core_web_sm
-```
-
-### Run DocExplainer
-
-```bash
-uv run doc-explainer
-```
-
-</details>
-
-<details>
-<summary><b>🍎 macOS</b></summary>
-
-### Install Homebrew
-
-If Homebrew is not already installed:
-
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-### Install system dependencies
-
-```bash
-brew install \
-    poppler \
-    tesseract \
-    portaudio \
-    libxml2 \
-    libxslt \
-    python@3.12
-```
-
-### Clone and install
-
-```bash
-git clone https://github.com/yourusername/doc-explainer.git
-cd doc-explainer
-
-uv sync
-```
-
-### Install spaCy model
-
-```bash
-uv run python -m spacy download en_core_web_sm
-```
-
-### Run DocExplainer
-
-```bash
-uv run doc-explainer
-```
-
-> **Apple Silicon:** If MLX support is configured as an optional dependency in `pyproject.toml`, install the corresponding extra with:
->
-> ```bash
-> uv sync --extra mlx
-> ```
-
-</details>
-
-<details>
-<summary><b>🪟 Windows</b></summary>
-
-### Install system dependencies
-
-Install the required Microsoft C++ Build Tools if they are not already available:
-
-https://visualstudio.microsoft.com/visual-cpp-build-tools/
-
-### Clone and install
-
-```powershell
-git clone https://github.com/yourusername/doc-explainer.git
-cd doc-explainer
-
-uv sync
-```
-
-### Install spaCy model
-
-```powershell
-uv run python -m spacy download en_core_web_sm
-```
-
-### Run DocExplainer
-
-```powershell
-uv run doc-explainer
-```
-
-> **Note:** `uv` automatically manages the project virtual environment and dependencies. You do not need to use `pipwin` or manually install PyAudio wheels unless your platform requires a specific workaround.
-
-</details>
-
----
-
-## Docker Installation
-
-### Build the Docker image
-
-```bash
-docker build -t doc-explainer .
-```
-
-### Run DocExplainer
-
-```bash
-docker run -v /path/to/documents:/documents \
-    doc-explainer \
-    /documents/paper.pdf
-```
-
-> **Note:** Docker manages its own Python environment. The host `uv` environment is not used inside the container.
-
----
-
-## Development Installation
-
-`uv` also manages development dependencies.
-
-### Install development dependencies
-
-If development dependencies are defined in `pyproject.toml`:
-
-```bash
-uv sync --dev
-```
-
-If development dependencies are defined as an optional dependency group/extra:
-
-```bash
-uv sync --extra dev
-```
-
-### Install pre-commit hooks
-
-```bash
-uv run pre-commit install
-```
-
-### Run tests
-
-```bash
-uv run pytest tests/
-```
-
-### Run linting
-
-```bash
-uv run ruff check .
-```
-
-### Run formatting
-
-```bash
-uv run ruff format .
-```
-
----
-
-## 🧩 Running it: service, SDK and UI
-
-Three independent Python packages. The backend is a **service**; the UI only talks to it through the **SDK**.
-
-| Package | Path | Import | Needs |
-|---|---|---|---|
-| Backend service | `./` | `doc_explainer` | models, LLM keys |
-| SDK | `./sdk` | `doc_explainer_sdk` | only `httpx`, `pydantic` |
-| Desktop UI | `./ui` | `doc_explainer_ui` | SDK, PySide6 (never the backend) |
-
-```bash
-# 1. Backend service (one-time: the spaCy model it needs)
-uv run python -m spacy download en_core_web_sm
-export AIROUTER_API_KEY=...              # the default provider; OPENROUTER_API_KEY etc. if you switch in llm_config.yaml
-uv run doc-explainer-server              # http://127.0.0.1:8000  (REST /v1, JSON-RPC /rpc, docs at /docs)
-
-# 2. UI, in another terminal (does not start or configure the backend)
-uv pip install -e ./sdk -e ./ui
-doc-explainer --server-url http://127.0.0.1:8000 --protocol rest      # or --protocol rpc
-```
-
-**Config files are created automatically** on first start from defaults shipped inside each package
-(`~/.doc_explainer/config/{llm_config,backend_config}.yaml` by the server, `ui_config.yaml` by the UI).
-Existing files are never overwritten. A package install cannot write to your home directory, so this
-happens at first run; `doc-explainer-server --init-config` / `doc-explainer --init-config` do it on demand.
-If a config file was written by an old version (Python-object tags), the app tells you to move it aside.
-
-**Server settings** (flags or `DOC_EXPLAINER_*` env vars): `--host/--port`, `--api-key`
-(`DOC_EXPLAINER_API_KEY`; required to listen on a non-loopback address), `--data-dir`,
-`--no-rest` / `--no-rpc` to serve only one protocol, `--llmconfig`, `--backendconfig`.
-Users are separated by the `X-User-Id` header; the server plain-HTTP, put TLS in front of it.
-
-**SDK**
+## The SDK and the API
 
 ```python
-from doc_explainer_sdk import DocExplainerClient          # AsyncDocExplainerClient is the awaitable twin
+from doc_explainer_sdk import DocExplainerClient     # AsyncDocExplainerClient is the awaitable twin
 
-client = DocExplainerClient("http://127.0.0.1:8000", protocol="rest")   # or "rpc"; same API either way
-doc = client.register_document("paper.pdf")               # uploads the bytes (the server can be remote) and waits
+client = DocExplainerClient("http://127.0.0.1:8000")          # protocol="rest" (default) or "rpc"
+doc = client.register_document("paper.pdf")                   # waits for processing; build_graph=False to skip the graph
 print(client.ask(doc.doc_id, "What is the main finding?").text)
 
-# Registration is slow (a model call per section), so it is a background job on the server.
-job = client.start_registration("paper.pdf")              # returns at once: job.state is "queued" / "running"
-job = client.wait_for_job(job.job_id, on_update=lambda j: print(j.state, j.queue_position))
-print(job.document.doc_id)                                # raises ProcessingError etc. if it failed
+for event in client.chat_stream(doc.doc_id, "Explain the Calvin cycle"):    # streamed (REST)
+    if event.type == "delta":
+        print(event.text, end="")
+
+client.get_review(doc.doc_id)          # concepts you are likely forgetting
+client.export_session(doc.doc_id, session_id).markdown
+client.delete_knowledge(doc.doc_id)    # drop the graph and your tracking; the document stays
 ```
 
-**Background registration.** `POST /v1/documents` (RPC: `document.register`) validates the upload and returns `202`
-with a job; poll `GET /v1/jobs/{id}` (RPC: `job.get`). One worker processes jobs in order; the queue is bounded per
-user and per server (`queue_full`, retry later). Jobs survive restarts: anything still running when the server
-stopped is reported `failed` ("restarted ... upload it again"). Uploading the same bytes again is instant: the
-already-registered document is returned (`job.reused`), and an identical upload that is still processing returns
-the running job instead of queuing a second one. A job cannot be cancelled once it is running.
+REST lives under `/v1` and JSON-RPC at `/rpc` (one service layer behind both; interactive docs at `/docs`). Main areas:
 
-While a document is processing it owns the model pipeline, so other calls that need it wait
-`DOC_EXPLAINER_LOCK_TIMEOUT_S` (default 5 s) and then fail with the retryable `busy` error (`ServerBusyError` in
-the SDK). Listing documents/jobs and checking health stay responsive. Allowing questions to run during an ingest
-needs a thread-safety audit of the orchestrator first.
+| Area | Operations |
+|---|---|
+| Documents | upload, list, get, delete, structure, section lookup, context |
+| Jobs | list, get, `pause` / `resume` / `cancel` (registration is a background job) |
+| Knowledge | knowledge graph, growth, concepts, prerequisites, learning path, **delete graph** |
+| Learner | learner state, diagnostic, quizzes, feedback, progress, **review**, **history** |
+| Chat | streamed chat (SSE), sessions, notes, summaries, **export** |
 
-Supported upload types are whatever the backend can parse (`GET /v1/health` -> `supported_types`; PDF today).
-Tests: `pytest tests/test_api.py tests/test_sdk_contract.py tests/test_core_independence.py`,
-`(cd sdk && pytest tests)`, `(cd ui && pytest tests)`.
+Users are separated by the `X-User-Id` header; an API key (`DOC_EXPLAINER_API_KEY`) is required to listen on a
+non-loopback address. The server speaks plain HTTP: put TLS in front of it.
 
 ---
 
-## 🚀 Usage Guide
+## How it works
 
-### Command Line Interface
+```
+upload ─► parse (pdf/docx/pptx/html/md/txt, OCR for scans) ─► one DocumentStructure
+          (document → sections → paragraphs → sentences, tables, figures)
+        ─► chunk + embed ─► vector index          (text store + structure store)
+        ─► knowledge graph, one LLM call per section (optional)
 
-After installing the project with `uv sync`, commands can be executed using `uv run`.
-
-### Basic usage
-
-```bash
-# Basic usage
-doc-explainer
-uv run python -m spacy download en_core_web_sm
-uv run doc-explainer-server    # start the service first; then run the UI as shown above
-
-doc-explainer /path/to/document.pdf
-
-# With theme
-doc-explainer --theme dark document.pdf
-
-# With custom config
-doc-explainer --config ~/.doc_explainer/config.json document.pdf
-
-# Debug mode
-doc-explainer --debug document.pdf
-
-# Disable splash screen
-doc-explainer --no-splash document.pdf
-
-# Set log level
-doc-explainer --log-level DEBUG document.pdf
-
-# Profile performance
-doc-explainer --profile document.pdf
+question ─► where are you reading? ─► retrieve only text up to that point
+         ─► what do you know?      ─► adapt depth, define new terms, skip the known
+         ─► stream an answer, then 3 follow-up questions
 ```
 
-### Download spaCy model
+- **Time axis = reading order.** Retrieval is filtered to the reader's position and the graph is stamped with where each
+  concept was introduced, so nothing later than the reader's position can appear in an answer.
+- **Knowledge graph:** built section by section, only earlier→later prerequisites, resumable (finished steps are kept,
+  failed ones retried) and loud about failures. Status: `ready | partial | failed | none`.
+- **Learner model:** a belief per concept (Bayesian knowledge tracing) updated by quiz answers, question types and
+  feedback. Review scheduling decays that belief over time, more slowly the more you have practised a concept.
+- **Jobs:** processing runs on one background worker (`queued → running → succeeded | failed | cancelled`, plus `paused`).
+  A paused job survives a restart; re-uploading a document whose graph failed or is partial resumes the same document, and
+  so does asking for a graph on a document that had none.
 
-```bash
-uv run python -m spacy download en_core_web_sm
-```
-
-### Run with custom configuration
-
-```bash
-uv run doc-explainer \
-    --uiconfig config/ui.yaml \
-    --llmconfig config/llm.yaml \
-    --backendconfig config/backend.yaml
-```
-
-### Process a document
-
-```bash
-uv run doc-explainer /path/to/document.pdf
-```
-
-### With theme
-
-```bash
-uv run doc-explainer \
-    --theme dark \
-    document.pdf
-```
-
-### With custom configuration
-
-```bash
-uv run doc-explainer \
-    --config ~/.doc_explainer/config.json \
-    document.pdf
-```
-
-### Debug mode
-
-```bash
-uv run doc-explainer \
-    --debug \
-    document.pdf
-```
-
-### Disable splash screen
-
-```bash
-uv run doc-explainer \
-    --no-splash \
-    document.pdf
-```
-
-### Set log level
-
-```bash
-uv run doc-explainer \
-    --log-level DEBUG \
-    document.pdf
-```
-
-### Profile performance
-
-```bash
-uv run doc-explainer \
-    --profile \
-    document.pdf
-```
+More detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`CLAUDE.md`](CLAUDE.md).
 
 ---
 
-## Dependency Management
+## Project layout
 
-Use `uv` instead of `pip` for managing project dependencies.
-
-### Add a dependency
-
-```bash
-uv add <package>
+```
+sdk/   doc_explainer_sdk        typed client (sync + async), REST and JSON-RPC protocols; depends only on httpx, pydantic
+ui/    doc_explainer_ui         PySide6 desktop app; talks to the backend only through the SDK
+src/doc_explainer/
+  core/common      shared types + ports (Protocols): the only thing core packages may share
+  core/document    parsers → one DocumentStructure
+  core/indexing    chunking, embeddings, vector index, stores
+  core/knowledge   temporal knowledge graph
+  core/learner     learner model, evidence, diagnostics
+  core/tutor       adaptation policy, prompts, streaming, quizzes, resources
+  core/chat        sessions, notes, summaries
+  core/llm         provider wrappers (airouter, openrouter, openai, gemini, ollama)
+  orchestrator     composition root: adapters, ingestion pipeline
+  api              FastAPI service: jobs, REST, JSON-RPC, streaming
+  config           layered config
+tests/ sdk/tests/ ui/tests/
 ```
 
-For example:
-
-```bash
-uv add requests
-```
-
-### Add a development dependency
-
-```bash
-uv add --dev pytest
-```
-
-### Remove a dependency
-
-```bash
-uv remove <package>
-```
-
-### Synchronize dependencies
-
-```bash
-uv sync
-```
-
-### Upgrade dependencies
-
-```bash
-uv lock --upgrade
-uv sync
-```
-
-### Run a Python command
-
-```bash
-uv run python script.py
-```
-
-### Run a project command
-
-```bash
-uv run doc-explainer
-```
-
-### Run tests
-
-```bash
-uv run pytest
-```
-
-> **Tip:** You generally don't need to activate `.venv` when using `uv`. Commands such as `uv run python`, `uv run pytest`, and `uv run doc-explainer` automatically use the project's managed environment.
+A core package imports only itself and `core.common`; `tests/test_core_independence.py` enforces it.
 
 ---
 
-## Environment Variables
+## Development and tests
 
-If your project requires environment variables, create a `.env` file in the project root:
-
-```bash
-cp .env.example .env
-```
-
-Then configure the required values before running DocExplainer.
-
----
-
-## Updating the Project
-
-To install the exact dependency versions recorded in `uv.lock`:
+Use the one virtual environment at the repo root. All three packages are installed in editable mode, so code changes
+need a restart, not a reinstall (reinstall only when dependencies or entry points change).
 
 ```bash
-uv sync
+.venv/bin/python -m pytest tests -q                                                  # backend (~2.5 min), real System + scripted LLM, no network
+(cd sdk && ../.venv/bin/python -m pytest tests -q)                                   # SDK
+(cd ui && QT_QPA_PLATFORM=offscreen PYTHONPATH=src:../sdk/src ../.venv/bin/python -m pytest tests -q)   # UI, offscreen
 ```
 
-When dependencies change, update them with:
-
-```bash
-uv add <package>
-```
-
-and commit both:
-
-```text
-pyproject.toml
-uv.lock
-```
-
-to version control.
+Adding an API operation: `sdk/.../protocols.py` + `client.py` (sync **and** async — a parity test enforces it),
+`api/schemas.py`, `api/rest.py`, `api/rpc.py`, `api/service.py`, and the error table in `api/errors.py`.
 
 ---
 
 ## Troubleshooting
 
-### PyAudio installation error
-
-If you see:
-
-```text
-fatal error: portaudio.h: No such file or directory
-```
-
-install the PortAudio development package:
-
-```bash
-sudo apt update
-sudo apt install portaudio19-dev
-```
-
-Then run:
-
-```bash
-uv sync
-```
-
-### Verify the environment
-
-```bash
-uv run python --version
-```
-
-### Verify installed packages
-
-```bash
-uv pip list
-```
-
-### Check PyTorch
-
-```bash
-uv run python -c "import torch; print(torch.__version__)"
-```
-
-### Check CUDA availability
-
-```bash
-uv run python -c "import torch; print(torch.cuda.is_available())"
-```
-
-
-### GUI Application
-
-#### Main Window
-
-![Main Window](docs/images/main_window.png)
-
-1. **Document Viewer** (center) - Displays the current document
-2. **AI Tutor Sidebar** (right) - Shows explanations and recommendations
-3. **Toolbar** (top) - Document controls and settings
-4. **Voice Controls** - Voice input/output buttons
-5. **Tab Bar** - Multiple documents support
-
-#### Basic Workflow
-
-1. **Open Document**
-   - Click "Open Document" button or press `Ctrl+O`
-   - Select PDF, TXT, HTML, or other supported format
-
-2. **Select Text**
-   - Highlight any text in the document
-   - Right-click or use toolbar buttons
-
-3. **Choose Action**
-   - **Explain** (`Ctrl+E`) - Get detailed explanation
-   - **Summarize** (`Ctrl+S`) - Get concise summary
-   - **Ask** (`Ctrl+Q`) - Ask a question
-
-4. **Interact with Results**
-   - Read explanation in sidebar
-   - Click follow-up questions for deeper understanding
-   - Access recommended resources (videos, articles)
-   - Use voice for hands-free interaction
-
-### Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+O` | Open document |
-| `Ctrl+W` | Close current tab |
-| `Ctrl+Tab` | Switch tabs |
-| `Ctrl+E` | Explain selected text |
-| `Ctrl+S` | Summarize selected text |
-| `Ctrl+Q` | Ask question |
-| `Ctrl+F` | Find in document |
-| `Ctrl++` | Zoom in |
-| `Ctrl+-` | Zoom out |
-| `Ctrl+0` | Reset zoom |
-| `Ctrl+B` | Toggle sidebar |
-| `F5` | Refresh document |
-| `F1` | Help |
-| `Ctrl+,` | Settings |
-| `Ctrl+Q` | Quit |
-
-### Voice Commands
-
-Enable voice input and try these commands:
-
-- "Explain this paragraph"
-- "Summarize this section"
-- "What does [term] mean?"
-- "Give me an example"
-- "Simplify that"
-- "Tell me more about [concept]"
-
-### Example Sessions
-
-#### Session 1: Learning a New Concept
-
-```
-User: Opens a machine learning paper
-User: Selects "Transformer architecture"
-System: Explains using beginner-level language, noting it requires understanding of attention
-User: Clicks follow-up "What is attention?"
-System: Explains attention mechanism, updates knowledge state
-User: Asks "Show me an example"
-System: Provides concrete example with visualization
-```
-
-#### Session 2: Reviewing Known Material
-
-```
-User: Selects same text a week later
-System: Recognizes user now knows attention, provides advanced explanation
-User: Asks "How does this compare to RNNs?"
-System: Draws comparisons based on known concepts
-```
+| Problem | Fix |
+|---|---|
+| "Cannot reach the Doc Explainer server" | Start `doc-explainer-server` and check the URL in Settings → Server |
+| Documents stay "processing" or the graph fails | Check the key (`AIROUTER_API_KEY`) and `~/.doc_explainer/logs/app.log`; re-uploading resumes only the failed sections |
+| Microphone captures nothing | Lower the input gain / "Mic Boost" in system sound settings; the app warns when the noise level is too high |
+| Robotic voice | Install Piper (see Quick start) |
+| Scanned PDF gives "no readable text" | OCR needs `rapidocr-onnxruntime` (installed with the backend); very poor scans may still fail |
+| Docker build fails on `--frozen` | Run `uv lock` to refresh `uv.lock` |
 
 ---
 
-## ⚙️ Configuration
+## Known limits
 
-### Configuration File
-
-Create `~/.doc_explainer/config/config.json`:
-
-```json
-{
-    "theme": "light",
-    "llm_provider": "gemini",
-    "gemini_api_key": "YOUR_GEMINI_API_KEY",
-    "openai_api_key": "YOUR_OPENAI_API_KEY",
-    "window": {
-        "width": 1200,
-        "height": 800,
-        "maximized": false
-    },
-    "sidebar": {
-        "visible": true,
-        "width": 350,
-        "position": "right"
-    },
-    "voice": {
-        "enabled": true,
-        "input_device": "default",
-        "output_enabled": true,
-        "output_rate": 150,
-        "output_volume": 0.9
-    },
-    "documents": {
-        "default_zoom": 1.0,
-        "max_recent": 10,
-        "auto_save_interval": 5
-    },
-    "cache": {
-        "enabled": true,
-        "size_mb": 500,
-        "location": "~/.doc_explainer/cache"
-    },
-    "llm": {
-        "provider": "gemini",
-        "model": "gemini-1.5-flash",
-        "temperature": 1.0,
-        "max_tokens": null
-    },
-    "knowledge_graph": {
-        "enabled": true,
-        "auto_build": true
-    },
-    "memory": {
-        "enabled": true,
-        "session_tracking": true
-    },
-    "startup": {
-        "open_last_docs": true,
-        "check_updates": true,
-        "show_splash": true
-    },
-    "debug": {
-        "enabled": false,
-        "log_level": "INFO",
-        "profiling": false
-    }
-}
-```
-
-### Environment Variables
-
-Create `.env` file in project root:
-
-```env
-# API Keys
-GEMINI_API_KEY=your_gemini_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Configuration
-DOC_EXPLAINER_THEME=light
-DOC_EXPLAINER_DEBUG=false
-DOC_EXPLAINER_LOG_LEVEL=INFO
-
-# Paths
-DOC_EXPLAINER_CACHE_DIR=~/.doc_explainer/cache
-DOC_EXPLAINER_CONFIG_DIR=~/.doc_explainer/config
-DOC_EXPLAINER_DATA_DIR=~/.doc_explainer/data
-
-# LLM Settings
-DOC_EXPLAINER_LLM_PROVIDER=gemini
-DOC_EXPLAINER_LLM_TEMPERATURE=1.0
-DOC_EXPLAINER_LLM_MAX_TOKENS=4096
-
-# Feature Flags
-DOC_EXPLAINER_ENABLE_VOICE=true
-DOC_EXPLAINER_ENABLE_KG=true
-DOC_EXPLAINER_ENABLE_MEMORY=true
-```
-
-### Command Line Arguments
-
-```bash
-doc-explainer --help
-```
-
-```
-usage: doc-explainer [-h] [--config CONFIG] [--theme {light,dark,high_contrast,sepia}]
-                     [--debug] [--no-splash] [--log-level {DEBUG,INFO,WARNING,ERROR}]
-                     [--version] [--profile] [--reset-config] [--clear-cache]
-                     [document]
-
-Doc Explainer - Intelligent Document Explanation System
-
-positional arguments:
-  document              Document to open (PDF, TXT, HTML, etc.)
-
-options:
-  -h, --help            show this help message and exit
-  --config CONFIG, -c CONFIG
-                        Configuration file path
-  --theme {light,dark,high_contrast,sepia}, -t {light,dark,high_contrast,sepia}
-                        Theme to use
-  --debug, -d           Enable debug mode
-  --no-splash           Disable splash screen
-  --log-level {DEBUG,INFO,WARNING,ERROR}
-                        Set logging level
-  --version, -v         show program's version number and exit
-  --profile             Enable performance profiling
-  --reset-config        Reset configuration to defaults
-  --clear-cache         Clear application cache
-```
+- DOCX/PPTX are shown as formatted text (images are not rendered).
+- A document's knowledge graph can be removed or rebuilt, but highlights are kept only while the document is open.
+- Concept-extraction quality on very large books has not been tested end to end with the current settings.
+- Reasoning models spend tokens thinking; if answers are cut off, raise `llm.max_tokens`.
 
 ---
 
-## 📚 API Reference
+## License
 
-### Core Classes
-
-#### `DocumentProcessor`
-
-```python
-from src.core.document import DocumentProcessor
-
-processor = DocumentProcessor()
-doc_id = processor.load_document("path/to/file.pdf")
-tree = processor.build_document_tree(doc_id)
-```
-
-#### `AdaptiveExplainer`
-
-```python
-from src.core.explanation_engine import AdaptiveExplainer
-
-explainer = AdaptiveExplainer(style="intermediate")
-explanation = explainer.explain(text, context)
-summary = explainer.summarize(text, context)
-answer = explainer.ask(question, context)
-```
-
-#### `KnowledgeGraph`
-
-```python
-from src.core.knowledge import KnowledgeGraph
-
-kg = KnowledgeGraph()
-kg.add_concept("attention")
-kg.add_relationship("transformer", "depends_on", "attention")
-prereqs = kg.get_prerequisites("transformer")
-```
-
-#### `UserManager`
-
-```python
-from src.core.user import UserManager
-
-user_manager = UserManager("user123")
-state = user_manager.get_user_knowledge()
-user_manager.update_knowledge({"concept": "attention", "correct": True})
-```
-
-### REST API (if enabled)
-
-```bash
-# Register document
-POST /api/documents
-{"path": "/path/to/file.pdf"}
-
-# Get explanation
-POST /api/explain
-{
-    "doc_id": "123",
-    "text": "selected text",
-    "section_id": 5
-}
-
-# Ask question
-POST /api/ask
-{
-    "doc_id": "123",
-    "question": "What is attention?",
-    "section_id": 5
-}
-
-# Get user state
-GET /api/user/{user_id}/knowledge
-```
-
----
-
-## 🛠️ Development
-
-### Project Structure
-
-```
-doc-explainer/
-├── src/
-│   ├── core/               # Core modules
-│   │   ├── document/       # Document processing
-│   │   ├── memory/         # Memory management
-│   │   ├── knowledge/      # Knowledge graph
-│   │   ├── explanation/    # Explanation engine
-│   │   ├── user/           # User modeling
-│   │   └── agent/          # LLM interaction
-│   ├── orchestrator/       # Pipeline coordination
-│   ├── store/              # Data persistence
-│   ├── ui/                 # User interface
-│   │   ├── gui/            # Qt GUI
-│   │   └── web/            # Web interface (optional)
-│   └── cli/                # Command line interface
-├── tests/                   # Unit tests
-├── docs/                    # Documentation
-├── examples/                # Example notebooks
-├── scripts/                 # Utility scripts
-├── data/                    # Data directory
-├── config/                  # Configuration files
-├── requirements.txt         # Dependencies
-├── setup.py                 # Package setup
-├── README.md                # This file
-└── LICENSE                  # MIT License
-```
-
-### Setting Up Development Environment
-
-```bash
-# Clone repository
-git clone https://github.com/yourusername/doc-explainer.git
-cd doc-explainer
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate
-
-# Install with dev dependencies
-pip install -e .[dev]
-
-# Install pre-commit hooks
-pre-commit install
-
-# Run tests
-pytest tests/ -v
-
-# Run with coverage
-pytest --cov=src tests/
-
-# Build documentation
-cd docs
-make html
-```
-
-### Code Style
-
-This project follows:
-- **PEP 8** for Python code
-- **Black** for formatting
-- **isort** for import sorting
-- **mypy** for type checking
-- **pylint** for linting
-
-```bash
-# Format code
-black src/
-isort src/
-
-# Type check
-mypy src/
-
-# Lint
-pylint src/
-```
-
-### Running Tests
-
-```bash
-# Run all tests
-pytest
-
-# Run specific test file
-pytest tests/test_document.py
-
-# Run with verbose output
-pytest -v
-
-# Run with coverage report
-pytest --cov=src --cov-report=html
-
-# Run GUI tests (headless)
-pytest tests/test_gui.py --qt
-```
-
-### Building Distributions
-
-```bash
-# Build source and wheel distributions
-python -m build
-
-# Upload to PyPI (if publishing)
-twine upload dist/*
-```
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
-
-### Development Process
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Contribution Areas
-
-- 🐛 Bug fixes
-- ✨ New features
-- 📚 Documentation improvements
-- 🎨 UI/UX enhancements
-- 🌐 Internationalization
-- ⚡ Performance optimizations
-- 🧪 Test coverage
-
-### Code of Conduct
-
-Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **LangChain** community for LLM orchestration
-- **PySide6** team for Qt bindings
-- **Google Gemini** and **OpenAI** for LLM APIs
-- **spaCy** for NLP capabilities
-- **NetworkX** for graph algorithms
-- All open-source contributors
-
----
+MIT — see [`LICENSE`](LICENSE).
