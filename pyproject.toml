@@ -110,3 +110,14 @@ dev = [
     "pytest>=9.1.1",
 ]
 
+
+
+# uv only (pip ignores this): use PyTorch's CPU build. The backend runs its small embedding model on the CPU, and the
+# default Linux wheel would pull in several GB of CUDA libraries (and make the Docker image huge).
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

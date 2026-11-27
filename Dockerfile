@@ -5,6 +5,11 @@ WORKDIR /app
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+# Be gentle with flaky networks / DNS: fewer parallel downloads, longer timeouts, more retries
+ENV UV_CONCURRENT_DOWNLOADS=4 \
+    UV_HTTP_TIMEOUT=120 \
+    UV_HTTP_RETRIES=10
+
 # Install dependencies first for better layer caching
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-install-project
