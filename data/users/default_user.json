@@ -1,0 +1,9 @@
+{
+  "user_id": "default_user",
+  "knowledge_state": {
+    "confidence": {},
+    "exposure": {},
+    "last_seen": {}
+  },
+  "interaction_history": []
+}
